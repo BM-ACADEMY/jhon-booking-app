@@ -2,16 +2,54 @@ import mongoose from 'mongoose';
 
 const roomSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
-  category: { type: String, required: true, enum: ['Standard', 'Deluxe', 'Suite', 'Presidential'] },
+  category: { type: String, required: true, trim: true },
+  propertyType: { type: String, default: 'Entire Villa' }, 
   description: { type: String, required: true },
+  
+  // Pricing
   price: { type: Number, required: true },
-  capacity: { type: Number, required: true, default: 2 },
+  originalPrice: { type: Number }, // For strike-through display
+  priceUnit: { type: String, default: 'night' }, // night, day, hour, etc.
+  
+  // Capacity details
+  guests: { type: Number, required: true, default: 2 },
+  bedrooms: { type: Number, default: 1 },
+  beds: { type: Number, default: 1 },
+  bathrooms: { type: Number, default: 1 },
+  
   size: { type: String },
-  amenities: [{ type: String }],
-  images: [{ type: String }],
+  
+  // Highlights
+  highlights: [{
+    icon: { type: String, default: 'Star' },
+    text: { type: String },
+    subtext: { type: String }
+  }],
+  
+  // Amenities
+  amenities: [{
+    name: { type: String },
+    icon: { type: String, default: 'Check' }
+  }],
+  
+  // Images with labels
+  images: [{
+    url: { type: String },
+    label: { type: String } // e.g., "Kitchen", "Bedroom"
+  }],
+  
+  // Location
+  address: { type: String },
+  city: { type: String },
+  state: { type: String },
+  country: { type: String },
+  
+  unavailableDates: [{ type: Date }],
+  
+  status: { type: String, enum: ['draft', 'published'], default: 'draft' },
   isAvailable: { type: Boolean, default: true },
   isFeatured: { type: Boolean, default: false },
-  rating: { type: Number, default: 0, min: 0, max: 5 },
+  rating: { type: Number, default: 0 },
   reviewCount: { type: Number, default: 0 },
 }, { timestamps: true });
 

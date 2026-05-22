@@ -9,7 +9,10 @@ const bookingSchema = new mongoose.Schema({
   totalAmount: { type: Number, required: true },
   status: { type: String, enum: ['pending', 'confirmed', 'cancelled', 'completed'], default: 'pending' },
   paymentStatus: { type: String, enum: ['unpaid', 'paid', 'refunded'], default: 'unpaid' },
-  paymentId: { type: String },
+  paymentId: { type: String }, // Legacy field
+  razorpayOrderId: { type: String },
+  razorpayPaymentId: { type: String },
+  razorpaySignature: { type: String },
   specialRequests: { type: String },
 }, { timestamps: true });
 

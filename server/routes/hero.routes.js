@@ -1,11 +1,15 @@
 import express from 'express';
-import { getActiveHero, createHero, updateHero } from '../controllers/hero.controller.js';
+import { getHero, updateHero, deleteHeroVideo } from '../controllers/hero.controller.js';
 import { protect, adminOnly } from '../middleware/auth.middleware.js';
+import upload from '../middleware/upload.middleware.js';
 
 const router = express.Router();
 
-router.get('/', getActiveHero);
-router.post('/', protect, adminOnly, createHero);
-router.put('/:id', protect, adminOnly, updateHero);
+// Public route
+router.get('/', getHero);
+
+// Admin routes
+router.post('/', protect, adminOnly, upload.single('video'), updateHero);
+router.delete('/video', protect, adminOnly, deleteHeroVideo);
 
 export default router;

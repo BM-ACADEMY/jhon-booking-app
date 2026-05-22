@@ -8,6 +8,9 @@ import bookingRoutes from './routes/booking.routes.js';
 import userRoutes from './routes/user.routes.js';
 import testimonialRoutes from './routes/testimonial.routes.js';
 import heroRoutes from './routes/hero.routes.js';
+import categoryRoutes from './routes/category.routes.js';
+import propertyTypeRoutes from './routes/propertyType.routes.js';
+import priceUnitRoutes from './routes/priceUnit.routes.js';
 
 dotenv.config();
 
@@ -27,6 +30,9 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/hero', heroRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/property-types', propertyTypeRoutes);
+app.use('/api/price-units', priceUnitRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Jhon Booking API running' });

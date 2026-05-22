@@ -1,5 +1,18 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+
+// Public
+import PublicLayout from './layouts/PublicLayout';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import RoomsPage from './pages/RoomsPage';
+import RoomDetailPage from './pages/RoomDetailPage';
+import MyBookings from './pages/MyBookings';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+
+// Admin
 import AdminLayout from './admin/layout/AdminLayout';
 import AdminLogin from './admin/pages/AdminLogin';
 import Dashboard from './admin/pages/Dashboard';
@@ -20,6 +33,22 @@ const ProtectedRoute = ({ children }) => {
 
 const AppRoutes = () => (
   <Routes>
+    {/* Public website */}
+    {/* Standalone auth pages (no Navbar/Footer) */}
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/signup" element={<SignupPage />} />
+
+    {/* Public website with Navbar + Footer */}
+    <Route element={<PublicLayout />}>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/rooms" element={<RoomsPage />} />
+      <Route path="/rooms/:id" element={<RoomDetailPage />} />
+      <Route path="/bookings/my" element={<MyBookings />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+    </Route>
+
+    {/* Admin */}
     <Route path="/admin/login" element={<AdminLogin />} />
     <Route
       path="/admin"
@@ -38,13 +67,62 @@ const AppRoutes = () => (
       <Route path="sections" element={<DynamicSections />} />
       <Route path="settings" element={<Settings />} />
     </Route>
-    <Route path="*" element={<Navigate to="/admin" replace />} />
+
+    <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
 );
+
+import { Toaster } from 'react-hot-toast';
 
 const App = () => (
   <BrowserRouter>
     <AuthProvider>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        gutter={12}
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#0f172a',
+            color: '#f1f5f9',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '1rem',
+            padding: '14px 18px',
+            fontSize: '13px',
+            fontWeight: '500',
+            letterSpacing: '0.01em',
+            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)',
+            backdropFilter: 'blur(16px)',
+            maxWidth: '360px',
+            lineHeight: '1.5',
+          },
+          success: {
+            iconTheme: {
+              primary: '#d4891f',
+              secondary: '#fff',
+            },
+            style: {
+              background: '#0f172a',
+              color: '#f1f5f9',
+              border: '1px solid rgba(212, 137, 31, 0.3)',
+              borderLeft: '3px solid #d4891f',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+            style: {
+              background: '#0f172a',
+              color: '#f1f5f9',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderLeft: '3px solid #ef4444',
+            },
+          },
+        }}
+      />
       <AppRoutes />
     </AuthProvider>
   </BrowserRouter>
