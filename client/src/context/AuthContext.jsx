@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import api from '../api';
+import { toast } from 'react-hot-toast';
 
 const AuthContext = createContext(null);
 
@@ -20,8 +22,31 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUserData = (userData) => {
+    localStorage.setItem('admin_user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
+  const toggleUserWishlist = async (roomId) => {
+    if (!user) {
+      toast.error('Please log in to manage your wishlist');
+      return false;
+    }
+    try {
+      const res = await api.post('/auth/wishlist/toggle', { roomId });
+      const updatedWishlist = res.data.wishlist || [];
+      const updatedUser = { ...user, wishlist: updatedWishlist };
+      updateUserData(updatedUser);
+      return true;
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to toggle wishlist');
+      console.error(err);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAdmin: user?.role === 'admin' }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUserData, toggleUserWishlist, isAdmin: user?.role === 'admin' }}>
       {children}
     </AuthContext.Provider>
   );

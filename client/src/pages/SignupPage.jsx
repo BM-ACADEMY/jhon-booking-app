@@ -177,7 +177,7 @@ const SignupPage = () => {
               {/* Phone */}
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Phone <span className="text-gray-400 font-normal normal-case">(optional)</span>
+                  Phone Number
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -186,6 +186,7 @@ const SignupPage = () => {
                     name="phone"
                     value={form.phone}
                     onChange={handleChange}
+                    required
                     placeholder="+1 555-0000"
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 transition-all"
                   />

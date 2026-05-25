@@ -5,12 +5,14 @@ import {
   createBooking, 
   updateBookingStatus,
   createRazorpayOrder,
-  verifyRazorpayPayment
+  verifyRazorpayPayment,
+  getDashboardStats
 } from '../controllers/booking.controller.js';
 import { protect, adminOnly } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
+router.get('/stats/dashboard', protect, adminOnly, getDashboardStats);
 router.get('/', protect, adminOnly, getAllBookings);
 router.get('/my', protect, getMyBookings);
 router.post('/', protect, createBooking);

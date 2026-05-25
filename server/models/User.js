@@ -6,9 +6,10 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true },
   password: { type: String, required: true, minlength: 6 },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
-  phone: { type: String },
+  phone: { type: String, required: true },
   avatar: { type: String },
   isActive: { type: Boolean, default: true },
+  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room' }],
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

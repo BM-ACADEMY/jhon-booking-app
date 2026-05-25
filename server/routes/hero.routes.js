@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/', getHero);
 
 // Admin routes
-router.post('/', protect, adminOnly, upload.single('video'), updateHero);
+router.post('/', protect, adminOnly, upload.fields([{ name: 'video', maxCount: 1 }, { name: 'image', maxCount: 1 }]), updateHero);
 router.delete('/video', protect, adminOnly, deleteHeroVideo);
 
 export default router;

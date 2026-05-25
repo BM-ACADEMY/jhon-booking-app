@@ -11,6 +11,7 @@ import {
   X,
   Hotel,
   ChevronRight,
+  User,
 } from 'lucide-react';
 
 const navItems = [
@@ -20,8 +21,9 @@ const navItems = [
   { label: 'Bookings', icon: CalendarCheck, path: '/admin/bookings' },
   { label: 'Users', icon: Users, path: '/admin/users' },
   { label: 'Testimonials', icon: Star, path: '/admin/testimonials' },
-  { label: 'Dynamic Sections', icon: Layers, path: '/admin/sections' },
+  // { label: 'Dynamic Sections', icon: Layers, path: '/admin/sections' },
   { label: 'Settings', icon: Settings, path: '/admin/settings' },
+  { label: 'Profile', icon: User, path: '/admin/profile' },
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
