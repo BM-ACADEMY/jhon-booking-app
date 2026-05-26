@@ -33,13 +33,13 @@ const HeroManagement = () => {
       const res = await api.get('/hero');
       if (res.data) {
         setForm({
-          titleLine1: res.data.titleLine1 || '',
-          titleLine2: res.data.titleLine2 || '',
-          subtitle: res.data.subtitle || '',
-          ctaPrimaryText: res.data.ctaPrimaryText || '',
-          ctaSecondaryText: res.data.ctaSecondaryText || '',
-          videoUrl: res.data.videoUrl || '',
-          backgroundImage: res.data.backgroundImage || '',
+          titleLine1: res.data.titleLine1 ,
+          titleLine2: res.data.titleLine2 ,
+          subtitle: res.data.subtitle ,
+          ctaPrimaryText: res.data.ctaPrimaryText ,
+          ctaSecondaryText: res.data.ctaSecondaryText ,
+          videoUrl: res.data.videoUrl ,
+          backgroundImage: res.data.backgroundImage ,
           stats: res.data.stats && res.data.stats.length > 0 ? res.data.stats : [
             { label: 'Luxury Stays', value: '500+' },
             { label: 'Premium Suites', value: '24' },

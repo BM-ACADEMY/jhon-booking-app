@@ -76,7 +76,7 @@ const UserManagement = () => {
         name: user.name,
         email: user.email,
         password: '', 
-        phone: user.phone || '',
+        phone: user.phone ,
         role: user.role,
         isActive: user.isActive
       });

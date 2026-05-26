@@ -9,9 +9,9 @@ const ProfilePage = () => {
   const { user, updateUserData } = useAuth();
   const navigate = useNavigate();
 
-  const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState(user?.phone || '');
+  const [name, setName] = useState(user?.name );
+  const [email, setEmail] = useState(user?.email );
+  const [phone, setPhone] = useState(user?.phone );
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);

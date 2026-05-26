@@ -105,14 +105,14 @@ const App = () => (
           },
           success: {
             iconTheme: {
-              primary: '#d4891f',
+              primary: '#10b981',
               secondary: '#fff',
             },
             style: {
               background: '#0f172a',
               color: '#f1f5f9',
-              border: '1px solid rgba(212, 137, 31, 0.3)',
-              borderLeft: '3px solid #d4891f',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              borderLeft: '3px solid #10b981',
             },
           },
           error: {

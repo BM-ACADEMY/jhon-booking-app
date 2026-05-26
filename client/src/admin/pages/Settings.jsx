@@ -49,9 +49,9 @@ const Settings = () => {
         setLoading(true);
         const res = await api.get('/settings');
         const d = res.data;
-        setEmail(d.email || '');
-        setPhone(d.phone || '');
-        setAddress(d.address || '');
+        setEmail(d.email );
+        setPhone(d.phone );
+        setAddress(d.address );
         
         const checkInParsed = parse24h(d.checkInTime);
         setCheckInHour(checkInParsed.hour);
@@ -63,10 +63,10 @@ const Settings = () => {
         setCheckOutMinute(checkOutParsed.minute);
         setCheckOutAmPm(checkOutParsed.ampm);
 
-        setFacebook(d.facebook || '');
-        setInstagram(d.instagram || '');
-        setTwitter(d.twitter || '');
-        setLinkedin(d.linkedin || '');
+        setFacebook(d.facebook );
+        setInstagram(d.instagram );
+        setTwitter(d.twitter );
+        setLinkedin(d.linkedin );
       } catch (err) {
         toast.error('Failed to load settings');
         console.error(err);

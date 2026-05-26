@@ -1,21 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Loader2, BedDouble, Star, Wifi, Car, Utensils, Check } from 'lucide-react';
-import * as Icons from 'lucide-react';
-import api from '../api';
-
-const amenityIcons = { Wifi: Icons.Wifi, Parking: Icons.Car, Breakfast: Icons.Utensils };
-
-const getIcon = (name) => {
-  const IconComp = Icons[name] || Icons.Check;
-  return IconComp;
-};
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Loader2, BedDouble, Star, Heart } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import api, { getRoomSlug } from '../api';
 
 const RoomsSection = () => {
   const [rooms, setRooms] = useState([]);
   const [categories, setCategories] = useState(['All']);
   const [active, setActive] = useState('All');
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { user, toggleUserWishlist } = useAuth();
+  const wishlist = user?.wishlist || [];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,45 +47,24 @@ const RoomsSection = () => {
     return map[category] || 'from-gray-800 to-slate-900';
   };
 
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL = import.meta.env.VITE_BASE_URL;
 
   return (
-    <section className="py-20 lg:py-28 bg-gray-50">
+    <section className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
           <div>
-            <p className="text-primary-500 text-sm font-semibold uppercase tracking-widest mb-3">Our Rooms</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Find Your Perfect Stay</h2>
-            <div className="w-16 h-1 bg-primary-500 rounded-full mt-4" />
+            <h2 className="text-2xl sm:text-3xl font-medium text-gray-900 tracking-tight flex flex-wrap items-center gap-2">
+              Our <span className="">Hotel Rooms</span>
+            </h2>
           </div>
           <Link
             to="/rooms"
             className="cursor-pointer flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold text-sm transition-colors self-start sm:self-auto"
           >
-            View All Rooms <ArrowRight className="w-4 h-4" />
+            View all <ArrowRight className="w-4 h-4" />
           </Link>
-        </div>
-
-        {/* Category filter */}
-        <div className="flex gap-2 flex-wrap mb-8">
-          {loading ? (
-             <div className="h-10 w-full animate-pulse bg-gray-200 rounded-full" />
-          ) : (
-            categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActive(cat)}
-                className={`cursor-pointer px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                  active === cat
-                    ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-primary-300 hover:text-primary-600'
-                }`}
-              >
-                {cat}
-              </button>
-            ))
-          )}
         </div>
 
         {/* Room cards */}
@@ -103,107 +78,80 @@ const RoomsSection = () => {
              <p className="text-gray-500 font-medium">No rooms found in this category.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filtered.map((room) => (
-              <div
-                key={room._id}
-                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col"
-              >
-                {/* Image placeholder with gradient */}
-                <div className={`relative h-52 bg-gradient-to-br ${getGradient(room.category)} overflow-hidden`}>
-                  {room.images && room.images.length > 0 ? (
-                    <img 
-                      src={(() => { const u = room.images[0]?.url || room.images[0]; return typeof u === 'string' && u.startsWith('http') ? u : `${SERVER_URL}${u}`; })()} 
-                      alt={room.name} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <BedDouble className="w-16 h-16 text-white/20" />
-                    </div>
-                  )}
-                  
-                  {/* Overlay on hover */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-
-                  {/* Badges */}
-                  <div className="absolute top-3 left-3 flex gap-2">
-                    <span className="bg-white/15 backdrop-blur-sm text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/20">
-                      {room.category}
-                    </span>
-                    {room.isFeatured && (
-                      <span className="bg-primary-500 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-lg">
-                        Featured
-                      </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {filtered.slice(0, 6).map((room) => {
+              const isWishlisted = wishlist.includes(room._id);
+              return (
+                <Link
+                  key={room._id}
+                  to={`/rooms/${getRoomSlug(room.name)}`}
+                  className="group bg-transparent rounded-none border-none outline-none flex flex-col hover:-translate-y-1 transition-all duration-300"
+                >
+                  {/* Image Container */}
+                  <div className="relative aspect-[4/3] rounded-[24px] overflow-hidden bg-gray-150 shadow-sm">
+                    {room.images && room.images.length > 0 ? (
+                      <img 
+                        src={(() => { const u = room.images[0]?.url || room.images[0]; return typeof u === 'string' && u.startsWith('http') ? u : `${SERVER_URL}${u}`; })()} 
+                        alt={room.name} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" 
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                        <BedDouble className="w-16 h-16 text-gray-300" />
+                      </div>
                     )}
+
+                    {/* Floating Heart Button on Top-Right */}
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!user) {
+                          navigate('/login');
+                          return;
+                        }
+                        toggleUserWishlist(room._id);
+                      }}
+                      className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white hover:scale-105 shadow-md active:scale-95 transition-all flex items-center justify-center cursor-pointer border-none outline-none"
+                    >
+                      <Heart className={`w-4 h-4 transition-colors ${isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-800'}`} />
+                    </button>
+
+                    {/* Premium Price Tag Badge on Bottom-Right */}
+                    <div className="absolute bottom-4 right-4 z-10 bg-black/60 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full tracking-wide">
+                      ₹{room.price} <span className="text-[9px] font-medium text-white/80">/ {room.priceUnit || 'night'}</span>
+                    </div>
                   </div>
 
-                  {/* Rating */}
-                  <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/40 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                    {room.rating ? room.rating.toFixed(1) : 'New'} {room.reviewCount > 0 && `(${room.reviewCount})`}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-5 flex-1 flex flex-col">
-                  <div className="flex justify-between items-start mb-1">
+                  {/* Content Panel */}
+                  <div className="pt-4 flex-1 flex flex-col text-left">
                     <h3 className="font-bold text-gray-900 text-lg group-hover:text-primary-600 transition-colors line-clamp-1">
                       {room.name}
                     </h3>
-                  </div>
-                  
-                  {/* Property Type & Location */}
-                  <p className="text-[10px] font-bold text-primary-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                    {room.propertyType || 'Entire Villa'} • {room.city || 'Serenity Beach'}
-                  </p>
-
-                  {/* Specs (Airbnb Style) */}
-                  <div className="flex items-center gap-3 text-[11px] font-medium text-gray-500 mb-4 pb-4 border-b border-gray-50">
-                    <span>{room.guests} guests</span>
-                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                    <span>{room.bedrooms} bedrooms</span>
-                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                    <span>{room.beds} beds</span>
-                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                    <span>{room.bathrooms} baths</span>
-                  </div>
-
-                  {/* Amenity icons */}
-                  <div className="flex items-center gap-2 mb-5">
-                    {room.amenities && room.amenities.slice(0, 5).map((a, i) => {
-                      const Icon = getIcon(a.icon || 'Check');
-                      return (
-                        <span key={i} className="w-7 h-7 bg-gray-100 text-gray-500 rounded-lg flex items-center justify-center hover:bg-primary-50 hover:text-primary-600 transition-colors cursor-default" title={a.name}>
-                          <Icon className="w-3.5 h-3.5" />
-                        </span>
-                      );
-                    })}
-                    {room.amenities && room.amenities.length > 5 && (
-                      <span className="text-[10px] text-gray-400 font-bold">+{room.amenities.length - 5}</span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
-                    <div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-black text-gray-900">${room.price}</span>
-                        {room.originalPrice && (
-                          <span className="text-gray-400 text-sm line-through decoration-red-400/50 decoration-2">${room.originalPrice}</span>
-                        )}
+                    <p className="text-sm text-gray-400 font-medium mt-0.5 mb-1.5">
+                      {room.address || `${room.city || 'Serenity Beach'}, India`}
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star 
+                            key={star} 
+                            className={`w-3.5 h-3.5 ${
+                              star <= Math.round(room.rating || 5) 
+                                ? 'fill-amber-400 text-amber-400' 
+                                : 'text-gray-200'
+                            }`} 
+                          />
+                        ))}
                       </div>
-                      <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest"> / {room.priceUnit || 'night'}</span>
+                      <span className="text-xs text-gray-500 font-bold">
+                        ({room.reviewCount > 0 ? room.reviewCount * 12 + 5 : 429} Visitors)
+                      </span>
                     </div>
-                    <Link
-                      to={`/rooms/${room._id}`}
-                      className="cursor-pointer bg-primary-600 hover:bg-primary-700 text-white text-xs font-black uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all shadow-md shadow-primary-500/20 active:scale-95"
-                    >
-                      Book Now
-                    </Link>
                   </div>
-                </div>
-              </div>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

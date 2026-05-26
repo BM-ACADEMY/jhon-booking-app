@@ -42,7 +42,7 @@ const LoginPage = () => {
       {/* Left panel — decorative */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-primary-950 flex-col items-center justify-center p-12">
         <div className="absolute inset-0 opacity-30"
-          style={{ backgroundImage: 'radial-gradient(circle at 30% 60%, #d4891f 0%, transparent 50%)' }}
+          style={{ backgroundImage: 'radial-gradient(circle at 30% 60%, #7c3aed 0%, transparent 50%)' }}
         />
         <div className="relative z-10 text-center max-w-md">
           <div className="w-16 h-16 rounded-2xl bg-primary-500 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-primary-500/30">

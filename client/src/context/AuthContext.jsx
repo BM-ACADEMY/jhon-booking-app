@@ -32,13 +32,39 @@ export const AuthProvider = ({ children }) => {
       toast.error('Please log in to manage your wishlist');
       return false;
     }
+    
+    // Save original state for potential rollback
+    const originalUser = { ...user };
+    const originalWishlist = user.wishlist || [];
+    
+    // Calculate optimistic wishlist
+    let optimisticWishlist;
+    if (originalWishlist.includes(roomId)) {
+      optimisticWishlist = originalWishlist.filter(id => id !== roomId);
+    } else {
+      optimisticWishlist = [...originalWishlist, roomId];
+    }
+    
+    const optimisticUser = { ...user, wishlist: optimisticWishlist };
+    
+    // Instantly update global state & local storage
+    setUser(optimisticUser);
+    localStorage.setItem('admin_user', JSON.stringify(optimisticUser));
+    
     try {
       const res = await api.post('/auth/wishlist/toggle', { roomId });
-      const updatedWishlist = res.data.wishlist || [];
-      const updatedUser = { ...user, wishlist: updatedWishlist };
-      updateUserData(updatedUser);
+      const finalWishlist = res.data.wishlist || [];
+      const finalUser = { ...user, wishlist: finalWishlist };
+      
+      // Update with final server data (in case of server-side adjustments)
+      setUser(finalUser);
+      localStorage.setItem('admin_user', JSON.stringify(finalUser));
       return true;
     } catch (err) {
+      // Rollback to original state on failure
+      setUser(originalUser);
+      localStorage.setItem('admin_user', JSON.stringify(originalUser));
+      
       toast.error(err.response?.data?.message || 'Failed to toggle wishlist');
       console.error(err);
       return false;

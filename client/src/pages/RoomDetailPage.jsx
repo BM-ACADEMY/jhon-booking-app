@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import api from '../api';
 
-const SERVER_URL = 'http://localhost:5000';
+const SERVER_URL = import.meta.env.VITE_BASE_URL;
 
 const getImageUrl = (img) => {
   const u = img?.url || img;
@@ -28,7 +28,7 @@ const RoomDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
-  const isWishlisted = user?.wishlist?.includes(id) || false;
+  const isWishlisted = user?.wishlist?.includes(room?._id) || false;
 
   const checkInQuery = searchParams.get('checkIn') || '';
   const checkOutQuery = searchParams.get('checkOut') || '';
@@ -149,7 +149,7 @@ const RoomDetailPage = () => {
           contact: user.phone || ''
         },
         theme: {
-          color: '#d4891f'
+          color: '#111827'
         }
       };
 
@@ -182,7 +182,7 @@ const RoomDetailPage = () => {
                   navigate('/login');
                   return;
                 }
-                await toggleUserWishlist(id);
+                await toggleUserWishlist(room?._id);
               }}
               className="cursor-pointer p-2 hover:bg-gray-100 rounded-xl transition-colors"
               title="Save"

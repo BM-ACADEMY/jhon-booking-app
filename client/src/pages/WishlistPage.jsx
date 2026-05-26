@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, Loader2, BedDouble, ArrowRight, Star, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import api from '../api';
+import api, { getRoomSlug } from '../api';
 
-const SERVER_URL = 'http://localhost:5000';
+const SERVER_URL = import.meta.env.VITE_BASE_URL ;
 
 const getImageUrl = (img) => {
   const u = img?.url || img;
@@ -41,10 +41,17 @@ const WishlistPage = () => {
   const handleRemoveWishlist = async (e, roomId) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Save original state for rollback
+    const originalWishlistRooms = [...wishlistRooms];
+    
+    // Optimistically remove the room from the screen immediately
+    setWishlistRooms((prev) => prev.filter((room) => room._id !== roomId));
+    
     const success = await toggleUserWishlist(roomId);
-    if (success) {
-      // Animate/remove item locally from screen
-      setWishlistRooms((prev) => prev.filter((room) => room._id !== roomId));
+    if (!success) {
+      // Roll back to the original list on failure
+      setWishlistRooms(originalWishlistRooms);
     }
   };
 
@@ -90,82 +97,70 @@ const WishlistPage = () => {
           /* Wishlist Grid */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {wishlistRooms.map((room) => {
-              const detailLink = `/rooms/${room._id}`;
+              const detailLink = `/rooms/${getRoomSlug(room.name)}`;
 
               return (
-                <div 
+                <Link
                   key={room._id}
-                  className="group bg-white rounded-3xl border border-gray-150/70 overflow-hidden shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] hover:border-gray-200 transition-all duration-300 flex flex-col relative"
+                  to={detailLink}
+                  className="group bg-transparent rounded-none border-none outline-none flex flex-col hover:-translate-y-1 transition-all duration-300 text-left"
                 >
-                  {/* Image Panel */}
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-900">
-                    {room.images?.[0] ? (
+                  {/* Image Container */}
+                  <div className="relative aspect-[4/3] rounded-[24px] overflow-hidden bg-gray-150 shadow-sm">
+                    {room.images && room.images.length > 0 ? (
                       <img 
                         src={getImageUrl(room.images[0])} 
                         alt={room.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                        <BedDouble className="w-12 h-12 text-gray-300" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                        <BedDouble className="w-16 h-16 text-gray-300" />
                       </div>
                     )}
 
-                    {/* Star Rating Badge */}
-                    <div className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-white/95 backdrop-blur-sm shadow px-2.5 py-1 rounded-full border border-gray-100/50">
-                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                      <span className="text-xs font-black text-gray-800">{room.rating ? room.rating.toFixed(1) : 'New'}</span>
-                    </div>
-
-                    {/* Wishlist Heart Icon (to remove) */}
+                    {/* Wishlist Heart Icon Floating Top-Right */}
                     <button 
                       onClick={(e) => handleRemoveWishlist(e, room._id)}
-                      className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/90 hover:bg-white hover:scale-105 shadow-md active:scale-95 transition-all cursor-pointer"
+                      className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white hover:scale-105 shadow-md active:scale-95 transition-all flex items-center justify-center cursor-pointer border-none outline-none"
                       title="Remove from wishlist"
                     >
                       <Heart className="w-4 h-4 text-red-500 fill-red-500 transition-colors" />
                     </button>
+
+                    {/* Premium Price Tag Badge Floating Bottom-Right */}
+                    <div className="absolute bottom-4 right-4 z-10 bg-black/60 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full tracking-wide">
+                      ₹{room.price} <span className="text-[9px] font-medium text-white/80">/ {room.priceUnit || 'night'}</span>
+                    </div>
                   </div>
 
-                  {/* Description Panel */}
-                  <div className="p-5 flex-1 flex flex-col">
-                    <div className="flex items-center gap-1 text-[10px] font-black text-violet-600 uppercase tracking-widest mb-1.5">
-                      <span>{room.category?.name || room.category || 'Suite'}</span>
-                      <span>•</span>
-                      <span className="truncate">{room.propertyType || 'Hotel'}</span>
-                    </div>
-
-                    <Link 
-                      to={detailLink} 
-                      className="font-black text-gray-900 text-lg group-hover:text-violet-600 line-clamp-1 transition-colors leading-snug mb-1"
-                    >
+                  {/* Content Panel */}
+                  <div className="pt-4 flex-1 flex flex-col text-left">
+                    <h3 className="font-bold text-gray-900 text-lg group-hover:text-primary-600 transition-colors line-clamp-1">
                       {room.name}
-                    </Link>
-
-                    <div className="flex items-center gap-1 text-xs text-gray-450 font-semibold mb-4">
-                      <MapPin className="w-3.5 h-3.5 text-gray-300" />
-                      <span className="truncate">{[room.city, room.country].filter(Boolean).join(', ')}</span>
-                    </div>
-
-                    {/* Pricing & Reservation CTA */}
-                    <div className="mt-auto border-t border-gray-50 pt-4 flex items-center justify-between">
-                      <div>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-lg font-black text-gray-900">${room.price}</span>
-                          <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">/ night</span>
-                        </div>
+                    </h3>
+                    <p className="text-sm text-gray-400 font-medium mt-0.5 mb-1.5">
+                      {[room.city, room.country].filter(Boolean).join(', ') || 'Serenity Beach, India'}
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star 
+                            key={star} 
+                            className={`w-3.5 h-3.5 ${
+                              star <= Math.round(room.rating || 5) 
+                                ? 'fill-amber-400 text-amber-400' 
+                                : 'text-gray-200'
+                            }`} 
+                          />
+                        ))}
                       </div>
-
-                      <Link 
-                        to={detailLink}
-                        className="bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-md shadow-violet-500/20 active:scale-98 transition-all flex items-center gap-1"
-                      >
-                        <span>View Stay</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
+                      <span className="text-xs text-gray-500 font-bold">
+                        ({room.reviewCount > 0 ? room.reviewCount * 12 + 5 : 429} Visitors)
+                      </span>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

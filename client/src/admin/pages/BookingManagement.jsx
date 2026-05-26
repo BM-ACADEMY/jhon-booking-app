@@ -66,12 +66,12 @@ const BookingManagement = () => {
   
   // Filtering Logic
   const filtered = bookings.filter((b) => {
-    const guestName = b.user?.name || '';
-    const guestEmail = b.user?.email || '';
-    const guestPhone = b.user?.phone || '';
-    const roomName = b.room?.name || '';
-    const mongoId = b._id || '';
-    const razorpayPayId = b.razorpayPaymentId || '';
+    const guestName = b.user?.name ;
+    const guestEmail = b.user?.email ;
+    const guestPhone = b.user?.phone ;
+    const roomName = b.room?.name ;
+    const mongoId = b._id ;
+    const razorpayPayId = b.razorpayPaymentId ;
 
     const matchSearch = 
       guestName.toLowerCase().includes(search.toLowerCase()) || 

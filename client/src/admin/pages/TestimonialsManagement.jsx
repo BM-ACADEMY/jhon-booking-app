@@ -65,7 +65,7 @@ const TestimonialsManagement = () => {
   const openCreate = () => { setEditTarget(null); setForm(EMPTY_FORM); setShowModal(true); };
   const openEdit = (t) => {
     setEditTarget(t);
-    setForm({ name: t.name, designation: t.designation || '', message: t.message, rating: t.rating, color: t.color || AVATAR_COLORS[0] });
+    setForm({ name: t.name, designation: t.designation , message: t.message, rating: t.rating, color: t.color || AVATAR_COLORS[0] });
     setShowModal(true);
   };
 

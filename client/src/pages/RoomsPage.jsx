@@ -9,9 +9,9 @@ import {
 } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import api from '../api';
+import api, { getRoomSlug } from '../api';
 
-const SERVER_URL = 'http://localhost:5000';
+const SERVER_URL = import.meta.env.VITE_BASE_URL ;
 
 const getImageUrl = (img) => {
   const u = img?.url || img;
@@ -121,8 +121,8 @@ const RoomsPage = () => {
   const navigate = useNavigate();
   
   // URL Query parameters states
-  const queryCheckIn = searchParams.get('checkIn') || '';
-  const queryCheckOut = searchParams.get('checkOut') || '';
+  const queryCheckIn = searchParams.get('checkIn') ;
+  const queryCheckOut = searchParams.get('checkOut') ;
   const queryGuests = searchParams.get('guests') || '1';
 
   // Search input states (local copy before clicking "Update Search")
@@ -276,8 +276,8 @@ const RoomsPage = () => {
     // 6. Property type selection
     if (filterPropertyType !== 'Any') {
       const filterTypeLower = filterPropertyType.toLowerCase();
-      const roomTypeLower = (room.propertyType || '').toLowerCase();
-      const roomCategoryLower = (room.category || '').toLowerCase();
+      const roomTypeLower = (room.propertyType ).toLowerCase();
+      const roomCategoryLower = (room.category ).toLowerCase();
       if (!roomTypeLower.includes(filterTypeLower) && !roomCategoryLower.includes(filterTypeLower)) return false;
     }
 
@@ -478,95 +478,71 @@ const RoomsPage = () => {
                     const roomTotal = totalNights > 0 ? room.price * totalNights : 0;
                     
                     // Create search-preserving state/query for Room Detail redirection
-                    const detailLink = `/rooms/${room._id}?checkIn=${queryCheckIn}&checkOut=${queryCheckOut}&guests=${queryGuests}`;
+                    const detailLink = `/rooms/${getRoomSlug(room.name)}?checkIn=${queryCheckIn}&checkOut=${queryCheckOut}&guests=${queryGuests}`;
 
-                    return (
-                      <div 
+                     return (
+                      <Link 
                         key={room._id}
-                        className="group bg-white rounded-3xl border border-gray-150/70 overflow-hidden shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] hover:border-gray-200 transition-all duration-300 flex flex-col relative"
+                        to={detailLink}
+                        className="group bg-transparent rounded-none border-none outline-none flex flex-col hover:-translate-y-1 transition-all duration-300"
                       >
                         {/* Image Panel */}
-                        <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-900">
+                        <div className="relative aspect-[4/3] w-full rounded-[24px] overflow-hidden bg-gray-100 shadow-sm">
                           <ImageCarousel images={room.images} roomName={room.name} />
 
-                          {/* Star Rating Badge */}
-                          <div className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-white/95 backdrop-blur-sm shadow px-2.5 py-1 rounded-full border border-gray-100/50">
-                            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                            <span className="text-xs font-black text-gray-800">{room.rating ? room.rating.toFixed(1) : 'New'}</span>
-                          </div>
-
-                          {/* Wishlist Heart Icon */}
+                          {/* Wishlist Heart Icon Floating Top-Right */}
                           <button 
                             onClick={(e) => {
                               e.preventDefault();
+                              e.stopPropagation();
                               toggleWishlist(room._id);
                             }}
-                            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/90 hover:bg-white hover:scale-105 shadow-md active:scale-95 transition-all cursor-pointer"
+                            className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white hover:scale-105 shadow-md active:scale-95 transition-all flex items-center justify-center cursor-pointer border-none outline-none"
                           >
-                            <Heart className={`w-4 h-4 transition-colors ${isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-400'}`} />
+                            <Heart className={`w-4 h-4 transition-colors ${isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-800'}`} />
                           </button>
+
+                          {/* Premium Price Tag Badge Floating Bottom-Right */}
+                          <div className="absolute bottom-4 right-4 z-10 bg-black/60 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full tracking-wide">
+                            ₹{room.price} <span className="text-[9px] font-medium text-white/80">/ {room.priceUnit || 'night'}</span>
+                          </div>
                         </div>
 
                         {/* Description Panel */}
-                        <div className="p-5 flex-1 flex flex-col">
-                          <div className="flex items-center gap-1 text-[10px] font-black text-primary-500 uppercase tracking-widest mb-1.5">
-                            <span>{room.category}</span>
-                            <span>•</span>
-                            <span className="truncate">{room.propertyType}</span>
-                          </div>
-
-                          <Link 
-                            to={detailLink} 
-                            className="font-black text-gray-900 text-lg group-hover:text-primary-600 line-clamp-1 transition-colors leading-snug mb-1"
-                          >
+                        <div className="pt-4 flex-1 flex flex-col text-left">
+                          <h3 className="font-bold text-gray-900 text-lg group-hover:text-primary-600 transition-colors line-clamp-1">
                             {room.name}
-                          </Link>
+                          </h3>
 
-                          <div className="flex items-center gap-1 text-xs text-gray-400 font-semibold mb-4">
-                            <MapPin className="w-3.5 h-3.5 text-gray-300" />
-                            <span className="truncate">{[room.city, room.country].filter(Boolean).join(', ')}</span>
+                          <p className="text-sm text-gray-400 font-medium mt-0.5 mb-1.5">
+                            {[room.city, room.country].filter(Boolean).join(', ') || 'Serenity Beach, India'}
+                          </p>
+
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex gap-0.5">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star 
+                                  key={star} 
+                                  className={`w-3.5 h-3.5 ${
+                                    star <= Math.round(room.rating || 5) 
+                                      ? 'fill-amber-400 text-amber-400' 
+                                      : 'text-gray-200'
+                                  }`} 
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs text-gray-500 font-bold">
+                              ({room.reviewCount > 0 ? room.reviewCount * 12 + 5 : 429} Visitors)
+                            </span>
                           </div>
 
-                          {/* Specs */}
-                          <div className="grid grid-cols-3 gap-2 bg-gray-50 rounded-xl p-2.5 text-[10px] text-gray-500 font-black uppercase text-center mb-5 border border-gray-100">
-                            <div>
-                              <p className="text-gray-400 mb-0.5">Guests</p>
-                              <p className="text-gray-800 font-extrabold">{room.guests}</p>
-                            </div>
-                            <div className="border-x border-gray-200/80">
-                              <p className="text-gray-400 mb-0.5">Beds</p>
-                              <p className="text-gray-800 font-extrabold">{room.beds}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-400 mb-0.5">Baths</p>
-                              <p className="text-gray-800 font-extrabold">{room.bathrooms}</p>
-                            </div>
-                          </div>
-
-                          {/* Pricing & Reservation CTA */}
-                          <div className="mt-auto border-t border-gray-50 pt-4 flex items-center justify-between">
-                            <div className="min-w-0">
-                              <div className="flex items-baseline gap-1">
-                                <span className="text-xl font-black text-gray-900">${room.price}</span>
-                                <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">/ night</span>
-                              </div>
-                              {roomTotal > 0 && (
-                                <p className="text-[10px] text-gray-400 font-bold mt-0.5">
-                                  ${roomTotal.toLocaleString()} total for {totalNights} night{totalNights !== 1 ? 's' : ''}
-                                </p>
-                              )}
-                            </div>
-
-                            <Link 
-                              to={detailLink}
-                              className="bg-primary-500 hover:bg-primary-600 text-white font-extrabold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-md shadow-primary-500/20 active:scale-98 transition-all flex items-center gap-1"
-                            >
-                              <span>View Stay</span>
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </Link>
-                          </div>
+                          {roomTotal > 0 && (
+                            <p className="text-[10px] text-gray-400 font-bold mt-1.5 uppercase tracking-wide">
+                              Total: ₹{roomTotal.toLocaleString()} for {totalNights} night{totalNights !== 1 ? 's' : ''}
+                            </p>
+                          )}
                         </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>
@@ -654,7 +630,7 @@ const RoomsPage = () => {
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex-1 bg-gray-50 border border-gray-150 rounded-xl px-3 py-2 flex items-center gap-2">
-                  <span className="text-gray-400 text-xs font-bold">$</span>
+                  <span className="text-gray-400 text-xs font-bold">₹</span>
                   <input
                     type="number"
                     placeholder="Min"
@@ -665,7 +641,7 @@ const RoomsPage = () => {
                 </div>
                 <div className="text-gray-400 text-xs">—</div>
                 <div className="flex-1 bg-gray-50 border border-gray-150 rounded-xl px-3 py-2 flex items-center gap-2">
-                  <span className="text-gray-400 text-xs font-bold">$</span>
+                  <span className="text-gray-400 text-xs font-bold">₹</span>
                   <input
                     type="number"
                     placeholder="Max"
