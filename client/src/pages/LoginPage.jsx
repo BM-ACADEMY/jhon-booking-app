@@ -35,8 +35,16 @@ const LoginPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
+      
+      const contentType = res.headers.get("content-type");
+      let data;
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        data = await res.json();
+      } else {
+        throw new Error("Server returned an invalid response. Is the backend URL configured correctly?");
+      }
+
+      if (!res.ok) throw new Error(data?.message || "Login failed");
       if (data.user.role === 'admin') throw new Error("Please use the admin login page");
       login(data.user, data.token);
       // navigation handled by useEffect after user state updates
