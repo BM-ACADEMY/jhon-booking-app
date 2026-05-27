@@ -166,7 +166,7 @@ const Footer = () => {
                 <Hotel className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-white font-bold text-base tracking-wide uppercase">Jhon Booking</p>
+                <p className="text-white font-bold text-base tracking-wide uppercase">JThe Balified Villa</p>
                 <p className="text-slate-500 text-xs tracking-wider">Luxury Hotel & Resort</p>
               </div>
             </Link>
@@ -277,7 +277,7 @@ const Footer = () => {
         {/* Added mb-6 to push this row beautifully above the large text */}
         <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-slate-500 mb-6">
           <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
-            <p>© {new Date().getFullYear()} Jhon Booking. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} The Balified Villa. All rights reserved.</p>
             <span className="hidden sm:inline text-slate-800">|</span>
             <div className="flex gap-4">
               <a href="#" className="hover:text-slate-300 transition-colors duration-300">Privacy Policy</a>
@@ -285,7 +285,7 @@ const Footer = () => {
             </div>
 
             {/* Payment Methods */}
-            <div className="flex items-center gap-3 text-[11px] text-gray-400 tracking-wider ml-auto">
+            <div className="flex items-center gap-3 text-[11px] text-gray-400 tracking-wider">
               <div className="flex items-center gap-4">
                 <img src={upiIcon} alt="Accepted Payment Method: UPI" className="h-5 w-auto object-contain opacity-90" />
                 <img src={gpayIcon} alt="Accepted Payment Method: GPay" className="h-5 w-auto object-contain opacity-90" />
