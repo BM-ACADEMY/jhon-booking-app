@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   ChevronDown,
   ChevronRight,
+  Heart,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
@@ -190,12 +191,35 @@ const Navbar = () => {
                         </p>
                       </div>
                       <div className="py-2 px-2 space-y-1">
-                        <Link
-                          to="/admin"
-                          className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all outline-none"
-                        >
-                          <User className="w-4 h-4" /> Dashboard
-                        </Link>
+                        {user.role === 'admin' ? (
+                          <Link
+                            to="/admin"
+                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all outline-none"
+                          >
+                            <User className="w-4 h-4" /> Dashboard
+                          </Link>
+                        ) : (
+                          <>
+                            <Link
+                              to="/profile"
+                              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all outline-none"
+                            >
+                              <User className="w-4 h-4" /> Profile
+                            </Link>
+                            <Link
+                              to="/bookings"
+                              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all outline-none"
+                            >
+                              <CalendarCheck className="w-4 h-4" /> My Bookings
+                            </Link>
+                            <Link
+                              to="/wishlist"
+                              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all outline-none"
+                            >
+                              <Heart className="w-4 h-4" /> Wishlist
+                            </Link>
+                          </>
+                        )}
                       </div>
                       <div className="border-t border-gray-100/80 pt-2 px-2 pb-2">
                         <button
@@ -325,13 +349,39 @@ const Navbar = () => {
                     </div>
 
                     <div className="space-y-4 px-1">
-                      <Link
-                        to="/dashboard"
-                        className="flex items-center gap-3 text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors outline-none"
-                      >
-                        <User className="w-[18px] h-[18px] text-gray-400" />{" "}
-                        Dashboard
-                      </Link>
+                      {user.role === 'admin' ? (
+                        <Link
+                          to="/admin"
+                          className="flex items-center gap-3 text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors outline-none"
+                        >
+                          <User className="w-[18px] h-[18px] text-gray-400" />{" "}
+                          Dashboard
+                        </Link>
+                      ) : (
+                        <>
+                          <Link
+                            to="/profile"
+                            className="flex items-center gap-3 text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors outline-none"
+                          >
+                            <User className="w-[18px] h-[18px] text-gray-400" />{" "}
+                            Profile
+                          </Link>
+                          <Link
+                            to="/bookings"
+                            className="flex items-center gap-3 text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors outline-none"
+                          >
+                            <CalendarCheck className="w-[18px] h-[18px] text-gray-400" />{" "}
+                            My Bookings
+                          </Link>
+                          <Link
+                            to="/wishlist"
+                            className="flex items-center gap-3 text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors outline-none"
+                          >
+                            <Heart className="w-[18px] h-[18px] text-gray-400" />{" "}
+                            Wishlist
+                          </Link>
+                        </>
+                      )}
                       <button
                         onClick={handleLogout}
                         className="flex items-center gap-3 w-full text-[14px] font-medium text-red-500 hover:text-red-600 transition-colors mt-6 outline-none"
