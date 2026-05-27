@@ -76,8 +76,8 @@ const RoomDetailPage = () => {
 
   const images = room.images?.length > 0 ? room.images : [];
   const nights = checkIn && checkOut
-      ? Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000))
-      : 0;
+    ? Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000))
+    : 0;
   const total = nights * (room.price || 0);
 
   const handleBooking = async () => {
@@ -93,13 +93,13 @@ const RoomDetailPage = () => {
     }
 
     if (nights < 0) {
-        toast.error('Invalid date range');
-        return;
-      }
+      toast.error('Invalid date range');
+      return;
+    }
 
     try {
       setBookingLoading(true);
-      
+
       // 1. Create Razorpay Order
       const orderRes = await api.post('/bookings/razorpay-order', {
         amount: total,
@@ -116,7 +116,7 @@ const RoomDetailPage = () => {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_HERE', // Should use env
         amount: order.amount,
         currency: order.currency,
-        name: 'Jhon Booking',
+        name: 'The Balified Villa',
         description: `Booking for ${room.name}`,
         order_id: order.id,
         handler: async (response) => {

@@ -163,19 +163,15 @@ const TestimonialsSection = () => {
   const { col1, col2, col3 } = getColumns();
 
   return (
-    <section className="relative py-24 bg-blue-50 text-slate-900 overflow-hidden">
+    <section className="relative py-24  text-slate-900 overflow-hidden">
       <div className="container mx-auto px-4">
         {/* Header Block */}
         <div className="flex flex-col items-center justify-center text-center max-w-2xl mx-auto mb-16">
-          <div className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">
-            Wall of Love
-          </div>
-          <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-4">
-            What our creators are saying
+          <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-slate-900 mb-4">
+            What Our Guests Are Saying
           </h2>
           <p className="text-slate-600 text-sm md:text-lg">
-            From seamless performance mechanics to aesthetic structural spacing,
-            discover why digital engineers value our foundational toolkit.
+            From comfortable rooms to peaceful stays, guests love our hotel for its hospitality, convenience, and relaxing experience.
           </p>
         </div>
 

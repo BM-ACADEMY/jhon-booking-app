@@ -64,7 +64,7 @@ const AboutPage = () => {
             </h2>
             <div className="space-y-4 text-gray-600 leading-relaxed">
               <p>
-                Founded on the principles of elegance and exceptional service, Jhon Booking has grown from a single boutique hotel to a world-renowned destination for luxury travelers.
+                Founded on the principles of elegance and exceptional service, The Balified Villa has grown from a single boutique hotel to a world-renowned destination for luxury travelers.
               </p>
               <p>
                 We believe that every stay should be more than just a room—it should be an experience. Our philosophy blends traditional hospitality with modern innovation, ensuring that every guest feels truly at home while enjoying the finest luxuries.
@@ -134,7 +134,7 @@ const AboutPage = () => {
       <section className="py-20 bg-primary-900 text-white overflow-hidden relative">
         <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
-        
+
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
           <Hotel className="w-12 h-12 text-primary-400 mx-auto mb-8" />
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Our Mission</h2>

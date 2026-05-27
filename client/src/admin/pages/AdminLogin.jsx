@@ -41,7 +41,7 @@ const AdminLogin = () => {
           <div className="w-16 h-16 rounded-2xl bg-primary-500 flex items-center justify-center mx-auto mb-4 shadow-xl">
             <Hotel className="w-9 h-9 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Jhon Booking</h1>
+          <h1 className="text-2xl font-bold text-white">The Balified Villa</h1>
           <p className="text-gray-400 text-sm mt-1">Admin Panel</p>
         </div>
 

@@ -1,7 +1,7 @@
 {
   "name": "jhon-booking-server",
   "version": "1.0.0",
-  "description": "Jhon Booking App - Backend API",
+  "description": "The Balified Villa App - Backend API",
   "main": "index.js",
   "type": "module",
   "scripts": {

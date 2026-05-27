@@ -50,7 +50,7 @@ const LoginPage = () => {
           </div>
           <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
             Welcome Back to<br />
-            <span className="text-primary-400">Jhon Booking</span>
+            <span className="text-primary-400">The Balified Villa</span>
           </h2>
           <p className="text-gray-400 leading-relaxed mb-10">
             Sign in to manage your reservations, explore exclusive member offers, and enjoy a seamless luxury experience.
@@ -79,7 +79,7 @@ const LoginPage = () => {
           <p className="text-gray-300 text-sm italic leading-relaxed">
             "The most memorable stays begin with a single click. We're glad you're back."
           </p>
-          <p className="text-primary-400 text-xs font-semibold mt-2">— Jhon Booking Team</p>
+          <p className="text-primary-400 text-xs font-semibold mt-2">— The Balified Villa Team</p>
         </div>
       </div>
 
@@ -92,7 +92,7 @@ const LoginPage = () => {
               <Hotel className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-sm">Jhon Booking</p>
+              <p className="font-bold text-gray-900 text-sm">The Balified Villa</p>
               <p className="text-gray-400 text-xs">Luxury Hotel</p>
             </div>
           </div>

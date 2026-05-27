@@ -63,10 +63,9 @@ app.use('/api/settings', settingRoutes);
 
 // Health Check API
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Jhon Booking API running securely' });
+  res.json({ status: 'OK', message: 'The Balified Villa API running securely' });
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-

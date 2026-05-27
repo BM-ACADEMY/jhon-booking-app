@@ -5,22 +5,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import api from '../api';
 import { UpiLogo, GPayLogo, RuPayLogo, VisaLogo, MasterCardLogo } from './PaymentLogos';
+import upiIcon from '../assets/icons/upi.svg?url';
+import gpayIcon from '../assets/icons/gpay.svg?url';
+import ruPayIcon from '../assets/icons/payment.svg?url';
+import visaIcon from '../assets/icons/visa.svg?url';
+import mastercardIcon from '../assets/icons/mastercard.svg?url';
 
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
   return (
-    <div 
-      className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 overflow-y-auto px-4" 
+    <div
+      className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 overflow-y-auto px-4"
       onClick={onClose}
     >
-      <div 
-        className="relative bg-white rounded-2xl p-8 max-w-[400px] w-full mx-4 shadow-2xl" 
+      <div
+        className="relative bg-white rounded-2xl p-8 max-w-[400px] w-full mx-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
-        <button 
-          onClick={onClose} 
-          className="absolute top-6 right-6 text-gray-500 hover:text-gray-900 border border-gray-300 hover:border-gray-500 rounded-full p-1 transition-colors cursor-pointer" 
+        <button
+          onClick={onClose}
+          className="absolute top-6 right-6 text-gray-500 hover:text-gray-900 border border-gray-300 hover:border-gray-500 rounded-full p-1 transition-colors cursor-pointer"
           aria-label="Close"
         >
           <X className="w-5 h-5" />
@@ -36,8 +41,8 @@ const StarRow = ({ rating, interactive = false, onRate, variant = 'default' }) =
     <div className={`flex ${isForm ? 'gap-2 justify-center' : 'gap-1'}`}>
       {[1, 2, 3, 4, 5].map((s) => {
         const isFilled = s <= rating;
-        
-        let starClass = isForm 
+
+        let starClass = isForm
           ? `w-8 h-8 transition-all ${isFilled ? 'fill-[#1a73e8] text-[#1a73e8]' : 'text-[#1a73e8] fill-transparent'} ${interactive ? 'cursor-pointer hover:scale-110' : ''}`
           : `w-4 h-4 transition-colors ${isFilled ? 'fill-amber-400 text-amber-400' : 'text-gray-200'} ${interactive ? 'cursor-pointer hover:text-amber-500/80' : ''}`;
 
@@ -140,92 +145,17 @@ const Footer = () => {
     { Icon: Linkedin, href: settings.linkedin || '#', name: 'LinkedIn' },
   ];
 
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    if (!email) return;
-    // Mock animation success state
-    setSubscribed(true);
-    setEmail('');
-    setTimeout(() => {
-      setSubscribed(false);
-    }, 4000);
-  };
-
   return (
     <footer className="relative bg-gradient-to-b from-gray-900 via-gray-950 to-black text-gray-400 overflow-hidden">
       {/* Decorative top ambient light line */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-600/30 to-transparent"></div>
-      
+
       {/* Visual luxury accent glows */}
       <div className="absolute -left-36 -top-36 w-72 h-72 rounded-full bg-slate-800/10 blur-3xl pointer-events-none"></div>
       <div className="absolute -right-36 -bottom-36 w-72 h-72 rounded-full bg-slate-800/10 blur-3xl pointer-events-none"></div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8 relative z-10">
-        
-        {/* Top Section: Newsletter Block */}
-        <div className="pb-12 border-b border-white/5 mb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-6">
-              <div className="flex items-center gap-2 text-white font-semibold text-sm mb-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse"></span>
-                <span className="tracking-widest uppercase text-xs text-slate-300">Exclusive Newsletter</span>
-              </div>
-              <h3 className="text-2xl font-bold text-white tracking-tight mb-2">
-                Subscribe to our travel & luxury updates
-              </h3>
-              <p className="text-sm text-slate-400 max-w-md">
-                Get the latest updates on luxury getaways, exclusive promotions, and travel guides straight to your inbox.
-              </p>
-            </div>
-            
-            <div className="lg:col-span-6">
-              <form onSubmit={handleSubscribe} className="relative flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-grow">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
-                    required
-                    disabled={subscribed}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30 transition-all duration-300 text-sm disabled:opacity-50"
-                  />
-                  <Mail className="absolute right-4 top-3.5 w-4 h-4 text-slate-500" />
-                </div>
-                
-                <button
-                  type="submit"
-                  disabled={subscribed}
-                  className="px-6 py-3 bg-white text-gray-950 font-medium rounded-xl text-sm hover:bg-slate-200 transition-all duration-300 shadow-lg shadow-white/5 active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:bg-emerald-500 disabled:text-white disabled:scale-100 min-w-[130px]"
-                >
-                  <AnimatePresence mode="wait">
-                    {subscribed ? (
-                      <motion.span 
-                        key="success"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="flex items-center gap-1.5"
-                      >
-                        Subscribed!
-                      </motion.span>
-                    ) : (
-                      <motion.span 
-                        key="idle"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="flex items-center gap-1.5"
-                      >
-                        Subscribe <ArrowRight className="w-4 h-4" />
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
+      {/* Main Container: Added padding bottom to make enough space for the big title at the absolute end */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-36 relative z-10">
 
         {/* Middle Section: Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 mb-16">
@@ -270,8 +200,7 @@ const Footer = () => {
                 { label: 'Home', to: '/' },
                 { label: 'Our Rooms', to: '/rooms' },
                 { label: 'About Us', to: '/about' },
-                { label: 'Contact', to: '/contact' },
-                { label: 'Admin Panel', to: '/admin' },
+                { label: 'Contact', to: '/contact' }
               ].map(({ label, to }) => (
                 <li key={label}>
                   <Link to={to} className="group text-sm hover:text-white transition-colors duration-300 flex items-center gap-1.5">
@@ -328,7 +257,7 @@ const Footer = () => {
                 </a>
               </li>
             </ul>
-            
+
             {/* Check in Check out glass box */}
             <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center gap-3.5">
               <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-white">
@@ -345,41 +274,40 @@ const Footer = () => {
         </div>
 
         {/* Bottom Section: Copyright & Legal & Payments */}
-        <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-slate-500">
+        {/* Added mb-6 to push this row beautifully above the large text */}
+        <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-slate-500 mb-6">
           <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
             <p>© {new Date().getFullYear()} Jhon Booking. All rights reserved.</p>
             <span className="hidden sm:inline text-slate-800">|</span>
             <div className="flex gap-4">
               <a href="#" className="hover:text-slate-300 transition-colors duration-300">Privacy Policy</a>
               <a href="#" className="hover:text-slate-300 transition-colors duration-300">Terms of Service</a>
-              <a href="#" className="hover:text-slate-300 transition-colors duration-300">Cookie Policy</a>
+            </div>
+
+            {/* Payment Methods */}
+            <div className="flex items-center gap-3 text-[11px] text-gray-400 tracking-wider ml-auto">
+              <div className="flex items-center gap-4">
+                <img src={upiIcon} alt="Accepted Payment Method: UPI" className="h-5 w-auto object-contain opacity-90" />
+                <img src={gpayIcon} alt="Accepted Payment Method: GPay" className="h-5 w-auto object-contain opacity-90" />
+                <img src={ruPayIcon} alt="Accepted Payment Method: RuPay" className="h-5 w-auto object-contain opacity-90" />
+                <img src={visaIcon} alt="Accepted Payment Method: Visa" className="h-5 w-auto object-contain opacity-90" />
+                <img src={mastercardIcon} alt="Accepted Payment Method: Mastercard" className="h-5 w-auto object-contain opacity-90" />
+              </div>
             </div>
           </div>
-          
-          {/* Payment Methods */}
-          <div className="flex items-center gap-4.5 py-1 px-4 bg-white/[0.01] border border-white/[0.03] rounded-2xl flex-wrap justify-center">
-            <UpiLogo />
-            <span className="w-px h-4 bg-white/10 hidden sm:inline-block"></span>
-            <GPayLogo />
-            <span className="w-px h-4 bg-white/10 hidden sm:inline-block"></span>
-            <RuPayLogo />
-            <span className="w-px h-4 bg-white/10 hidden sm:inline-block"></span>
-            <VisaLogo />
-            <span className="w-px h-4 bg-white/10 hidden sm:inline-block"></span>
-            <MasterCardLogo />
-          </div>
+
         </div>
 
       </div>
 
-      {/* Giant Background Outline Text */}
+      {/* Giant Background Outline Text (Moved underneath correctly via bottom spacing) */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full text-center pointer-events-none select-none z-0">
-        <span 
+        <span
           className="text-[7vw] md:text-[6vw] font-black uppercase tracking-[0.06em] text-transparent leading-none whitespace-nowrap block"
-          style={{ 
-            WebkitTextStroke: '1.5px rgba(255, 255, 255, 0.25)',
-            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 10%, rgba(0, 0, 0, 0) 100%)',
-            maskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 10%, rgba(0, 0, 0, 0) 100%)'
+          style={{
+            WebkitTextStroke: '1.5px rgba(255, 255, 255, 0.15)', // Lightened the text stroke for enhanced readability
+            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 100%)',
+            maskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 100%)'
           }}
         >
           The Balified Villa
@@ -408,13 +336,13 @@ const Footer = () => {
 
             <div className="pt-2">
               <label className="block text-sm font-semibold text-gray-800 mb-2">What impressed you the most?</label>
-              <input 
-                type="text" 
-                value={form.name} 
-                onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))} 
-                placeholder="Review Title (Your Name)" 
-                className="w-full bg-transparent border-0 border-b border-gray-300 px-0 py-2 text-sm text-gray-900 outline-none focus:ring-0 focus:border-blue-600 transition-colors placeholder:text-gray-300" 
-                required 
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+                placeholder="Review Title (Your Name)"
+                className="w-full bg-transparent border-0 border-b border-gray-300 px-0 py-2 text-sm text-gray-900 outline-none focus:ring-0 focus:border-blue-600 transition-colors placeholder:text-gray-300"
+                required
               />
             </div>
 
@@ -425,20 +353,20 @@ const Footer = () => {
                   {form.message.length} / 160
                 </span>
               </div>
-              <textarea 
-                value={form.message} 
-                onChange={(e) => setForm(p => ({ ...p, message: e.target.value }))} 
-                rows={3} 
+              <textarea
+                value={form.message}
+                onChange={(e) => setForm(p => ({ ...p, message: e.target.value }))}
+                rows={3}
                 maxLength={160}
                 placeholder="Describe your experience (max 160 characters)..."
-                className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none transition-all placeholder:text-gray-300" 
-                required 
+                className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none transition-all placeholder:text-gray-300"
+                required
               />
             </div>
 
-            <button 
-              type="submit" 
-              disabled={submitting} 
+            <button
+              type="submit"
+              disabled={submitting}
               className="w-full flex items-center justify-center gap-2 px-8 py-3.5 bg-[#1a73e8] hover:bg-[#155db1] text-white text-sm font-bold rounded-full transition-all disabled:opacity-50 cursor-pointer border-none"
             >
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
