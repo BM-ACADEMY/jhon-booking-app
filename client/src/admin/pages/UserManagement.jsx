@@ -50,7 +50,8 @@ const UserManagement = () => {
     }
     if (name === 'phone') {
       const phoneRegex = /^\d{10}$/;
-      if (value && !phoneRegex.test(value)) error = 'Phone must be 10 digits';
+      if (!value) error = 'Phone is required';
+      else if (!phoneRegex.test(value)) error = 'Phone must be 10 digits';
     }
     if (name === 'name' && !value) error = 'Name is required';
     if (name === 'password' && !editingUser && (!value || value.length < 6)) error = 'Password must be at least 6 characters';
@@ -75,7 +76,7 @@ const UserManagement = () => {
         name: user.name,
         email: user.email,
         password: '', 
-        phone: user.phone || '',
+        phone: user.phone ,
         role: user.role,
         isActive: user.isActive
       });
@@ -375,11 +376,12 @@ const UserManagement = () => {
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Phone Number</label>
                   <input
-                    type="number"
+                    type="text"
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
                     maxLength="10"
+                    required
                     className={`w-full px-3 py-2.5 bg-gray-50 border rounded-xl text-sm outline-none transition-all ${errors.phone ? 'border-red-400 focus:ring-4 focus:ring-red-100' : 'border-gray-200 focus:ring-4 focus:ring-primary-100 focus:border-primary-500'}`}
                     placeholder="1234567890"
                   />

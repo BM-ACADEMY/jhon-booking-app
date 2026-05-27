@@ -65,13 +65,17 @@ const TestimonialsManagement = () => {
   const openCreate = () => { setEditTarget(null); setForm(EMPTY_FORM); setShowModal(true); };
   const openEdit = (t) => {
     setEditTarget(t);
-    setForm({ name: t.name, designation: t.designation || '', message: t.message, rating: t.rating, color: t.color || AVATAR_COLORS[0] });
+    setForm({ name: t.name, designation: t.designation , message: t.message, rating: t.rating, color: t.color || AVATAR_COLORS[0] });
     setShowModal(true);
   };
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.message.trim()) {
       toast.error('Name and message are required.');
+      return;
+    }
+    if (form.message.length > 160) {
+      toast.error('Message must be 160 characters or less.');
       return;
     }
     try {
@@ -379,12 +383,18 @@ const TestimonialsManagement = () => {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Review *</label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Review *</label>
+                <span className={`text-[10px] font-bold ${form.message.length > 150 ? 'text-red-500' : 'text-gray-400'}`}>
+                  {form.message.length} / 160
+                </span>
+              </div>
               <textarea
                 value={form.message}
                 onChange={(e) => setForm(p => ({ ...p, message: e.target.value }))}
                 rows={4}
-                placeholder="Guest review text..."
+                maxLength={160}
+                placeholder="Guest review text (max 160 characters)..."
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary-400 resize-none"
               />
             </div>

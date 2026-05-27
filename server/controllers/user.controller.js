@@ -12,6 +12,7 @@ export const getAllUsers = async (req, res) => {
 export const createUser = async (req, res) => {
   try {
     const { name, email, password, role, phone } = req.body;
+    if (!phone) return res.status(400).json({ message: 'Phone number is required' });
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'User already exists' });
 

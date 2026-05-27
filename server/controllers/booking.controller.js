@@ -1,4 +1,6 @@
 import Booking from '../models/Booking.js';
+import Room from '../models/Room.js';
+import User from '../models/User.js';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
@@ -10,6 +12,41 @@ const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || 'dummy_id',
   key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_secret',
 });
+
+// Helper to calculate dates between check-in and check-out
+const getDatesInRange = (startDate, endDate) => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const date = new Date(start.getTime());
+  const dates = [];
+  while (date <= end) {
+    dates.push(new Date(date.getTime()));
+    date.setDate(date.getDate() + 1);
+  }
+  return dates;
+};
+
+// Helper to verify if room is available
+const checkRoomAvailability = async (roomId, checkIn, checkOut) => {
+  if (!roomId || !checkIn || !checkOut) return true; // skip validation if params missing
+  const room = await Room.findById(roomId);
+  if (!room) return false;
+  
+  if (!room.unavailableDates || room.unavailableDates.length === 0) return true;
+  
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+  const requestedDates = getDatesInRange(start, end);
+  
+  const hasOverlap = requestedDates.some(reqDate => {
+    return room.unavailableDates.some(unDate => {
+      const uDate = new Date(unDate);
+      return uDate.toDateString() === reqDate.toDateString();
+    });
+  });
+  
+  return !hasOverlap;
+};
 
 export const getAllBookings = async (req, res) => {
   try {
@@ -36,8 +73,16 @@ export const getMyBookings = async (req, res) => {
 
 export const createRazorpayOrder = async (req, res) => {
   try {
-    const { amount, currency = 'INR' } = req.body;
+    const { amount, currency = 'INR', roomId, checkIn, checkOut } = req.body;
     
+    // Check room availability first
+    if (roomId && checkIn && checkOut) {
+      const isAvailable = await checkRoomAvailability(roomId, checkIn, checkOut);
+      if (!isAvailable) {
+        return res.status(400).json({ message: 'Room is already booked for the selected dates!' });
+      }
+    }
+
     const options = {
       amount: amount * 100, // amount in the smallest currency unit (paise)
       currency,
@@ -68,6 +113,12 @@ export const verifyRazorpayPayment = async (req, res) => {
       return res.status(400).json({ message: 'Transaction not legitimate!' });
     }
 
+    // Double check availability before creating booking
+    const isAvailable = await checkRoomAvailability(bookingData.room, bookingData.checkIn, bookingData.checkOut);
+    if (!isAvailable) {
+      return res.status(400).json({ message: 'Room was booked by someone else during checkout!' });
+    }
+
     // Payment is verified, create the booking
     const booking = await Booking.create({
       ...bookingData,
@@ -77,6 +128,12 @@ export const verifyRazorpayPayment = async (req, res) => {
       razorpaySignature: razorpay_signature,
       paymentStatus: 'paid',
       status: 'confirmed'
+    });
+
+    // Block the booked dates in the Room database
+    const bookedDates = getDatesInRange(bookingData.checkIn, bookingData.checkOut);
+    await Room.findByIdAndUpdate(bookingData.room, {
+      $addToSet: { unavailableDates: { $each: bookedDates } }
     });
 
     res.status(201).json({ 
@@ -90,7 +147,22 @@ export const verifyRazorpayPayment = async (req, res) => {
 
 export const createBooking = async (req, res) => {
   try {
+    const { room, checkIn, checkOut } = req.body;
+    
+    // Check availability
+    const isAvailable = await checkRoomAvailability(room, checkIn, checkOut);
+    if (!isAvailable) {
+      return res.status(400).json({ message: 'Room is not available for the selected dates!' });
+    }
+
     const booking = await Booking.create({ ...req.body, user: req.user._id });
+
+    // Block dates
+    const bookedDates = getDatesInRange(checkIn, checkOut);
+    await Room.findByIdAndUpdate(room, {
+      $addToSet: { unavailableDates: { $each: bookedDates } }
+    });
+
     res.status(201).json(booking);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -106,6 +178,89 @@ export const updateBookingStatus = async (req, res) => {
     );
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
     res.json(booking);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getDashboardStats = async (req, res) => {
+  try {
+    const totalBookings = await Booking.countDocuments();
+    
+    // Sum totalAmount of all bookings except cancelled ones
+    const revenueResult = await Booking.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
+    const totalRevenue = revenueResult[0]?.total || 0;
+
+    const totalRooms = await Room.countDocuments();
+    // Total guests from bookings (sum of guests field in non-cancelled bookings)
+    const guestsAgg = await Booking.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
+      { $group: { _id: null, total: { $sum: '$guests' } } }
+    ]);
+    const totalGuests = guestsAgg[0]?.total || 0;
+
+    // Calculate Occupancy today
+    // Use UTC start of day for accurate occupancy calculation across timezones
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+
+    const activeBookings = await Booking.find({
+      status: { $in: ['confirmed', 'completed'] },
+      checkIn: { $lte: today },
+      checkOut: { $gte: today }
+    });
+    
+    const occupiedRoomIds = [...new Set(activeBookings.map(b => b.room.toString()))];
+    const occupiedRoomsCount = occupiedRoomIds.length;
+    const occupancyRate = totalRooms > 0 ? Math.round((occupiedRoomsCount / totalRooms) * 100) : 0;
+
+    const pendingBookings = await Booking.countDocuments({ status: 'pending' });
+
+    // Check-ins / check-outs today
+    const todayCheckIns = await Booking.countDocuments({
+      checkIn: { $gte: today, $lt: tomorrow },
+      status: { $ne: 'cancelled' }
+    });
+    
+    const todayCheckOuts = await Booking.countDocuments({
+      checkOut: { $gte: today, $lt: tomorrow },
+      status: { $ne: 'cancelled' }
+    });
+
+    // Recent bookings (last 5)
+    const recentBookings = await Booking.find()
+      .populate('user', 'name')
+      .populate('room', 'name')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    const formattedRecent = recentBookings.map(b => ({
+      id: b._id,
+      guest: b.user?.name || 'Deleted User',
+      room: b.room?.name || 'Deleted Room',
+      checkIn: b.checkIn ? new Date(b.checkIn).toISOString().split('T')[0] : 'N/A',
+      checkOut: b.checkOut ? new Date(b.checkOut).toISOString().split('T')[0] : 'N/A',
+      amount: `$${b.totalAmount}`,
+      status: b.status || 'pending'
+    }));
+
+    res.json({
+      totalBookings,
+      totalRevenue,
+      totalRooms,
+      totalGuests,
+      occupancyRate,
+      occupiedRoomsCount,
+      pendingBookings,
+      todayCheckIns,
+      todayCheckOuts,
+      recentBookings: formattedRecent
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

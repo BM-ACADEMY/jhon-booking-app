@@ -42,7 +42,7 @@ const LoginPage = () => {
       {/* Left panel — decorative */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-primary-950 flex-col items-center justify-center p-12">
         <div className="absolute inset-0 opacity-30"
-          style={{ backgroundImage: 'radial-gradient(circle at 30% 60%, #d4891f 0%, transparent 50%)' }}
+          style={{ backgroundImage: 'radial-gradient(circle at 30% 60%, #7c3aed 0%, transparent 50%)' }}
         />
         <div className="relative z-10 text-center max-w-md">
           <div className="w-16 h-16 rounded-2xl bg-primary-500 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-primary-500/30">
@@ -50,7 +50,7 @@ const LoginPage = () => {
           </div>
           <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
             Welcome Back to<br />
-            <span className="text-primary-400">Jhon Booking</span>
+            <span className="text-primary-400">The Balified Villa</span>
           </h2>
           <p className="text-gray-400 leading-relaxed mb-10">
             Sign in to manage your reservations, explore exclusive member offers, and enjoy a seamless luxury experience.
@@ -79,7 +79,7 @@ const LoginPage = () => {
           <p className="text-gray-300 text-sm italic leading-relaxed">
             "The most memorable stays begin with a single click. We're glad you're back."
           </p>
-          <p className="text-primary-400 text-xs font-semibold mt-2">— Jhon Booking Team</p>
+          <p className="text-primary-400 text-xs font-semibold mt-2">— The Balified Villa Team</p>
         </div>
       </div>
 
@@ -92,7 +92,7 @@ const LoginPage = () => {
               <Hotel className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-sm">Jhon Booking</p>
+              <p className="font-bold text-gray-900 text-sm">The Balified Villa</p>
               <p className="text-gray-400 text-xs">Luxury Hotel</p>
             </div>
           </div>

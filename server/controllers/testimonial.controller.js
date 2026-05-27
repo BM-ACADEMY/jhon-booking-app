@@ -27,6 +27,9 @@ export const submitTestimonial = async (req, res) => {
     if (!name || !message || !rating) {
       return res.status(400).json({ message: 'Name, message and rating are required' });
     }
+    if (message.length > 160) {
+      return res.status(400).json({ message: 'Message must be 160 characters or less' });
+    }
     const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
     const colors = ['bg-blue-500', 'bg-rose-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-cyan-500', 'bg-primary-500'];
     const color = colors[Math.floor(Math.random() * colors.length)];
@@ -43,6 +46,10 @@ export const submitTestimonial = async (req, res) => {
 // Admin: create testimonial (auto-approved)
 export const createTestimonial = async (req, res) => {
   try {
+    const { message } = req.body;
+    if (message && message.length > 160) {
+      return res.status(400).json({ message: 'Message must be 160 characters or less' });
+    }
     const testimonial = await Testimonial.create({ ...req.body, isApproved: 'approved', source: 'admin' });
     res.status(201).json(testimonial);
   } catch (err) {
@@ -53,7 +60,11 @@ export const createTestimonial = async (req, res) => {
 // Admin: update a testimonial
 export const updateTestimonial = async (req, res) => {
   try {
-    const testimonial = await Testimonial.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { message } = req.body;
+    if (message && message.length > 160) {
+      return res.status(400).json({ message: 'Message must be 160 characters or less' });
+    }
+    const testimonial = await Testimonial.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
     if (!testimonial) return res.status(404).json({ message: 'Testimonial not found' });
     res.json(testimonial);
   } catch (err) {

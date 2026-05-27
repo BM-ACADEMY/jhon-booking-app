@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import {
   ArrowLeft, Star, Users, BedDouble, Bath, MapPin, Wifi, Check,
@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import api from '../api';
 
-const SERVER_URL = 'http://localhost:5000';
+const SERVER_URL = import.meta.env.VITE_BASE_URL;
 
 const getImageUrl = (img) => {
   const u = img?.url || img;
@@ -22,17 +22,28 @@ const getIcon = (name) => Icons[name] || Icons.Check;
 const RoomDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, toggleUserWishlist } = useAuth();
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
-  const [wishlist, setWishlist] = useState(false);
+  const isWishlisted = user?.wishlist?.includes(room?._id) || false;
+
+  const checkInQuery = searchParams.get('checkIn') || '';
+  const checkOutQuery = searchParams.get('checkOut') || '';
+  const guestsQuery = parseInt(searchParams.get('guests') || '1', 10);
 
   // Booking form
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
-  const [guests, setGuests] = useState(1);
+  const [checkIn, setCheckIn] = useState(checkInQuery);
+  const [checkOut, setCheckOut] = useState(checkOutQuery);
+  const [guests, setGuests] = useState(guestsQuery);
+
+  useEffect(() => {
+    if (checkInQuery) setCheckIn(checkInQuery);
+    if (checkOutQuery) setCheckOut(checkOutQuery);
+    if (guestsQuery) setGuests(guestsQuery);
+  }, [checkInQuery, checkOutQuery, guestsQuery]);
 
   useEffect(() => {
     const load = async () => {
@@ -65,7 +76,7 @@ const RoomDetailPage = () => {
 
   const images = room.images?.length > 0 ? room.images : [];
   const nights = checkIn && checkOut
-    ? Math.max(0, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000))
+    ? Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000))
     : 0;
   const total = nights * (room.price || 0);
 
@@ -81,18 +92,21 @@ const RoomDetailPage = () => {
       return;
     }
 
-    if (nights <= 0) {
+    if (nights < 0) {
       toast.error('Invalid date range');
       return;
     }
 
     try {
       setBookingLoading(true);
-      
+
       // 1. Create Razorpay Order
       const orderRes = await api.post('/bookings/razorpay-order', {
         amount: total,
-        currency: 'INR'
+        currency: 'INR',
+        roomId: room._id,
+        checkIn,
+        checkOut
       });
 
       const order = orderRes.data;
@@ -102,7 +116,7 @@ const RoomDetailPage = () => {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_HERE', // Should use env
         amount: order.amount,
         currency: order.currency,
-        name: 'Jhon Booking',
+        name: 'The Balified Villa',
         description: `Booking for ${room.name}`,
         order_id: order.id,
         handler: async (response) => {
@@ -135,7 +149,7 @@ const RoomDetailPage = () => {
           contact: user.phone || ''
         },
         theme: {
-          color: '#d4891f'
+          color: '#111827'
         }
       };
 
@@ -163,11 +177,17 @@ const RoomDetailPage = () => {
               <Share2 className="w-4 h-4 text-gray-500" />
             </button>
             <button
-              onClick={() => setWishlist(w => !w)}
+              onClick={async () => {
+                if (!user) {
+                  navigate('/login');
+                  return;
+                }
+                await toggleUserWishlist(room?._id);
+              }}
               className="cursor-pointer p-2 hover:bg-gray-100 rounded-xl transition-colors"
               title="Save"
             >
-              <Heart className={`w-4 h-4 transition-colors ${wishlist ? 'text-red-500 fill-red-500' : 'text-gray-500'}`} />
+              <Heart className={`w-4 h-4 transition-colors ${isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-500'}`} />
             </button>
           </div>
         </div>

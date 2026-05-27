@@ -71,7 +71,7 @@ const SignupPage = () => {
             <Hotel className="w-9 h-9 text-white" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-3 leading-tight">
-            Join Jhon Booking<br />
+            Join The Balified Villa<br />
             <span className="text-primary-400">for Free</span>
           </h2>
           <p className="text-gray-400 text-sm leading-relaxed mb-8">
@@ -119,7 +119,7 @@ const SignupPage = () => {
               <Hotel className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-sm">Jhon Booking</p>
+              <p className="font-bold text-gray-900 text-sm">The Balified Villa</p>
               <p className="text-gray-400 text-xs">Luxury Hotel</p>
             </div>
           </div>
@@ -177,7 +177,7 @@ const SignupPage = () => {
               {/* Phone */}
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Phone <span className="text-gray-400 font-normal normal-case">(optional)</span>
+                  Phone Number
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -186,6 +186,7 @@ const SignupPage = () => {
                     name="phone"
                     value={form.phone}
                     onChange={handleChange}
+                    required
                     placeholder="+1 555-0000"
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 transition-all"
                   />
@@ -219,11 +220,10 @@ const SignupPage = () => {
                     <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div className={`h-full rounded-full transition-all duration-300 ${strength.color} ${strength.width}`} />
                     </div>
-                    <p className={`text-xs mt-1 font-medium ${
-                      strength.label === 'Weak' ? 'text-red-500' :
-                      strength.label === 'Fair' ? 'text-yellow-600' :
-                      strength.label === 'Good' ? 'text-blue-600' : 'text-green-600'
-                    }`}>{strength.label} password</p>
+                    <p className={`text-xs mt-1 font-medium ${strength.label === 'Weak' ? 'text-red-500' :
+                        strength.label === 'Fair' ? 'text-yellow-600' :
+                          strength.label === 'Good' ? 'text-blue-600' : 'text-green-600'
+                      }`}>{strength.label} password</p>
                   </div>
                 )}
               </div>
@@ -240,11 +240,10 @@ const SignupPage = () => {
                     onChange={handleChange}
                     required
                     placeholder="Re-enter password"
-                    className={`w-full pl-10 pr-11 py-3 border rounded-xl text-sm outline-none focus:ring-2 transition-all ${
-                      form.confirmPassword && form.confirmPassword !== form.password
+                    className={`w-full pl-10 pr-11 py-3 border rounded-xl text-sm outline-none focus:ring-2 transition-all ${form.confirmPassword && form.confirmPassword !== form.password
                         ? 'border-red-300 focus:border-red-400 focus:ring-red-400/20'
                         : 'border-gray-200 focus:border-primary-400 focus:ring-primary-400/20'
-                    }`}
+                      }`}
                   />
                   <button
                     type="button"

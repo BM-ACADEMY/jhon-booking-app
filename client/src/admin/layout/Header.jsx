@@ -12,6 +12,7 @@ const pageTitles = {
   '/admin/testimonials': 'Testimonials',
   '/admin/sections': 'Dynamic Sections',
   '/admin/settings': 'Settings',
+  '/admin/profile': 'Admin Profile',
 };
 
 const Header = ({ onMenuClick }) => {
@@ -21,7 +22,7 @@ const Header = ({ onMenuClick }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const pageTitle = pageTitles[location.pathname] || 'Admin Panel';
+  const pageTitle = pageTitles[location.pathname] || 'Admin Profile';
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -95,11 +96,17 @@ const Header = ({ onMenuClick }) => {
                 <p className="text-sm font-semibold text-gray-800">{user?.name || 'Administrator'}</p>
                 <p className="text-xs text-gray-500">{user?.email || 'admin@jhon.com'}</p>
               </div>
-              <button className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+              <button 
+                onClick={() => { setDropdownOpen(false); navigate('/admin/profile'); }}
+                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              >
                 <User className="w-4 h-4" />
                 Profile
               </button>
-              <button className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+              <button 
+                onClick={() => { setDropdownOpen(false); navigate('/admin/settings'); }}
+                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              >
                 <Settings className="w-4 h-4" />
                 Settings
               </button>

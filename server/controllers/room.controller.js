@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Room from '../models/Room.js';
 
 // Public: only return published rooms
@@ -30,7 +31,18 @@ export const getAllRoomsAdmin = async (req, res) => {
 
 export const getRoomById = async (req, res) => {
   try {
-    const room = await Room.findById(req.params.id);
+    let room;
+    // Check if the id is a valid Mongo ObjectId
+    if (mongoose.isValidObjectId(req.params.id)) {
+      room = await Room.findById(req.params.id);
+    }
+    
+    // If not found by ID, query by name-slug
+    if (!room) {
+      const slugRegex = new RegExp('^' + req.params.id.split('-').join('[-\\s]') + '$', 'i');
+      room = await Room.findOne({ name: { $regex: slugRegex } });
+    }
+    
     if (!room) return res.status(404).json({ message: 'Room not found' });
     res.json(room);
   } catch (err) {
@@ -78,7 +90,7 @@ export const createRoom = async (req, res) => {
     if (req.files && req.files.length > 0) {
       roomData.images = req.files.map((file, idx) => ({
         url: `/uploads/${file.filename}`,
-        label: labels[idx] || ''
+        label: labels[idx] 
       }));
     }
 
@@ -106,7 +118,7 @@ export const updateRoom = async (req, res) => {
     if (req.files && req.files.length > 0) {
       const newImages = req.files.map((file, idx) => ({
         url: `/uploads/${file.filename}`,
-        label: newLabels[idx] || ''
+        label: newLabels[idx] 
       }));
       roomData.images = [...existingImages, ...newImages];
     } else {

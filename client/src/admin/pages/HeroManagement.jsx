@@ -7,11 +7,13 @@ const HeroManagement = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
-    title: '',
+    titleLine1: '', // main title line 1
+    titleLine2: '', // optional second line
     subtitle: '',
     ctaPrimaryText: '',
     ctaSecondaryText: '',
     videoUrl: '',
+    backgroundImage: '',
     stats: [
       { label: 'Luxury Stays', value: '500+' },
       { label: 'Premium Suites', value: '24' },
@@ -20,7 +22,10 @@ const HeroManagement = () => {
   });
   const [videoFile, setVideoFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
   const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
 
   const fetchHero = async () => {
     try {
@@ -28,20 +33,29 @@ const HeroManagement = () => {
       const res = await api.get('/hero');
       if (res.data) {
         setForm({
-          title: res.data.title || '',
-          subtitle: res.data.subtitle || '',
-          ctaPrimaryText: res.data.ctaPrimaryText || '',
-          ctaSecondaryText: res.data.ctaSecondaryText || '',
-          videoUrl: res.data.videoUrl || '',
+          titleLine1: res.data.titleLine1 ,
+          titleLine2: res.data.titleLine2 ,
+          subtitle: res.data.subtitle ,
+          ctaPrimaryText: res.data.ctaPrimaryText ,
+          ctaSecondaryText: res.data.ctaSecondaryText ,
+          videoUrl: res.data.videoUrl ,
+          backgroundImage: res.data.backgroundImage ,
           stats: res.data.stats && res.data.stats.length > 0 ? res.data.stats : [
             { label: 'Luxury Stays', value: '500+' },
             { label: 'Premium Suites', value: '24' },
             { label: 'Guest Rating', value: '4.9★' },
           ],
         });
+        const baseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:5000';
         if (res.data.videoUrl) {
-          const baseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:5000';
           setPreviewUrl(res.data.videoUrl.startsWith('http') ? res.data.videoUrl : `${baseUrl}${res.data.videoUrl}`);
+        } else {
+          setPreviewUrl('');
+        }
+        if (res.data.backgroundImage) {
+          setImagePreviewUrl(res.data.backgroundImage.startsWith('http') ? res.data.backgroundImage : `${baseUrl}${res.data.backgroundImage}`);
+        } else {
+          setImagePreviewUrl('');
         }
       }
     } catch (err) {
@@ -68,7 +82,9 @@ const HeroManagement = () => {
     if (file) {
       setVideoFile(file);
       setPreviewUrl(URL.createObjectURL(file));
-      setForm(prev => ({ ...prev, videoUrl: '' })); // Clear URL if file is chosen
+        setForm(prev => ({ ...prev, videoUrl: '' })); // Clear URL if video file is chosen
+        setImageFile(null);
+        setImagePreviewUrl('');
     }
   };
 
@@ -76,15 +92,29 @@ const HeroManagement = () => {
     try {
       setSubmitting(true);
       const formData = new FormData();
-      formData.append('title', form.title);
+      formData.append('titleLine1', form.titleLine1);
+      formData.append('titleLine2', form.titleLine2);
       formData.append('subtitle', form.subtitle);
       formData.append('ctaPrimaryText', form.ctaPrimaryText);
       formData.append('ctaSecondaryText', form.ctaSecondaryText);
+      
+      // Validation to ensure only one media asset is saved: prioritize video over image
+      if (form.videoUrl && form.backgroundImage) {
+        // If both URLs are set, clear the image URL to keep only video
+        form.backgroundImage = '';
+      } else if (!form.videoUrl && form.backgroundImage) {
+        // If only image URL is set, ensure videoUrl is empty
+        form.videoUrl = '';
+      }
       formData.append('videoUrl', form.videoUrl);
+      formData.append('backgroundImage', form.backgroundImage);
       formData.append('stats', JSON.stringify(form.stats));
       
       if (videoFile) {
         formData.append('video', videoFile);
+      }
+      if (imageFile) {
+        formData.append('image', imageFile);
       }
 
       await api.post('/hero', formData, {
@@ -133,15 +163,24 @@ const HeroManagement = () => {
 
           <div className="grid grid-cols-1 gap-5">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Main Title</label>
-              <input
-                type="text"
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                placeholder="e.g. Experience Luxury Like Never Before"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400/20 transition-all"
-              />
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Title Line 1</label>
+                <input
+                  type="text"
+                  name="titleLine1"
+                  value={form.titleLine1}
+                  onChange={handleChange}
+                  placeholder="e.g. Experience Luxury Like Never Before"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400/20 transition-all"
+                />
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 mt-2">Title Line 2 (optional)</label>
+                <input
+                  type="text"
+                  name="titleLine2"
+                  value={form.titleLine2}
+                  onChange={handleChange}
+                  placeholder="e.g. Premium Suites Await"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400/20 transition-all"
+                />
             </div>
 
             <div>
@@ -179,35 +218,7 @@ const HeroManagement = () => {
               </div>
             </div>
 
-            {/* Stats Management */}
-            <div className="pt-2">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Hero Statistics</label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {form.stats.map((stat, idx) => (
-                  <div key={idx} className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Stat #{idx + 1}</p>
-                    <div>
-                      <input
-                        type="text"
-                        value={stat.value}
-                        onChange={(e) => handleStatChange(idx, 'value', e.target.value)}
-                        placeholder="Value (e.g. 500+)"
-                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-primary-400"
-                      />
-                    </div>
-                    <div>
-                      <input
-                        type="text"
-                        value={stat.label}
-                        onChange={(e) => handleStatChange(idx, 'label', e.target.value)}
-                        placeholder="Label (e.g. Stays)"
-                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[10px] uppercase font-semibold outline-none focus:border-primary-400"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+
 
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Background Video URL (External)</label>
@@ -221,6 +232,21 @@ const HeroManagement = () => {
                   setVideoFile(null);
                 }}
                 placeholder="https://example.com/hero-video.mp4"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary-400 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Background Image URL (External)</label>
+              <input
+                type="url"
+                name="backgroundImage"
+                value={form.backgroundImage}
+                onChange={(e) => {
+                  handleChange(e);
+                  setImagePreviewUrl(e.target.value);
+                  setImageFile(null);
+                }}
+                placeholder="https://example.com/hero-image.jpg"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary-400 transition-all"
               />
             </div>
@@ -244,6 +270,33 @@ const HeroManagement = () => {
                 </p>
                 <p className="text-xs text-gray-400 mt-1">MP4, WebM up to 500MB</p>
               </div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 mt-4">Or Upload Local Image</label>
+              <input
+                type="file"
+                ref={imageInputRef}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setImageFile(file);
+                    setImagePreviewUrl(URL.createObjectURL(file));
+                    setForm(prev => ({ ...prev, backgroundImage: '' }));
+                    setVideoFile(null);
+                    setPreviewUrl('');
+                  }
+                }}
+                accept="image/*"
+                className="hidden"
+              />
+              <div 
+                onClick={() => imageInputRef.current.click()}
+                className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${imageFile ? 'border-primary-500 bg-primary-50/30' : 'border-gray-200 hover:border-primary-300'}`}
+              >
+                <Upload className={`w-8 h-8 mx-auto mb-2 ${imageFile ? 'text-primary-500' : 'text-gray-300'}`} />
+                <p className="text-sm text-gray-600 font-medium">
+                  {imageFile ? imageFile.name : 'Click to upload image or drag and drop'}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">JPG, PNG up to 5MB</p>
+              </div>
             </div>
 
             <div className="flex gap-3 pt-2">
@@ -263,6 +316,18 @@ const HeroManagement = () => {
                   <Trash2 className="w-4 h-4" /> Remove Video
                 </button>
               )}
+              {imagePreviewUrl && (
+                <button 
+                  onClick={() => {
+                    setImageFile(null);
+                    setImagePreviewUrl('');
+                    setForm(prev => ({ ...prev, backgroundImage: '' }));
+                  }}
+                  className="flex items-center gap-2 px-5 py-2.5 border border-red-200 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-all cursor-pointer ml-2"
+                >
+                  <Trash2 className="w-4 h-4" /> Remove Image
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -271,20 +336,26 @@ const HeroManagement = () => {
         <div className="xl:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col">
           <h3 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider">Live Preview</h3>
           <div className="rounded-2xl overflow-hidden bg-gray-900 aspect-video relative group">
-            {previewUrl ? (
-              <video
-                key={previewUrl}
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="absolute inset-0 w-full h-full object-cover"
-              >
-                <source src={previewUrl} />
-              </video>
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
-            )}
+              {previewUrl ? (
+                <video
+                  key={previewUrl}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover"
+                >
+                  <source src={previewUrl} />
+                </video>
+              ) : imagePreviewUrl ? (
+                <img
+                  src={imagePreviewUrl}
+                  alt="Hero background"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+              )}
             
             <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
             

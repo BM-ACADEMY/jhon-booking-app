@@ -13,9 +13,12 @@ export const getHero = async (req, res) => {
 
 export const updateHero = async (req, res) => {
   try {
-    const { title, subtitle, ctaPrimaryText, ctaSecondaryText, videoUrl, stats } = req.body;
+    let { titleLine1, titleLine2, subtitle, ctaPrimaryText, ctaSecondaryText, videoUrl, backgroundImage, stats } = req.body;
+  if (titleLine1 === '') titleLine1 = undefined;
+  if (titleLine2 === '') titleLine2 = undefined;
     let videoPath = videoUrl;
     const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+let imagePath = null;
 
     let parsedStats = stats;
     if (typeof stats === 'string') {
@@ -26,36 +29,64 @@ export const updateHero = async (req, res) => {
       }
     }
 
-    if (req.file) {
-      videoPath = `${baseUrl}/uploads/${req.file.filename}`;
-    }
-
     let hero = await Hero.findOne().sort({ createdAt: -1 });
 
-    if (hero) {
-      // Delete old local file if a new one is uploaded
-      if (req.file && hero.videoUrl && hero.videoUrl.includes('/uploads/')) {
-        const relativePath = hero.videoUrl.split(`${baseUrl}`)[1] || hero.videoUrl;
-        const oldPath = path.join(process.cwd(), relativePath);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-      }
+    // Handle multipart uploads for video and image
+    if (req.files?.video?.[0]) {
+      videoPath = `${baseUrl}/uploads/${req.files.video[0].filename}`;
+    }
+    if (req.files?.image?.[0]) {
+      imagePath = `${baseUrl}/uploads/${req.files.image[0].filename}`;
+    }
+    // If a new video is uploaded, remove any existing image
+    if (videoPath && hero?.backgroundImage) {
+      const relativePath = hero.backgroundImage.split(`${baseUrl}`)[1] || hero.backgroundImage;
+      const oldPath = path.join(process.cwd(), relativePath);
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      hero.backgroundImage = '';
+    }
+    // If a new image is uploaded, remove any existing video
+    if (imagePath && hero?.videoUrl) {
+      const relativePath = hero.videoUrl.split(`${baseUrl}`)[1] || hero.videoUrl;
+      const oldPath = path.join(process.cwd(), relativePath);
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      hero.videoUrl = '';
+    }
 
-      hero.title = title || hero.title;
+    if (hero) {
+      // Delete old local files if new ones are uploaded
+  if (req.files?.video?.[0] && hero.videoUrl && hero.videoUrl.includes('/uploads/')) {
+    const relativePath = hero.videoUrl.split(`${baseUrl}`)[1] || hero.videoUrl;
+    const oldPath = path.join(process.cwd(), relativePath);
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+  }
+  if (req.files?.image?.[0] && hero.backgroundImage && hero.backgroundImage.includes('/uploads/')) {
+    const relativePath = hero.backgroundImage.split(`${baseUrl}`)[1] || hero.backgroundImage;
+    const oldPath = path.join(process.cwd(), relativePath);
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+  }
+
+      hero.titleLine1 = titleLine1 || hero.titleLine1;
+      hero.titleLine2 = titleLine2 || hero.titleLine2;
       hero.subtitle = subtitle || hero.subtitle;
       hero.ctaPrimaryText = ctaPrimaryText || hero.ctaPrimaryText;
       hero.ctaSecondaryText = ctaSecondaryText || hero.ctaSecondaryText;
       hero.videoUrl = videoPath !== undefined ? videoPath : hero.videoUrl;
+      hero.backgroundImage = imagePath ? imagePath : hero.backgroundImage;
       hero.stats = parsedStats || hero.stats;
       await hero.save();
     } else {
-      hero = await Hero.create({
-        title,
+      const heroData = {
+        ...(titleLine1 ? { titleLine1 } : {}),
+        ...(titleLine2 ? { titleLine2 } : {}),
         subtitle,
         ctaPrimaryText,
         ctaSecondaryText,
         videoUrl: videoPath,
+        backgroundImage: imagePath,
         stats: parsedStats || []
-      });
+      };
+      hero = await Hero.create(heroData);
     }
 
     res.json(hero);

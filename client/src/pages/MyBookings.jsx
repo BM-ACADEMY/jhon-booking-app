@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Clock, CreditCard, ChevronRight, Loader2, BedDouble } from 'lucide-react';
 import api from '../api';
 
-const SERVER_URL = 'http://localhost:5000';
+const SERVER_URL = import.meta.env.VITE_BASE_URL;
 
 const getImageUrl = (img) => {
   const u = img?.url || img;

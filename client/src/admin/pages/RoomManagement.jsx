@@ -8,7 +8,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import api from '../../api';
-const SERVER_URL = 'http://localhost:5000';
+const SERVER_URL = import.meta.env.VITE_BASE_URL;
 
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';

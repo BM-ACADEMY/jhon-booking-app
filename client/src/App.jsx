@@ -9,8 +9,10 @@ import SignupPage from './pages/SignupPage';
 import RoomsPage from './pages/RoomsPage';
 import RoomDetailPage from './pages/RoomDetailPage';
 import MyBookings from './pages/MyBookings';
+import WishlistPage from './pages/WishlistPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
+import ProfilePage from './pages/ProfilePage';
 
 // Admin
 import AdminLayout from './admin/layout/AdminLayout';
@@ -23,6 +25,7 @@ import TestimonialsManagement from './admin/pages/TestimonialsManagement';
 import HeroManagement from './admin/pages/HeroManagement';
 import DynamicSections from './admin/pages/DynamicSections';
 import Settings from './admin/pages/Settings';
+import AdminProfile from './admin/pages/AdminProfile';
 
 const ProtectedRoute = ({ children }) => {
   const { user, isAdmin } = useAuth();
@@ -46,6 +49,8 @@ const AppRoutes = () => (
       <Route path="/bookings/my" element={<MyBookings />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/wishlist" element={<WishlistPage />} />
     </Route>
 
     {/* Admin */}
@@ -66,6 +71,7 @@ const AppRoutes = () => (
       <Route path="testimonials" element={<TestimonialsManagement />} />
       <Route path="sections" element={<DynamicSections />} />
       <Route path="settings" element={<Settings />} />
+      <Route path="profile" element={<AdminProfile />} />
     </Route>
 
     <Route path="*" element={<Navigate to="/" replace />} />
@@ -99,14 +105,14 @@ const App = () => (
           },
           success: {
             iconTheme: {
-              primary: '#d4891f',
+              primary: '#10b981',
               secondary: '#fff',
             },
             style: {
               background: '#0f172a',
               color: '#f1f5f9',
-              border: '1px solid rgba(212, 137, 31, 0.3)',
-              borderLeft: '3px solid #d4891f',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              borderLeft: '3px solid #10b981',
             },
           },
           error: {
