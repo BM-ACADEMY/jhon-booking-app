@@ -75,7 +75,24 @@ const Footer = () => {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [categories, setCategories] = useState([]);
+    const [showForm, setShowForm] = useState(false);
+
+
+  // Fetch categories for Room Types section
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get('/categories');
+        if (res.data) {
+          setCategories(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories for footer:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
   const [form, setForm] = useState({ name: '', designation: 'Guest', message: '', rating: 0 });
 
   useEffect(() => {
@@ -154,7 +171,7 @@ const Footer = () => {
       <div className="absolute -left-36 -top-36 w-72 h-72 rounded-full bg-slate-800/10 blur-3xl pointer-events-none"></div>
       <div className="absolute -right-36 -bottom-36 w-72 h-72 rounded-full bg-slate-800/10 blur-3xl pointer-events-none"></div>
 
-      {/* Main Container: Added padding bottom to make enough space for the big title at the absolute end */}
+      {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-36 relative z-10">
 
         {/* Middle Section: Footer Grid */}
@@ -166,7 +183,7 @@ const Footer = () => {
                 <Hotel className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-white font-bold text-base tracking-wide uppercase">JThe Balified Villa</p>
+                <p className="text-white font-bold text-base tracking-wide uppercase">The Balified Villa</p>
                 <p className="text-slate-500 text-xs tracking-wider">Luxury Hotel & Resort</p>
               </div>
             </Link>
@@ -215,7 +232,7 @@ const Footer = () => {
                   className="group text-sm hover:text-white text-slate-400 transition-colors duration-300 flex items-center gap-1.5 bg-transparent border-none p-0 cursor-pointer text-left outline-none font-normal"
                 >
                   <span className="w-1 h-1 rounded-full bg-slate-600 group-hover:bg-white transition-colors duration-300"></span>
-                  Write a Review
+                  Feedback
                 </button>
               </li>
             </ul>
@@ -225,14 +242,17 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-6">Room Types</h4>
             <ul className="space-y-4">
-              {['Standard Rooms', 'Deluxe Rooms', 'Junior Suites', 'Presidential Suites', 'Penthouse'].map((r) => (
-                <li key={r}>
+              {categories.map((cat) => (
+                <li key={cat._id}>
                   <Link to="/rooms" className="group text-sm hover:text-white transition-colors duration-300 flex items-center gap-1.5">
                     <span className="w-1 h-1 rounded-full bg-slate-600 group-hover:bg-white transition-colors duration-300"></span>
-                    {r}
+                    {cat.name}
                   </Link>
                 </li>
               ))}
+              {categories.length === 0 && (
+                <li className="text-slate-500 text-sm">No categories available</li>
+              )}
             </ul>
           </div>
 
@@ -274,8 +294,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom Section: Copyright & Legal & Payments */}
-        {/* Added mb-6 to push this row beautifully above the large text */}
-        <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-slate-500 mb-6">
+        <div className="border-t border-white/15 pt-8 flex flex-col lg:flex-row justify-between items-center gap-6 text-xs text-slate-400 mb-6">
           <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
             <p>© {new Date().getFullYear()} The Balified Villa. All rights reserved.</p>
             <span className="hidden sm:inline text-slate-800">|</span>
@@ -283,29 +302,26 @@ const Footer = () => {
               <a href="#" className="hover:text-slate-300 transition-colors duration-300">Privacy Policy</a>
               <a href="#" className="hover:text-slate-300 transition-colors duration-300">Terms of Service</a>
             </div>
-
-            {/* Payment Methods */}
-            <div className="flex items-center gap-3 text-[11px] text-gray-400 tracking-wider">
-              <div className="flex items-center gap-4">
-                <img src={upiIcon} alt="Accepted Payment Method: UPI" className="h-5 w-auto object-contain opacity-90" />
-                <img src={gpayIcon} alt="Accepted Payment Method: GPay" className="h-5 w-auto object-contain opacity-90" />
-                <img src={ruPayIcon} alt="Accepted Payment Method: RuPay" className="h-5 w-auto object-contain opacity-90" />
-                <img src={visaIcon} alt="Accepted Payment Method: Visa" className="h-5 w-auto object-contain opacity-90" />
-                <img src={mastercardIcon} alt="Accepted Payment Method: Mastercard" className="h-5 w-auto object-contain opacity-90" />
-              </div>
-            </div>
           </div>
 
+          {/* Payment Methods - Pushed completely to the right side */}
+          <div className="flex items-center gap-4 w-full justify-between sm:justify-center lg:w-auto lg:justify-end lg:ml-auto">
+            <img src={upiIcon} alt="Accepted Payment Method: UPI" className="h-5 w-auto object-contain opacity-90" />
+            <img src={gpayIcon} alt="Accepted Payment Method: GPay" className="h-5 w-auto object-contain opacity-90" />
+            <img src={ruPayIcon} alt="Accepted Payment Method: RuPay" className="h-5 w-auto object-contain opacity-90" />
+            <img src={visaIcon} alt="Accepted Payment Method: Visa" className="h-5 w-auto object-contain opacity-90" />
+            <img src={mastercardIcon} alt="Accepted Payment Method: Mastercard" className="h-5 w-auto object-contain opacity-90" />
+          </div>
         </div>
 
       </div>
 
-      {/* Giant Background Outline Text (Moved underneath correctly via bottom spacing) */}
+      {/* Giant Background Outline Text */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full text-center pointer-events-none select-none z-0">
         <span
           className="text-[7vw] md:text-[6vw] font-black uppercase tracking-[0.06em] text-transparent leading-none whitespace-nowrap block"
           style={{
-            WebkitTextStroke: '1.5px rgba(255, 255, 255, 0.15)', // Lightened the text stroke for enhanced readability
+            WebkitTextStroke: '1.5px rgba(255, 255, 255, 0.15)',
             WebkitMaskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 100%)',
             maskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 100%)'
           }}
@@ -316,7 +332,7 @@ const Footer = () => {
 
       <Modal isOpen={showForm} onClose={() => setShowForm(false)}>
         <div className="space-y-6">
-          <h2 className="text-xl font-bold font-serif text-gray-900">Write a Review</h2>
+          <h2 className="text-xl font-bold font-serif text-gray-900">Feedback</h2>
 
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-inner shrink-0">
