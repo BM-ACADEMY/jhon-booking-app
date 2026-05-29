@@ -14,6 +14,8 @@ import categoryRoutes from './routes/category.routes.js';
 import propertyTypeRoutes from './routes/propertyType.routes.js';
 import priceUnitRoutes from './routes/priceUnit.routes.js';
 import settingRoutes from './routes/setting.routes.js';
+import reviewRoutes from './routes/review.routes.js';
+import messageRoutes from './routes/message.routes.js';
 
 dotenv.config();
 
@@ -60,6 +62,8 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/property-types', propertyTypeRoutes);
 app.use('/api/price-units', priceUnitRoutes);
 app.use('/api/settings', settingRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Health Check API
 app.get('/api/health', (req, res) => {

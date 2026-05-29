@@ -22,10 +22,12 @@ import RoomManagement from './admin/pages/RoomManagement';
 import BookingManagement from './admin/pages/BookingManagement';
 import UserManagement from './admin/pages/UserManagement';
 import TestimonialsManagement from './admin/pages/TestimonialsManagement';
+import MessagesManagement from './admin/pages/MessagesManagement';
 import HeroManagement from './admin/pages/HeroManagement';
 import DynamicSections from './admin/pages/DynamicSections';
 import Settings from './admin/pages/Settings';
 import AdminProfile from './admin/pages/AdminProfile';
+import RoomsReview from './admin/pages/RoomsReview';
 
 const ProtectedRoute = ({ children }) => {
   const { user, isAdmin } = useAuth();
@@ -46,7 +48,7 @@ const AppRoutes = () => (
       <Route path="/" element={<HomePage />} />
       <Route path="/rooms" element={<RoomsPage />} />
       <Route path="/rooms/:id" element={<RoomDetailPage />} />
-      <Route path="/bookings/my" element={<MyBookings />} />
+      <Route path="/mybookings" element={<MyBookings />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/profile" element={<ProfilePage />} />
@@ -68,7 +70,9 @@ const AppRoutes = () => (
       <Route path="rooms" element={<RoomManagement />} />
       <Route path="bookings" element={<BookingManagement />} />
       <Route path="users" element={<UserManagement />} />
+      <Route path="reviews" element={<RoomsReview />} />
       <Route path="testimonials" element={<TestimonialsManagement />} />
+      <Route path="messages" element={<MessagesManagement />} />
       <Route path="sections" element={<DynamicSections />} />
       <Route path="settings" element={<Settings />} />
       <Route path="profile" element={<AdminProfile />} />
@@ -79,9 +83,11 @@ const AppRoutes = () => (
 );
 
 import { Toaster } from 'react-hot-toast';
+import ScrollToTop from './components/ScrollToTop';
 
 const App = () => (
   <BrowserRouter>
+    <ScrollToTop />
     <AuthProvider>
       <Toaster
         position="top-right"
@@ -89,44 +95,6 @@ const App = () => (
         gutter={12}
         toastOptions={{
           duration: 4000,
-          style: {
-            background: '#0f172a',
-            color: '#f1f5f9',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '1rem',
-            padding: '14px 18px',
-            fontSize: '13px',
-            fontWeight: '500',
-            letterSpacing: '0.01em',
-            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)',
-            backdropFilter: 'blur(16px)',
-            maxWidth: '360px',
-            lineHeight: '1.5',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-            style: {
-              background: '#0f172a',
-              color: '#f1f5f9',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              borderLeft: '3px solid #10b981',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
-            style: {
-              background: '#0f172a',
-              color: '#f1f5f9',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderLeft: '3px solid #ef4444',
-            },
-          },
         }}
       />
       <AppRoutes />

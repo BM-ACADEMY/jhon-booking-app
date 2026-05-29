@@ -30,6 +30,9 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
+  const isRoomDetailPage = (location.pathname.startsWith("/rooms/") && location.pathname !== "/rooms") || location.pathname === "/mybookings" || location.pathname === "/wishlist" || location.pathname === "/profile";
+  const isHeaderScrolled = scrolled || isRoomDetailPage;
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -70,9 +73,9 @@ const Navbar = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 p-4 sm:p-6 pointer-events-none outline-none border-none">
       <div
-        className={`pointer-events-auto max-w-7xl mx-auto transition-all duration-500 ease-out border rounded-full ${scrolled
-            ? "bg-white/80 backdrop-blur-[4px] backdrop-saturate-150 border-gray-300/80 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.8)] py-3 px-6 lg:px-8"
-            : "bg-transparent border-transparent py-2 px-4 lg:px-6 shadow-none"
+        className={`pointer-events-auto max-w-7xl mx-auto transition-all duration-500 ease-out border rounded-full ${isHeaderScrolled
+          ? "bg-white/80 backdrop-blur-[4px] backdrop-saturate-150 border-gray-300/80 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.8)] py-3 px-6 lg:px-8"
+          : "bg-transparent border-transparent py-2 px-4 lg:px-6 shadow-none"
           }`}
       >
         <div className="flex items-center justify-between h-12 lg:h-14">
@@ -82,24 +85,24 @@ const Navbar = () => {
             className="flex items-center gap-3 flex-shrink-0 z-50 group outline-none border-none"
           >
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${scrolled
-                  ? "bg-gray-900 shadow-md"
-                  : "bg-white/20 backdrop-blur-md group-hover:bg-white/30"
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${isHeaderScrolled
+                ? "bg-gray-900 shadow-md"
+                : "bg-white/20 backdrop-blur-md group-hover:bg-white/30"
                 }`}
             >
               <Hotel
-                className={`w-5 h-5 transition-colors ${scrolled ? "text-white" : "text-white"}`}
+                className={`w-5 h-5 transition-colors ${isHeaderScrolled ? "text-white" : "text-white"}`}
               />
             </div>
             <div className="leading-tight">
               <p
-                className={`font-bold text-[15px] tracking-wide transition-colors ${scrolled ? "text-gray-900" : "text-white"
+                className={`font-bold text-[15px] tracking-wide transition-colors ${isHeaderScrolled ? "text-gray-900" : "text-white"
                   }`}
               >
                 The Balified Villa
               </p>
               <p
-                className={`text-[10px] uppercase tracking-[0.2em] transition-colors ${scrolled ? "text-gray-500" : "text-white/70"
+                className={`text-[10px] uppercase tracking-[0.2em] transition-colors ${isHeaderScrolled ? "text-gray-500" : "text-white/70"
                   }`}
               >
                 Luxury Hotel
@@ -115,20 +118,20 @@ const Navbar = () => {
                 <Link
                   key={to}
                   to={to}
-                  className={`text-sm font-medium transition-all relative group tracking-wider outline-none ${scrolled
-                      ? active
-                        ? "text-gray-900"
-                        : "text-gray-600 hover:text-gray-900"
-                      : active
-                        ? "text-white"
-                        : "text-white/70 hover:text-white"
+                  className={`text-sm font-medium transition-all relative group tracking-wider outline-none ${isHeaderScrolled
+                    ? active
+                      ? "text-gray-900"
+                      : "text-gray-600 hover:text-gray-900"
+                    : active
+                      ? "text-white"
+                      : "text-white/70 hover:text-white"
                     }`}
                 >
                   {label}
                   <span
                     className={`absolute -bottom-2 left-1/2 -translate-x-1/2 h-[3px] w-[3px] rounded-full transition-all duration-300 ${active
-                        ? "opacity-100 bg-current scale-100"
-                        : "opacity-0 bg-current scale-0 group-hover:opacity-50 group-hover:scale-100"
+                      ? "opacity-100 bg-current scale-100"
+                      : "opacity-0 bg-current scale-0 group-hover:opacity-50 group-hover:scale-100"
                       }`}
                   />
                 </Link>
@@ -147,27 +150,27 @@ const Navbar = () => {
               >
                 <button
                   onClick={() => setUserDropdown(!userDropdown)}
-                  className={`flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full border outline-none transition-all duration-300 ${scrolled
-                      ? "border-gray-200/80 hover:border-gray-300 bg-white/60 hover:bg-white"
-                      : "border-white/20 hover:border-white/40 bg-white/10 backdrop-blur-md"
+                  className={`flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full border outline-none transition-all duration-300 ${isHeaderScrolled
+                    ? "border-gray-200/80 hover:border-gray-300 bg-white/60 hover:bg-white"
+                    : "border-white/20 hover:border-white/40 bg-white/10 backdrop-blur-md"
                     }`}
                 >
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${scrolled
-                        ? "bg-gray-900 text-white"
-                        : "bg-white text-gray-900"
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${isHeaderScrolled
+                      ? "bg-gray-900 text-white"
+                      : "bg-white text-gray-900"
                       }`}
                   >
                     {user.name?.[0]?.toUpperCase() ?? "U"}
                   </div>
                   <span
-                    className={`text-sm font-medium ${scrolled ? "text-gray-800" : "text-white"}`}
+                    className={`text-sm font-medium ${isHeaderScrolled ? "text-gray-800" : "text-white"}`}
                   >
                     {user.name?.split(" ")[0]}
                   </span>
                   <ChevronDown
                     className={`w-3.5 h-3.5 transition-transform duration-300 ${userDropdown ? "rotate-180" : ""
-                      } ${scrolled ? "text-gray-500" : "text-white/60"}`}
+                      } ${isHeaderScrolled ? "text-gray-500" : "text-white/60"}`}
                   />
                 </button>
 
@@ -207,7 +210,7 @@ const Navbar = () => {
                               <User className="w-4 h-4" /> Profile
                             </Link>
                             <Link
-                              to="/bookings"
+                              to="/mybookings"
                               className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all outline-none"
                             >
                               <CalendarCheck className="w-4 h-4" /> My Bookings
@@ -237,18 +240,18 @@ const Navbar = () => {
               <div className="flex items-center gap-4">
                 <Link
                   to="/login"
-                  className={`text-sm font-medium tracking-wide transition-colors outline-none ${scrolled
-                      ? "text-gray-600 hover:text-gray-900"
-                      : "text-white/80 hover:text-white"
+                  className={`text-sm font-medium tracking-wide transition-colors outline-none ${isHeaderScrolled
+                    ? "text-gray-600 hover:text-gray-900"
+                    : "text-white/80 hover:text-white"
                     }`}
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/signup"
-                  className={`text-sm font-medium px-6 py-2.5 rounded-full transition-all shadow-lg hover:shadow-xl outline-none ${scrolled
-                      ? "bg-gray-900 text-white hover:bg-gray-800"
-                      : "bg-white text-gray-900 hover:bg-gray-100"
+                  className={`text-sm font-medium px-6 py-2.5 rounded-full transition-all shadow-lg hover:shadow-xl outline-none ${isHeaderScrolled
+                    ? "bg-gray-900 text-white hover:bg-gray-800"
+                    : "bg-white text-gray-900 hover:bg-gray-100"
                     }`}
                 >
                   Book Now
@@ -260,9 +263,9 @@ const Navbar = () => {
           {/* MAIN HEADER HAMBURGER */}
           <button
             onClick={() => setMenuOpen(true)}
-            className={`lg:hidden p-2.5 rounded-full outline-none transition-all relative ${scrolled
-                ? "bg-gray-100 text-gray-900 hover:bg-gray-200"
-                : "bg-white/10 text-white backdrop-blur-md hover:bg-white/20"
+            className={`lg:hidden p-2.5 rounded-full outline-none transition-all relative ${isHeaderScrolled
+              ? "bg-gray-100 text-gray-900 hover:bg-gray-200"
+              : "bg-white/10 text-white backdrop-blur-md hover:bg-white/20"
               }`}
           >
             <Menu className="w-5 h-5" />
@@ -314,8 +317,8 @@ const Navbar = () => {
                         to={to}
                         onClick={() => setMenuOpen(false)}
                         className={`flex items-center justify-between py-3.5 px-5 rounded-[18px] transition-all outline-none ${active
-                            ? "bg-[#0f172a] text-white font-medium shadow-md"
-                            : "text-gray-600 font-medium hover:bg-gray-200/50 hover:text-gray-900"
+                          ? "bg-[#0f172a] text-white font-medium shadow-md"
+                          : "text-gray-600 font-medium hover:bg-gray-200/50 hover:text-gray-900"
                           }`}
                       >
                         <span className="tracking-wide text-[15px]">
@@ -367,7 +370,7 @@ const Navbar = () => {
                             Profile
                           </Link>
                           <Link
-                            to="/bookings"
+                            to="/mybookings"
                             className="flex items-center gap-3 text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors outline-none"
                           >
                             <CalendarCheck className="w-[18px] h-[18px] text-gray-400" />{" "}

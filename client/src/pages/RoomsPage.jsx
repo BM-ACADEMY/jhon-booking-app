@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
+import {
   Search, BedDouble, Star, Users, Bath, ArrowRight, Loader2,
   MapPin, CalendarDays, Heart, ChevronLeft, ChevronRight,
   Home, Trees, Tent, Warehouse, Compass, Building2, Waves,
-  SlidersHorizontal, Check, X, Building, Hotel, Info
+  SlidersHorizontal, Check, X, Building, Hotel, Info, Maximize
 } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -76,25 +76,25 @@ const ImageCarousel = ({ images, roomName }) => {
   }
 
   return (
-    <div 
+    <div
       className="relative w-full h-full group"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <img 
-        src={getImageUrl(images[current])} 
+      <img
+        src={getImageUrl(images[current])}
         alt={`${roomName} - View ${current + 1}`}
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
       />
       {images.length > 1 && hovered && (
         <>
-          <button 
+          <button
             onClick={prev}
             className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4 text-gray-700" />
           </button>
-          <button 
+          <button
             onClick={next}
             className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 cursor-pointer"
           >
@@ -105,8 +105,8 @@ const ImageCarousel = ({ images, roomName }) => {
       {images.length > 1 && (
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
           {images.map((_, idx) => (
-            <span 
-              key={idx} 
+            <span
+              key={idx}
               className={`w-1.5 h-1.5 rounded-full transition-all ${current === idx ? 'bg-white scale-125' : 'bg-white/50'}`}
             />
           ))}
@@ -119,7 +119,7 @@ const ImageCarousel = ({ images, roomName }) => {
 const RoomsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   // URL Query parameters states
   const queryCheckIn = searchParams.get('checkIn') ;
   const queryCheckOut = searchParams.get('checkOut') ;
@@ -220,9 +220,9 @@ const RoomsPage = () => {
     setSortBy('latest');
   };
 
-  const activeFilterCount = 
-    (minPrice !== '' ? 1 : 0) + 
-    (maxPrice !== '' ? 1 : 0) + 
+  const activeFilterCount =
+    (minPrice !== '' ? 1 : 0) +
+    (maxPrice !== '' ? 1 : 0) +
     (filterBedrooms !== 'Any' ? 1 : 0) +
     (filterBeds !== 'Any' ? 1 : 0) +
     (filterBathrooms !== 'Any' ? 1 : 0) +
@@ -310,8 +310,8 @@ const RoomsPage = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [
-    activeCategory, queryCheckIn, queryCheckOut, queryGuests, 
-    minPrice, maxPrice, filterBedrooms, filterBeds, filterBathrooms, 
+    activeCategory, queryCheckIn, queryCheckOut, queryGuests,
+    minPrice, maxPrice, filterBedrooms, filterBeds, filterBathrooms,
     sortBy, itemsPerPage
   ]);
 
@@ -339,9 +339,9 @@ const RoomsPage = () => {
       <div className="space-y-2 border-b border-gray-100 pb-5">
         <p className="font-extrabold text-sm text-gray-850">Sort by</p>
         <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 flex items-center shadow-sm">
-          <select 
-            value={sortBy} 
-            onChange={(e) => setSortBy(e.target.value)} 
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
             className="w-full text-xs font-bold text-gray-800 bg-transparent outline-none cursor-pointer"
           >
             <option value="latest">Latest</option>
@@ -388,7 +388,7 @@ const RoomsPage = () => {
       {/* Rooms and beds selectors */}
       <div className="space-y-4 border-b border-gray-100 pb-5">
         <p className="font-extrabold text-sm text-gray-850">Rooms and beds</p>
-        
+
         {/* Bedrooms */}
         <div className="space-y-2">
           <span className="block text-xs font-bold text-gray-500">Bedrooms</span>
@@ -678,7 +678,7 @@ const RoomsPage = () => {
 
       {/* Main Container Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
-        
+
         {/* Results summary and toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200/60 pb-5 mb-8 gap-4">
           <div>
@@ -713,7 +713,7 @@ const RoomsPage = () => {
 
         {/* 2-Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+
           {/* LEFT side: Rooms Grid */}
           <div className="lg:col-span-8 space-y-10">
             {loading ? (
@@ -726,7 +726,7 @@ const RoomsPage = () => {
                 <BedDouble className="w-16 h-16 mx-auto mb-4 text-gray-200" />
                 <h3 className="font-extrabold text-gray-800 text-lg mb-1">No stays match your criteria</h3>
                 <p className="text-sm text-gray-400 max-w-sm mx-auto mb-6">Try adjusting your filters, location search, or widening your dates.</p>
-                <button 
+                <button
                   onClick={handleClearFilters}
                   className="bg-violet-50 text-violet-600 hover:bg-violet-100 font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all cursor-pointer"
                 >
@@ -739,22 +739,22 @@ const RoomsPage = () => {
                   {paginatedRooms.map(room => {
                     const isWishlisted = wishlist.includes(room._id);
                     const roomTotal = totalNights > 0 ? room.price * totalNights : 0;
-                    
+
                     // Create search-preserving state/query for Room Detail redirection
                     const detailLink = `/rooms/${getRoomSlug(room.name)}?checkIn=${queryCheckIn}&checkOut=${queryCheckOut}&guests=${queryGuests}`;
 
-                     return (
-                      <Link 
+                      return (
+                      <Link
                         key={room._id}
                         to={detailLink}
-                        className="group bg-transparent rounded-none border-none outline-none flex flex-col hover:-translate-y-1 transition-all duration-300"
+                        className="group bg-white rounded-[32px] border border-gray-100 p-3 flex flex-col shadow-xl hover:border-gray-200/80 transition-all duration-350"
                       >
                         {/* Image Panel */}
                         <div className="relative aspect-[4/3] w-full rounded-[24px] overflow-hidden bg-gray-100 shadow-sm">
                           <ImageCarousel images={room.images} roomName={room.name} />
 
                           {/* Wishlist Heart Icon Floating Top-Right */}
-                          <button 
+                          <button
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -766,31 +766,37 @@ const RoomsPage = () => {
                           </button>
 
                           {/* Premium Price Tag Badge Floating Bottom-Right */}
-                          <div className="absolute bottom-4 right-4 z-10 bg-black/60 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full tracking-wide">
-                            ₹{room.price} <span className="text-[9px] font-medium text-white/80">/ {room.priceUnit || 'night'}</span>
+                          <div className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full tracking-wide flex items-center gap-1.5 shadow-sm">
+                            <span className="font-bold mr-1">₹{room.price?.toLocaleString('en-IN')}</span>
+                            <span className="text-[9px] font-medium text-white/80">/ {room.priceUnit || 'night'}</span>
                           </div>
                         </div>
 
                         {/* Description Panel */}
-                        <div className="pt-4 flex-1 flex flex-col text-left">
+                        <div className="pt-4 pb-2 px-2 flex-1 flex flex-col text-left">
+                          <div className="mb-2">
+                            <span className="text-[9px] font-black text-primary-600 uppercase tracking-widest bg-gray-100 px-2.5 py-1 rounded-full">
+                              {room.category}
+                            </span>
+                          </div>
                           <h3 className="font-bold text-gray-900 text-lg group-hover:text-primary-600 transition-colors line-clamp-1">
                             {room.name}
                           </h3>
 
-                          <p className="text-sm text-gray-400 font-medium mt-0.5 mb-1.5">
-                            {[room.city, room.country].filter(Boolean).join(', ') || 'Serenity Beach, India'}
+                          <p className="text-sm text-gray-400 font-medium mt-0.5 mb-2">
+                            {room.address || `${[room.city, room.country].filter(Boolean).join(', ') || 'Serenity Beach, India'}`}
                           </p>
 
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 mb-3">
                             <div className="flex gap-0.5">
                               {[1, 2, 3, 4, 5].map((star) => (
-                                <Star 
-                                  key={star} 
+                                <Star
+                                  key={star}
                                   className={`w-3.5 h-3.5 ${
-                                    star <= Math.round(room.rating || 5) 
-                                      ? 'fill-amber-400 text-amber-400' 
+                                    star <= Math.round(room.rating || 5)
+                                      ? 'fill-amber-400 text-amber-400'
                                       : 'text-gray-200'
-                                  }`} 
+                                  }`}
                                 />
                               ))}
                             </div>
@@ -800,10 +806,32 @@ const RoomsPage = () => {
                           </div>
 
                           {roomTotal > 0 && (
-                            <p className="text-[10px] text-gray-400 font-bold mt-1.5 uppercase tracking-wide">
-                              Total: ₹{roomTotal.toLocaleString()} for {totalNights} night{totalNights !== 1 ? 's' : ''}
+                            <p className="text-[10px] text-gray-400 font-bold mt-1.5 mb-3 uppercase tracking-wide">
+                              Total: ${roomTotal.toLocaleString()} for {totalNights} night{totalNights !== 1 ? 's' : ''}
                             </p>
                           )}
+
+                          {/* Specs Row */}
+                          <div className="flex flex-wrap items-center gap-y-2 gap-x-4 border-t border-gray-100 pt-3.5 mt-auto text-xs text-gray-500 font-bold">
+                            <div className="flex items-center gap-1.5">
+                              <Users className="w-3.5 h-3.5 text-gray-400" />
+                              <span>{room.guests || 2} Guests</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <BedDouble className="w-3.5 h-3.5 text-gray-400" />
+                              <span>{room.bedrooms || 1} Bed{room.bedrooms > 1 ? 's' : ''}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Bath className="w-3.5 h-3.5 text-gray-400" />
+                              <span>{room.bathrooms || 1} Bath{room.bathrooms > 1 ? 's' : ''}</span>
+                            </div>
+                            {room.size && (
+                              <div className="flex items-center gap-1.5">
+                                <Maximize className="w-3.5 h-3.5 text-gray-400" />
+                                <span>{room.size}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </Link>
                     );
@@ -817,7 +845,7 @@ const RoomsPage = () => {
                     <div className="text-xs text-gray-400 font-bold uppercase tracking-widest">
                       Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, totalItems)} of {totalItems} stays
                     </div>
-                    
+
                     {totalPages > 1 && (
                       <div className="flex items-center gap-1.5">
                         <button
@@ -827,7 +855,7 @@ const RoomsPage = () => {
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
-                        
+
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                           <button
                             key={page}
@@ -872,7 +900,7 @@ const RoomsPage = () => {
           </div>
 
           {/* RIGHT side: Sidebar Filters */}
-          <div className="hidden lg:block lg:col-span-4 bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-6 sticky top-24">
+          <div className="hidden lg:block lg:col-span-4 bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-6 sticky top-34">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-base font-black text-gray-800 uppercase tracking-wider flex items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4 text-violet-600" />
@@ -914,7 +942,7 @@ const RoomsPage = () => {
       {isMobileFilterOpen && (
         <div className="lg:hidden fixed inset-0 z-[100] flex justify-end">
           {/* Backdrop */}
-          <div 
+          <div
             onClick={() => setIsMobileFilterOpen(false)}
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
           />
@@ -935,7 +963,7 @@ const RoomsPage = () => {
                     Clear all
                   </button>
                 )}
-                <button 
+                <button
                   onClick={() => setIsMobileFilterOpen(false)}
                   className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer border-none bg-transparent"
                 >

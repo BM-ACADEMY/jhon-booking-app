@@ -21,7 +21,7 @@ const RoomsSection = () => {
           api.get('/rooms'),
           api.get('/categories')
         ]);
-        
+
         setRooms(roomsRes.data);
         const catNames = catsRes.data.map(c => c.name);
         setCategories(['All', ...catNames]);
@@ -56,7 +56,7 @@ const RoomsSection = () => {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
           <div>
             <h2 className="text-2xl sm:text-3xl font-medium text-gray-900 tracking-tight flex flex-wrap items-center gap-2">
-              Our <span className="">Hotel Rooms</span>
+              Our Hotel Rooms
             </h2>
           </div>
           <Link
@@ -85,15 +85,15 @@ const RoomsSection = () => {
                 <Link
                   key={room._id}
                   to={`/rooms/${getRoomSlug(room.name)}`}
-                  className="group bg-white rounded-[32px] border border-gray-100 p-3 flex flex-col hover:-translate-y-1.5 hover:shadow-xl hover:border-gray-200/80 transition-all duration-350"
+                  className="group bg-white rounded-[32px] border border-gray-100 p-3 flex flex-col  shadow-xl hover:border-gray-200/80 transition-all duration-350"
                 >
                   {/* Image Container */}
                   <div className="relative aspect-[4/3] rounded-[24px] overflow-hidden bg-gray-150 shadow-sm">
                     {room.images && room.images.length > 0 ? (
-                      <img 
-                        src={(() => { const u = room.images[0]?.url || room.images[0]; return typeof u === 'string' && u.startsWith('http') ? u : `${SERVER_URL}${u}`; })()} 
-                        alt={room.name} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" 
+                      <img
+                        src={(() => { const u = room.images[0]?.url || room.images[0]; return typeof u === 'string' && u.startsWith('http') ? u : `${SERVER_URL}${u}`; })()}
+                        alt={room.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -101,15 +101,8 @@ const RoomsSection = () => {
                       </div>
                     )}
 
-                    {/* Featured Badge */}
-                    {room.isFeatured && (
-                      <div className="absolute top-4 left-4 z-10 bg-amber-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
-                        <span>✦</span> Featured
-                      </div>
-                    )}
-
                     {/* Floating Heart Button on Top-Right */}
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -126,10 +119,7 @@ const RoomsSection = () => {
 
                     {/* Premium Price Tag Badge on Bottom-Right */}
                     <div className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full tracking-wide flex items-center gap-1.5 shadow-sm">
-                      {room.originalPrice && (
-                        <span className="text-[10px] text-white/50 line-through font-medium">₹{room.originalPrice}</span>
-                      )}
-                      <span>₹{room.price}</span>
+                      <span className="font-bold mr-1">₹{room.price?.toLocaleString('en-IN')}</span>
                       <span className="text-[9px] font-medium text-white/80">/ {room.priceUnit || 'night'}</span>
                     </div>
                   </div>
@@ -147,17 +137,17 @@ const RoomsSection = () => {
                     <p className="text-sm text-gray-400 font-medium mt-0.5 mb-2">
                       {room.address || `${room.city || 'Serenity Beach'}, India`}
                     </p>
-                    
+
                     <div className="flex items-center gap-1.5 mb-3">
                       <div className="flex gap-0.5">
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <Star 
-                            key={star} 
+                          <Star
+                            key={star}
                             className={`w-3.5 h-3.5 ${
-                              star <= Math.round(room.rating || 5) 
-                                ? 'fill-amber-400 text-amber-400' 
+                              star <= Math.round(room.rating || 5)
+                                ? 'fill-amber-400 text-amber-400'
                                 : 'text-gray-200'
-                            }`} 
+                            }`}
                           />
                         ))}
                       </div>

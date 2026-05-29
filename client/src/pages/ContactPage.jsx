@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Globe } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Globe, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import toast from 'react-hot-toast';
+import api from '../api';
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,31 @@ const ContactPage = () => {
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [settings, setSettings] = useState({
+    email: 'reservations@thebalified.com',
+    phone: '+1 (555) 123-4567',
+    address: '123 Luxury Ave, Coastal Estate',
+    checkInTime: '14:00',
+    checkOutTime: '11:00',
+    facebook: '',
+    instagram: '',
+    twitter: '',
+    linkedin: ''
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/settings');
+        if (res.data) {
+          setSettings(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch contact settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,46 +45,62 @@ const ContactPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    toast.success('Message sent successfully! We will get back to you soon.', {
-      style: {
-        borderRadius: '0px',
-        background: '#333',
-        color: '#fff',
-      },
-    });
-    setFormData({ name: '', email: '', subject: '', message: '' });
-    setIsSubmitting(false);
+
+    try {
+      await api.post('/messages/submit', formData);
+
+      toast.success('Message sent successfully! We will get back to you soon.', {
+        style: {
+          borderRadius: '0px',
+          background: '#333',
+          color: '#fff',
+        },
+      });
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send message. Please try again.', {
+        style: {
+          borderRadius: '0px',
+          background: '#333',
+          color: '#fff',
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
     {
       icon: <Phone className="w-5 h-5" />,
       label: 'Call Us',
-      value: '+1 (555) 123-4567',
-      description: 'Mon-Fri from 8am to 6pm.',
+      value: settings.phone,
     },
     {
       icon: <Mail className="w-5 h-5" />,
       label: 'Email Us',
-      value: 'reservations@thebalified.com',
+      value: settings.email,
       description: 'Our friendly team is here to help.',
     },
     {
       icon: <MapPin className="w-5 h-5" />,
       label: 'Visit Us',
-      value: '123 Luxury Ave, Coastal Estate',
+      value: settings.address,
       description: 'Come say hello at our reception.',
     },
     {
       icon: <Clock className="w-5 h-5" />,
       label: 'Working Hours',
-      value: '24/7 Service',
-      description: 'We never sleep for your comfort.',
+      value: `Check-in: ${settings.checkInTime} / Check-out: ${settings.checkOutTime}`,
+      description: 'Standard timings for your comfort.',
     },
+  ];
+
+  const socialLinks = [
+    { name: 'Facebook', url: settings.facebook || 'https://facebook.com', icon: <Facebook className="w-5 h-5" /> },
+    { name: 'Twitter', url: settings.twitter || 'https://twitter.com', icon: <Twitter className="w-5 h-5" /> },
+    { name: 'Instagram', url: settings.instagram || 'https://instagram.com', icon: <Instagram className="w-5 h-5" /> },
+    { name: 'LinkedIn', url: settings.linkedin || 'https://linkedin.com', icon: <Linkedin className="w-5 h-5" /> },
   ];
 
   return (
@@ -74,11 +116,11 @@ const ContactPage = () => {
           <div className="absolute inset-0 bg-black/60" />
         </div>
         <div className="relative z-10 text-center px-4 flex flex-col items-center w-full max-w-5xl mx-auto mt-12">
-          <span className="text-amber-500 font-bold tracking-[0.15em] uppercase text-sm md:text-base mb-4">
+          <span className="text-[#d9f969] font-bold tracking-[0.15em] uppercase text-sm md:text-base mb-4">
             Get in Touch
           </span>
           <h1 className="text-5xl md:text-7xl font-serif text-white mb-6">
-            Contact <span className="italic text-amber-500">Us</span>
+            Contact <span className="italic text-[#d9f969]">Us</span>
           </h1>
           <p className="text-lg md:text-2xl text-white max-w-2xl mx-auto font-light">
             Have questions? We're here to help you plan your perfect stay.
@@ -117,9 +159,16 @@ const ContactPage = () => {
             <div className="pt-10 border-t border-stone-200">
               <p className="text-sm font-semibold text-stone-400 uppercase tracking-widest mb-6">Follow Us</p>
               <div className="flex gap-4">
-                {['Facebook', 'Twitter', 'Instagram', 'LinkedIn'].map((social) => (
-                  <a key={social} href="#" className="w-12 h-12 border border-stone-200 bg-white flex items-center justify-center text-stone-600 hover:bg-amber-600 hover:text-white hover:border-amber-600 transition-all duration-300 rounded-sm">
-                    <Globe className="w-5 h-5" />
+                {socialLinks.map((social) => (
+                  <a
+                    key={social.name}
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={social.name}
+                    className="w-12 h-12 border border-stone-200 bg-white flex items-center justify-center text-stone-600 hover:bg-amber-600 hover:text-white hover:border-amber-600 transition-all duration-300 rounded-sm"
+                  >
+                    {social.icon}
                   </a>
                 ))}
               </div>
@@ -214,9 +263,9 @@ const ContactPage = () => {
       </section>
 
       {/* Map Section */}
-      <section className="h-[500px] w-full bg-stone-200 grayscale hover:grayscale-0 transition-all duration-700 relative overflow-hidden">
+      <section className="h-[500px] w-full bg-stone-200 transition-all duration-700 relative overflow-hidden">
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2624.9916256937595!2d2.29229261558235!3d48.8583736086224!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e66e2964e34e2d%3A0x8ddca979a7412e14!2sEiffel%20Tower!5e0!3m2!1sen!2sfr!4v1625672323565!5m2!1sen!2sfr"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3903.09121251625!2d79.8397885!3d11.968186500000002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a536365f691abb5%3A0x734a1822f8140975!2sThe%20Balified%20Villa!5e0!3m2!1sen!2sin!4v1780057279015!5m2!1sen!2sin"
           width="100%"
           height="100%"
           style={{ border: 0 }}

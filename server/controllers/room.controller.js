@@ -39,7 +39,13 @@ export const getRoomById = async (req, res) => {
     
     // If not found by ID, query by name-slug
     if (!room) {
-      const slugRegex = new RegExp('^' + req.params.id.split('-').join('[-\\s]') + '$', 'i');
+      const words = req.params.id.split('-');
+      const slugRegex = new RegExp(
+        '^\\W*' + 
+        words.map(w => w.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('\\W+') + 
+        '\\W*$', 
+        'i'
+      );
       room = await Room.findOne({ name: { $regex: slugRegex } });
     }
     

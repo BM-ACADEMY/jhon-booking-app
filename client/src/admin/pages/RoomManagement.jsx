@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { 
-  Plus, Search, Edit2, Trash2, BedDouble, Star, ChevronLeft, ChevronRight, 
-  Loader2, Folder, Tag, X, MapPin, Users, Home, Info, Image as ImageIcon, 
+import {
+  Plus, Search, Edit2, Trash2, BedDouble, Star, ChevronLeft, ChevronRight,
+  Loader2, Folder, Tag, X, MapPin, Users, Home, Info, Image as ImageIcon,
   Calendar, Check, Shield, Wifi, Car, Utensils, Coffee, Tv, Wind, Waves,
   Sparkles, Key, Zap, Heart
 } from 'lucide-react';
@@ -14,18 +14,19 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 const PAGE_SIZE = 6;
-const DEFAULT_ROOM_FORM = { 
-  name: '', 
-  category: '', 
+const DEFAULT_ROOM_FORM = {
+  name: '',
+  category: '',
   propertyType: '',
-  description: '', 
-  price: '', 
+  description: '',
+  price: '',
   originalPrice: '',
   priceUnit: 'night',
   guests: 2,
   bedrooms: 1,
   beds: 1,
   bathrooms: 1,
+  size: '',
   address: '',
   city: '',
   state: '',
@@ -33,7 +34,7 @@ const DEFAULT_ROOM_FORM = {
   amenities: [], // [{ name, icon }]
   highlights: [], // [{ icon, text, subtext }]
   images: [], // [{ url, label }]
-  isAvailable: true 
+  isAvailable: true
 };
 
 const ICON_LIST = [
@@ -74,16 +75,16 @@ const RoomManagement = () => {
   const [priceUnits, setPriceUnits] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [loadingCats, setLoadingCats] = useState(true);
-  
+
   const [newPropType, setNewPropType] = useState('');
   const [showPropTypeInput, setShowPropTypeInput] = useState(false);
   const [newPriceUnit, setNewPriceUnit] = useState({ name: '', label: '' });
   const [showPriceUnitInput, setShowPriceUnitInput] = useState(false);
-  
+
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [editRoomTarget, setEditRoomTarget] = useState(null);
   const [roomForm, setRoomForm] = useState(DEFAULT_ROOM_FORM);
@@ -241,7 +242,7 @@ const RoomManagement = () => {
   // --- Category Handlers ---
   const openCatCreate = () => { setEditCatTarget(null); setCatForm(DEFAULT_CAT_FORM); setShowCatModal(true); };
   const openCatEdit = (c) => { setEditCatTarget(c); setCatForm({ name: c.name, description: c.description || '', color: c.color }); setShowCatModal(true); };
-  
+
   const handleSaveCat = async () => {
     if (!catForm.name.trim()) return toast.error('Category name is required');
     try {
@@ -304,6 +305,7 @@ const RoomManagement = () => {
       bedrooms: draft.bedrooms || 1,
       beds: draft.beds || 1,
       bathrooms: draft.bathrooms || 1,
+      size: draft.size || '',
       address: draft.address || '',
       city: draft.city || '',
       state: draft.state || '',
@@ -341,6 +343,7 @@ const RoomManagement = () => {
       bedrooms: r.bedrooms || 1,
       beds: r.beds || 1,
       bathrooms: r.bathrooms || 1,
+      size: r.size || '',
       address: r.address || '',
       city: r.city || '',
       state: r.state || '',
@@ -461,14 +464,14 @@ const cat = categories.find(c => c.name === catName);
           <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Control your listings and configurations</p>
         </div>
         <div className="flex gap-2">
-           <button 
-             onClick={() => setActiveMainTab('rooms')} 
+           <button
+             onClick={() => setActiveMainTab('rooms')}
              className={`cursor-pointer px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${activeMainTab === 'rooms' ? 'bg-primary-600 text-white shadow-xl shadow-primary-500/20' : 'bg-white text-gray-500 border border-gray-100 hover:bg-gray-50'}`}
            >
              Rooms
            </button>
-           <button 
-             onClick={() => setActiveMainTab('settings')} 
+           <button
+             onClick={() => setActiveMainTab('settings')}
              className={`cursor-pointer px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${activeMainTab === 'settings' ? 'bg-primary-600 text-white shadow-xl shadow-primary-500/20' : 'bg-white text-gray-500 border border-gray-100 hover:bg-gray-50'}`}
            >
              Settings
@@ -489,7 +492,7 @@ const cat = categories.find(c => c.name === catName);
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
-              
+
               <div className="space-y-1.5">
                 <button
                   onClick={() => setActiveCategory('All')}
@@ -554,8 +557,8 @@ const cat = categories.find(c => c.name === catName);
                 <button
                   onClick={() => setActiveCategory('All')}
                   className={`cursor-pointer px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
-                    activeCategory === 'All' 
-                      ? 'bg-primary-600 text-white border-primary-600 shadow-md shadow-primary-500/20' 
+                    activeCategory === 'All'
+                      ? 'bg-primary-600 text-white border-primary-600 shadow-md shadow-primary-500/20'
                       : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                   }`}
                 >
@@ -566,8 +569,8 @@ const cat = categories.find(c => c.name === catName);
                     <button
                       onClick={() => setActiveCategory(cat.name)}
                       className={`cursor-pointer px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap border ${
-                        activeCategory === cat.name 
-                          ? 'bg-primary-600 text-white border-primary-600 shadow-md shadow-primary-500/20' 
+                        activeCategory === cat.name
+                          ? 'bg-primary-600 text-white border-primary-600 shadow-md shadow-primary-500/20'
                           : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                       }`}
                     >
@@ -644,7 +647,7 @@ const cat = categories.find(c => c.name === catName);
                       <span className="text-[10px] font-bold text-gray-700">{room.rating || 'New'}</span>
                     </div>
                   </div>
-                  
+
                   <p className="text-xs text-gray-500 line-clamp-2 mb-4 flex-1">{room.description ? room.description.replace(/<[^>]*>/g, '') : 'No description provided.'}</p>
 
                   <div className="flex items-end justify-between mt-auto pt-4 border-t border-gray-50">
@@ -782,7 +785,7 @@ const cat = categories.find(c => c.name === catName);
     )}
 
       {/* --- Modals --- */}
-      
+
       {/* Room Modal */}
       {showRoomModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -827,7 +830,7 @@ const cat = categories.find(c => c.name === catName);
                     <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Property Name *</label>
                     <input type="text" value={roomForm.name} onChange={(e) => setRoomForm(p => ({ ...p, name: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all bg-gray-50 focus:bg-white" placeholder="e.g. Villa Mandala Serenity" />
                   </div>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Property Type</label>
@@ -860,12 +863,12 @@ const cat = categories.find(c => c.name === catName);
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Discount Price ($) *</label>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Price (₹) *</label>
                       <input type="number" value={roomForm.price} onChange={(e) => setRoomForm(p => ({ ...p, price: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-gray-50 focus:bg-white" placeholder="e.g. 200" />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Original Price ($)</label>
-                      <input type="number" value={roomForm.originalPrice} onChange={(e) => setRoomForm(p => ({ ...p, originalPrice: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-gray-50 focus:bg-white" placeholder="e.g. 250" />
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Size (optional)</label>
+                      <input type="text" value={roomForm.size} onChange={(e)=> setRoomForm(p=>({ ...p, size: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-gray-50 focus:bg-white" placeholder="e.g. 35 m²" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Price Unit</label>
@@ -893,9 +896,9 @@ const cat = categories.find(c => c.name === catName);
                   <div>
                     <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Description (Rich Text)</label>
                     <div className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 quill-responsive-container">
-                      <ReactQuill 
-                        theme="snow" 
-                        value={roomForm.description} 
+                      <ReactQuill
+                        theme="snow"
+                        value={roomForm.description}
                         onChange={(content) => setRoomForm(p => ({ ...p, description: content }))}
                         modules={quillModules}
                         formats={quillFormats}
@@ -937,10 +940,10 @@ const cat = categories.find(c => c.name === catName);
                       <div key={field.id} className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col items-center">
                         <field.icon className="w-5 h-5 text-primary-500 mb-3" />
                         <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">{field.label}</label>
-                        <input 
-                          type="number" 
-                          value={roomForm[field.id]} 
-                          onChange={(e) => setRoomForm(p => ({ ...p, [field.id]: e.target.value }))} 
+                        <input
+                          type="number"
+                          value={roomForm[field.id]}
+                          onChange={(e) => setRoomForm(p => ({ ...p, [field.id]: e.target.value }))}
                           className="w-full bg-white border border-gray-200 rounded-lg px-2 py-2 text-center text-sm font-black outline-none focus:border-primary-500 transition-all"
                         />
                       </div>
@@ -971,7 +974,7 @@ const cat = categories.find(c => c.name === catName);
                       <h4 className="text-gray-900 text-xs font-black uppercase tracking-widest flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-amber-500" /> Key Highlights
                       </h4>
-                      <button 
+                      <button
                         onClick={() => setRoomForm(p => ({ ...p, highlights: [...p.highlights, { icon: 'Star', text: '', subtext: '' }] }))}
                         className="cursor-pointer text-[10px] font-bold bg-primary-50 text-primary-600 px-3 py-1 rounded-lg hover:bg-primary-100 transition-all"
                       >
@@ -982,8 +985,8 @@ const cat = categories.find(c => c.name === catName);
                       {roomForm.highlights.map((h, i) => (
                         <div key={i} className="flex gap-3 items-start bg-gray-50 p-3 rounded-2xl border border-gray-100 group">
                            <div className="relative">
-                              <select 
-                                value={h.icon} 
+                              <select
+                                value={h.icon}
                                 onChange={(e) => {
                                   const next = [...roomForm.highlights];
                                   next[i].icon = e.target.value;
@@ -1001,27 +1004,27 @@ const cat = categories.find(c => c.name === catName);
                               </div>
                            </div>
                            <div className="flex-1 space-y-2">
-                              <input 
-                                type="text" 
-                                placeholder="Main text (e.g. Great Location)" 
+                              <input
+                                type="text"
+                                placeholder="Main text (e.g. Great Location)"
                                 value={h.text}
                                 onChange={(e) => {
                                   const next = [...roomForm.highlights];
                                   next[i].text = e.target.value;
                                   setRoomForm(p => ({ ...p, highlights: next }));
                                 }}
-                                className="w-full bg-transparent border-b border-gray-200 text-sm font-bold outline-none focus:border-primary-500" 
+                                className="w-full bg-transparent border-b border-gray-200 text-sm font-bold outline-none focus:border-primary-500"
                               />
-                              <input 
-                                type="text" 
-                                placeholder="Subtext (e.g. 95% of recent guests gave 5 stars)" 
+                              <input
+                                type="text"
+                                placeholder="Subtext (e.g. 95% of recent guests gave 5 stars)"
                                 value={h.subtext}
                                 onChange={(e) => {
                                   const next = [...roomForm.highlights];
                                   next[i].subtext = e.target.value;
                                   setRoomForm(p => ({ ...p, highlights: next }));
                                 }}
-                                className="w-full bg-transparent border-b border-gray-200 text-[10px] outline-none focus:border-primary-400" 
+                                className="w-full bg-transparent border-b border-gray-200 text-[10px] outline-none focus:border-primary-400"
                               />
                            </div>
                            <button onClick={() => setRoomForm(p => ({ ...p, highlights: p.highlights.filter((_, idx) => idx !== i) }))} className="p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
@@ -1038,7 +1041,7 @@ const cat = categories.find(c => c.name === catName);
                       <h4 className="text-gray-900 text-xs font-black uppercase tracking-widest flex items-center gap-2">
                         <Check className="w-4 h-4 text-emerald-500" /> Amenities
                       </h4>
-                      <button 
+                      <button
                         onClick={() => setRoomForm(p => ({ ...p, amenities: [...p.amenities, { name: '', icon: 'Check' }] }))}
                         className="cursor-pointer text-[10px] font-bold bg-primary-50 text-primary-600 px-3 py-1 rounded-lg hover:bg-primary-100 transition-all"
                       >
@@ -1049,8 +1052,8 @@ const cat = categories.find(c => c.name === catName);
                       {roomForm.amenities.map((a, i) => (
                         <div key={i} className="flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-100 group">
                            <div className="relative">
-                              <select 
-                                value={a.icon} 
+                              <select
+                                value={a.icon}
                                 onChange={(e) => {
                                   const next = [...roomForm.amenities];
                                   next[i].icon = e.target.value;
@@ -1067,16 +1070,16 @@ const cat = categories.find(c => c.name === catName);
                                 })()}
                               </div>
                            </div>
-                           <input 
-                              type="text" 
-                              placeholder="Amenity name" 
+                           <input
+                              type="text"
+                              placeholder="Amenity name"
                               value={a.name}
                               onChange={(e) => {
                                 const next = [...roomForm.amenities];
                                 next[i].name = e.target.value;
                                 setRoomForm(p => ({ ...p, amenities: next }));
                               }}
-                              className="flex-1 bg-transparent border-b border-gray-200 text-xs font-bold outline-none focus:border-primary-500" 
+                              className="flex-1 bg-transparent border-b border-gray-200 text-xs font-bold outline-none focus:border-primary-500"
                             />
                            <button onClick={() => setRoomForm(p => ({ ...p, amenities: p.amenities.filter((_, idx) => idx !== i) }))} className="p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1130,16 +1133,16 @@ const cat = categories.find(c => c.name === catName);
                                 <button type="button" onClick={() => setRoomForm(p => ({ ...p, images: p.images.filter((_, i) => i !== idx) }))} className="bg-red-500 text-white p-2 rounded-xl hover:bg-red-600 transition-all shadow-lg"><Trash2 className="w-4 h-4" /></button>
                              </div>
                           </div>
-                          <input 
-                            type="text" 
-                            placeholder="Image label (e.g. Kitchen)" 
-                            value={img.label} 
+                          <input
+                            type="text"
+                            placeholder="Image label (e.g. Kitchen)"
+                            value={img.label}
                             onChange={(e) => {
                               const next = [...roomForm.images];
                               next[idx].label = e.target.value;
                               setRoomForm(p => ({ ...p, images: next }));
                             }}
-                            className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[10px] font-bold outline-none focus:border-primary-500" 
+                            className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[10px] font-bold outline-none focus:border-primary-500"
                           />
                        </div>
                      ))}
@@ -1152,16 +1155,16 @@ const cat = categories.find(c => c.name === catName);
                                 <button type="button" onClick={() => setRoomImages(p => p.filter((_, i) => i !== idx))} className="bg-red-500 text-white p-2 rounded-xl hover:bg-red-600 transition-all shadow-lg"><Trash2 className="w-4 h-4" /></button>
                              </div>
                           </div>
-                          <input 
-                            type="text" 
-                            placeholder="New label..." 
-                            value={imgObj.label || ''} 
+                          <input
+                            type="text"
+                            placeholder="New label..."
+                            value={imgObj.label || ''}
                             onChange={(e) => {
                               const next = [...roomImages];
                               next[idx].label = e.target.value;
                               setRoomImages(next);
                             }}
-                            className="bg-white border border-primary-200 rounded-lg px-3 py-1.5 text-[10px] font-bold outline-none focus:border-primary-500" 
+                            className="bg-white border border-primary-200 rounded-lg px-3 py-1.5 text-[10px] font-bold outline-none focus:border-primary-500"
                           />
                        </div>
                      ))}
@@ -1359,9 +1362,9 @@ const cat = categories.find(c => c.name === catName);
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {viewRoomTarget.images.map((img, i) => (
                     <div key={i} className={`relative rounded-2xl overflow-hidden border border-gray-100 shadow-sm ${i === 0 ? 'md:col-span-2 md:row-span-2' : ''}`}>
-                      <img 
-                        src={img.url.startsWith('http') ? img.url : `${SERVER_URL}${img.url}`} 
-                        alt={img.label} 
+                      <img
+                        src={img.url.startsWith('http') ? img.url : `${SERVER_URL}${img.url}`}
+                        alt={img.label}
                         className="w-full h-full object-cover aspect-video"
                       />
                       {img.label && (
@@ -1406,7 +1409,7 @@ const cat = categories.find(c => c.name === catName);
                     <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-3 flex items-center gap-2">
                       <Info className="w-3.5 h-3.5 text-primary-500" /> About Property
                     </h4>
-                    <div 
+                    <div
                       className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
                       dangerouslySetInnerHTML={{ __html: viewRoomTarget.description || 'No description provided.' }}
                     />
@@ -1459,7 +1462,7 @@ const cat = categories.find(c => c.name === catName);
                       )}
                     </div>
                     <p className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">per {viewRoomTarget.priceUnit || 'night'}</p>
-                    
+
                     <div className="mt-6 pt-6 border-t border-white/10 space-y-3">
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Availability</span>
@@ -1504,13 +1507,13 @@ const cat = categories.find(c => c.name === catName);
 
             {/* Modal Footer */}
             <div className="px-4 sm:px-8 py-4 sm:py-5 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-end gap-2.5 sm:gap-3">
-              <button 
+              <button
                 onClick={() => setViewRoomTarget(null)}
                 className="w-full sm:w-auto px-6 py-2.5 bg-white border border-gray-200 text-gray-600 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-gray-100 transition-all text-center"
               >
                 Close View
               </button>
-              <button 
+              <button
                 onClick={() => { setViewRoomTarget(null); openRoomEdit(viewRoomTarget); }}
                 className="w-full sm:w-auto px-6 py-2.5 bg-primary-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-500/20 transition-all text-center"
               >

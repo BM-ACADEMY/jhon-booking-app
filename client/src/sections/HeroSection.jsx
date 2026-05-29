@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CalendarDays, Users, Search, Navigation, ChevronDown, Bell, X } from 'lucide-react';
+import { CalendarDays, Users, Search, Navigation, ChevronDown, Bell, X, AlertTriangle } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import api from '../api';
@@ -15,6 +15,7 @@ const HeroSection = () => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
   const [guests, setGuests] = useState('');
+  const [showError, setShowError] = useState(false);
 
   // Mobile Search Modal & Animation State
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -37,6 +38,15 @@ const HeroSection = () => {
   };
 
   const handleSearch = () => {
+    if (!startDate || !endDate || !guests) {
+      setShowError(true);
+      // Auto-hide the validation error banner after exactly 3 seconds
+      const timer = setTimeout(() => {
+        setShowError(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+    setShowError(false);
     const checkInStr = formatDateLocal(startDate);
     const checkOutStr = formatDateLocal(endDate);
     setIsMobileSearchOpen(false);
@@ -262,6 +272,19 @@ const HeroSection = () => {
               </button>
             </div>
           </div>
+
+          {/* Error Banner below Desktop Booking Bar (placed on the left side with an upward pointing arrow - ultra compact size) */}
+          {showError && (
+            <div className="hidden lg:block w-full max-w-4xl relative z-30">
+              <div className="absolute left-8 top-3 bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] px-3 py-1.5 rounded-lg shadow-md animate-in fade-in slide-in-from-top-1 duration-300 w-fit flex items-center gap-1.5">
+                {/* Upward pointing indicator arrow */}
+                <div className="absolute -top-[4.5px] left-6 w-2 h-2 bg-[#FFFBEB] border-t border-l border-[#FDE68A] rotate-45"></div>
+                
+                <AlertTriangle className="w-3.5 h-3.5 text-[#D97706] shrink-0 relative z-10" strokeWidth={2.5} />
+                <span className="font-semibold text-[11px] tracking-wide relative z-10">Please select check-in, check-out dates and guest count!</span>
+              </div>
+            </div>
+          )}
           
         </div>
       </section>
@@ -341,6 +364,13 @@ const HeroSection = () => {
                   </select>
                 </div>
               </div>
+
+              {showError && (
+                <div className="flex items-center gap-3 bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] px-4 py-3.5 rounded-2xl shadow-md animate-in fade-in duration-200">
+                  <AlertTriangle className="w-5 h-5 text-[#D97706] shrink-0" strokeWidth={2} />
+                  <span className="font-semibold text-xs">Please select check-in, check-out dates and guest count!</span>
+                </div>
+              )}
 
               <button
                 onClick={handleSearch}

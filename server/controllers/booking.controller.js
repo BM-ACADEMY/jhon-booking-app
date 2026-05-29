@@ -1,6 +1,7 @@
 import Booking from '../models/Booking.js';
 import Room from '../models/Room.js';
 import User from '../models/User.js';
+import Review from '../models/Review.js';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
@@ -65,7 +66,17 @@ export const getMyBookings = async (req, res) => {
     const bookings = await Booking.find({ user: req.user._id })
       .populate('room', 'name category price images')
       .sort({ createdAt: -1 });
-    res.json(bookings);
+
+    const reviews = await Review.find({ user: req.user._id });
+    const reviewedBookingIds = reviews.map(r => r.booking?.toString()).filter(Boolean);
+
+    const bookingsWithReviewStatus = bookings.map(b => {
+      const bObj = b.toObject();
+      bObj.isReviewed = reviewedBookingIds.includes(b._id.toString());
+      return bObj;
+    });
+
+    res.json(bookingsWithReviewStatus);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

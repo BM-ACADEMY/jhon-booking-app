@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import api from '../../api';
 import {
   LayoutDashboard,
   BedDouble,
@@ -12,6 +14,7 @@ import {
   Hotel,
   ChevronRight,
   User,
+  MessageSquare,
 } from 'lucide-react';
 
 const navItems = [
@@ -20,7 +23,9 @@ const navItems = [
   { label: 'Rooms & Categories', icon: BedDouble, path: '/admin/rooms' },
   { label: 'Bookings', icon: CalendarCheck, path: '/admin/bookings' },
   { label: 'Users', icon: Users, path: '/admin/users' },
+  { label: 'Rooms Review', icon: Star, path: '/admin/reviews' },
   { label: 'Testimonials', icon: Star, path: '/admin/testimonials' },
+  { label: 'Messages', icon: MessageSquare, path: '/admin/messages' },
   // { label: 'Dynamic Sections', icon: Layers, path: '/admin/sections' },
   { label: 'Settings', icon: Settings, path: '/admin/settings' },
   { label: 'Profile', icon: User, path: '/admin/profile' },
@@ -28,6 +33,24 @@ const navItems = [
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await api.get('/messages');
+        const count = res.data.filter(m => !m.read).length;
+        setUnreadCount(count);
+      } catch (err) {
+        console.error('Failed to fetch unread messages count', err);
+      }
+    };
+    fetchUnreadCount();
+    
+    // Poll every 30 seconds for live updates
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -98,6 +121,11 @@ const Sidebar = ({ isOpen, onClose }) => {
                     )}
                     <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-primary-400' : 'text-gray-500 group-hover:text-white'}`} />
                     <span className="flex-1">{label}</span>
+                    {label === 'Messages' && unreadCount > 0 && (
+                      <span className="px-2 py-0.5 text-[10px] font-black bg-primary-500 text-white rounded-full leading-none mr-1.5">
+                        {unreadCount}
+                      </span>
+                    )}
                     {isActive && <ChevronRight className="w-3.5 h-3.5 text-primary-400" />}
                   </NavLink>
                 </li>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, CreditCard, ChevronRight, Loader2, BedDouble } from 'lucide-react';
+import { Calendar, MapPin, Clock, CreditCard, ChevronLeft, ChevronRight, Loader2, BedDouble, Star, X, UploadCloud } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import api from '../api';
 
 const SERVER_URL = import.meta.env.VITE_BASE_URL;
@@ -14,6 +15,19 @@ const getImageUrl = (img) => {
 const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Review Modal States
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [commRating, setCommRating] = useState(5);
+  const [cleanRating, setCleanRating] = useState(5);
+  const [comfRating, setComfRating] = useState(5);
+  const [facRating, setFacRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -29,6 +43,66 @@ const MyBookings = () => {
     fetchBookings();
   }, []);
 
+  const handleOpenReviewModal = (booking) => {
+    setSelectedBooking(booking);
+    setCommRating(5);
+    setCleanRating(5);
+    setComfRating(5);
+    setFacRating(5);
+    setComment('');
+    setSelectedFiles([]);
+    setPreviews([]);
+  };
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedFiles(files);
+
+    const filePreviews = files.map(file => URL.createObjectURL(file));
+    setPreviews(filePreviews);
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedBooking) return;
+    
+    setSubmittingReview(true);
+    const formData = new FormData();
+    formData.append('bookingId', selectedBooking._id);
+    formData.append('communication', commRating);
+    formData.append('cleanliness', cleanRating);
+    formData.append('comfort', comfRating);
+    formData.append('facilities', facRating);
+    formData.append('comment', comment);
+    
+    selectedFiles.forEach((file) => {
+      formData.append('images', file);
+    });
+
+    try {
+      const res = await api.post('/reviews', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      toast.success(res.data.message || 'Review submitted successfully!');
+      
+      // Update booking list to reflect isReviewed
+      setBookings(prev => prev.map(b => b._id === selectedBooking._id ? { ...b, isReviewed: true } : b));
+      setSelectedBooking(null);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit review');
+      console.error(err);
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const indexOfLastBooking = currentPage * itemsPerPage;
+  const indexOfFirstBooking = indexOfLastBooking - itemsPerPage;
+  const currentBookings = bookings.slice(indexOfFirstBooking, indexOfLastBooking);
+  const totalPages = Math.ceil(bookings.length / itemsPerPage);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -38,8 +112,8 @@ const MyBookings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
         <div className="mb-10">
           <h1 className="text-3xl font-black text-gray-900">My Bookings</h1>
           <p className="text-gray-500 mt-2 font-medium">Manage your upcoming and past stays</p>
@@ -58,27 +132,38 @@ const MyBookings = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {bookings.map((booking) => (
-              <div key={booking._id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row">
-                {/* Room Preview */}
-                <div className="w-full md:w-64 h-48 md:h-auto relative bg-gray-100 flex-shrink-0">
-                  {booking.room.images?.[0] ? (
-                    <img src={getImageUrl(booking.room.images[0])} alt={booking.room.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <BedDouble className="w-12 h-12 text-gray-200" />
+            {currentBookings.map((booking) => {
+              const checkOutDate = new Date(booking.checkOut);
+              checkOutDate.setHours(0, 0, 0, 0);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const isPast = checkOutDate < today;
+              return (
+                <div key={booking._id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row">
+                  {/* Room Preview */}
+                  <div className="w-full md:w-64 h-48 md:h-auto relative bg-gray-100 flex-shrink-0">
+                    {booking.room.images?.[0] ? (
+                      <img
+                        src={getImageUrl(booking.room.images[0])}
+                        alt={booking.room.name}
+                        className={`w-full h-full object-cover transition-all duration-500 ${isPast ? 'grayscale opacity-75' : ''}`}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <BedDouble className="w-12 h-12 text-gray-200" />
+                      </div>
+                    )}
+                    <div className="absolute top-4 left-4">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                        isPast ? 'bg-gray-100 text-gray-500 border-gray-200' :
+                        booking.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                        booking.status === 'cancelled' ? 'bg-red-50 text-red-600 border-red-100' :
+                        'bg-amber-50 text-amber-600 border-amber-100'
+                      }`}>
+                        {isPast ? 'completed' : booking.status}
+                      </span>
                     </div>
-                  )}
-                  <div className="absolute top-4 left-4">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                      booking.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
-                      booking.status === 'cancelled' ? 'bg-red-50 text-red-600 border-red-100' : 
-                      'bg-amber-50 text-amber-600 border-amber-100'
-                    }`}>
-                      {booking.status}
-                    </span>
                   </div>
-                </div>
 
                 {/* Booking Info */}
                 <div className="p-6 md:p-8 flex-1 flex flex-col justify-between">
@@ -89,7 +174,7 @@ const MyBookings = () => {
                         <h2 className="text-xl font-black text-gray-900 line-clamp-1">{booking.room.name}</h2>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-black text-gray-900">${booking.totalAmount}</p>
+                        <p className="text-sm font-black text-gray-900">₹{booking.totalAmount?.toLocaleString('en-IN')}</p>
                         <p className="text-[10px] text-gray-400 font-bold uppercase">Total Paid</p>
                       </div>
                     </div>
@@ -112,8 +197,8 @@ const MyBookings = () => {
                     </div>
                   </div>
 
-                  <div className="mt-6 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                  <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between border-t border-gray-50 pt-4 gap-4">
+                    <div className="flex items-center gap-4 flex-wrap">
                       <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                         <Clock className="w-4 h-4 text-gray-400" />
                         Booked on {new Date(booking.createdAt).toLocaleDateString()}
@@ -125,16 +210,268 @@ const MyBookings = () => {
                         </div>
                       )}
                     </div>
-                    <Link to={`/rooms/${booking.room._id}`} className="p-2 hover:bg-gray-50 rounded-xl transition-all">
-                      <ChevronRight className="w-5 h-5 text-gray-300" />
-                    </Link>
+                    <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-50">
+                      {isPast && (
+                        booking.isReviewed ? (
+                          <span className="bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full border border-emerald-100">
+                            Reviewed
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleOpenReviewModal(booking)}
+                            className="bg-primary-600 hover:bg-primary-700 text-white active:scale-95 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl shadow-md shadow-primary-600/10 transition-all cursor-pointer"
+                          >
+                            Start Review
+                          </button>
+                        )
+                      )}
+                      <Link to={`/rooms/${booking.room._id}`} className="p-2 hover:bg-gray-50 rounded-xl transition-all">
+                        <ChevronRight className="w-5 h-5 text-gray-300" />
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-between bg-white border border-gray-100 px-6 py-4 rounded-3xl shadow-sm gap-4">
+                <div className="flex flex-1 justify-between w-full sm:hidden">
+                  <button
+                    onClick={() => {
+                      setCurrentPage((prev) => Math.max(prev - 1, 1));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-black text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    disabled={currentPage === totalPages}
+                    className="relative inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-black text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Next
+                  </button>
+                </div>
+                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between w-full">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">
+                      Showing <span className="font-bold text-gray-900">{indexOfFirstBooking + 1}</span> to{' '}
+                      <span className="font-bold text-gray-900">
+                        {Math.min(indexOfLastBooking, bookings.length)}
+                      </span>{' '}
+                      of <span className="font-bold text-gray-900">{bookings.length}</span> bookings
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="flex items-center gap-2" aria-label="Pagination">
+                      <button
+                        onClick={() => {
+                          setCurrentPage((prev) => Math.max(prev - 1, 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={currentPage === 1}
+                        className="relative inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-100 bg-white text-gray-500 hover:bg-gray-50 hover:border-gray-200 active:scale-95 disabled:opacity-40 disabled:hover:bg-white disabled:hover:border-gray-100 disabled:scale-100 shadow-sm transition-all"
+                      >
+                        <span className="sr-only">Previous</span>
+                        <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                      </button>
+
+                      {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          onClick={() => {
+                            setCurrentPage(pageNum);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className={`relative inline-flex items-center justify-center w-10 h-10 rounded-xl text-sm font-black transition-all active:scale-95 ${
+                            currentPage === pageNum
+                              ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20 hover:bg-primary-700'
+                              : 'text-gray-700 border border-gray-100 bg-white hover:bg-gray-50 hover:border-gray-200 shadow-sm'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+
+                      <button
+                        onClick={() => {
+                          setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={currentPage === totalPages}
+                        className="relative inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-100 bg-white text-gray-500 hover:bg-gray-50 hover:border-gray-200 active:scale-95 disabled:opacity-40 disabled:hover:bg-white disabled:hover:border-gray-100 disabled:scale-100 shadow-sm transition-all"
+                      >
+                        <span className="sr-only">Next</span>
+                        <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Review Modal */}
+      {selectedBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Overlay */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => setSelectedBooking(null)}
+          />
+          
+          {/* Content Card */}
+          <div className="bg-white rounded-[2rem] w-full max-w-lg p-6 sm:p-8 relative z-10 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mb-1">{selectedBooking.room.category}</p>
+                <h2 className="text-xl font-black text-gray-900 leading-snug">Review {selectedBooking.room.name}</h2>
+              </div>
+              <button
+                onClick={() => setSelectedBooking(null)}
+                className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-900 active:scale-95 transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleReviewSubmit} className="space-y-6">
+              {/* Ratings */}
+              <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-4 space-y-1">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Category Ratings</h3>
+                
+                {/* Communication */}
+                <div className="flex items-center justify-between py-2 border-b border-gray-100/50">
+                  <span className="text-sm font-bold text-gray-700">Communication</span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setCommRating(star)}
+                        className="p-0.5 hover:scale-110 active:scale-95 transition-all text-[#FCE83A] focus:outline-none cursor-pointer"
+                      >
+                        <Star className={`w-5 h-5 ${star <= commRating ? 'fill-[#FCE83A] text-[#FCE83A]' : 'text-gray-200'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Cleanliness */}
+                <div className="flex items-center justify-between py-2 border-b border-gray-100/50">
+                  <span className="text-sm font-bold text-gray-700">Cleanliness</span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setCleanRating(star)}
+                        className="p-0.5 hover:scale-110 active:scale-95 transition-all text-[#FCE83A] focus:outline-none cursor-pointer"
+                      >
+                        <Star className={`w-5 h-5 ${star <= cleanRating ? 'fill-[#FCE83A] text-[#FCE83A]' : 'text-gray-200'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Comfort */}
+                <div className="flex items-center justify-between py-2 border-b border-gray-100/50">
+                  <span className="text-sm font-bold text-gray-700">Comfort</span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setComfRating(star)}
+                        className="p-0.5 hover:scale-110 active:scale-95 transition-all text-[#FCE83A] focus:outline-none cursor-pointer"
+                      >
+                        <Star className={`w-5 h-5 ${star <= comfRating ? 'fill-[#FCE83A] text-[#FCE83A]' : 'text-gray-200'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Facilities */}
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm font-bold text-gray-700">Facilities</span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setFacRating(star)}
+                        className="p-0.5 hover:scale-110 active:scale-95 transition-all text-[#FCE83A] focus:outline-none cursor-pointer"
+                      >
+                        <Star className={`w-5 h-5 ${star <= facRating ? 'fill-[#FCE83A] text-[#FCE83A]' : 'text-gray-200'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Comment */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Detailed Feedback</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Share your stay experience! What did you enjoy? What could we improve?"
+                  className="w-full bg-gray-50/50 hover:bg-gray-50 focus:bg-white border border-gray-200 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 rounded-2xl p-4 text-sm outline-none transition-all placeholder-gray-400"
+                />
+              </div>
+
+              {/* Photos Upload */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Upload Room Photos</label>
+                <div className="border-2 border-dashed border-gray-200 hover:border-primary-500 rounded-2xl p-6 transition-all flex flex-col items-center justify-center bg-gray-50/50 cursor-pointer relative group">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-primary-500 transition-colors mb-2" />
+                  <p className="text-xs text-gray-500 font-bold text-center">Click or drag images to upload</p>
+                  <p className="text-[10px] text-gray-400 font-medium text-center mt-1">Supports PNG, JPG, JPEG, WEBP</p>
+                </div>
+                
+                {previews.length > 0 && (
+                  <div className="flex gap-2.5 overflow-x-auto py-2">
+                    {previews.map((src, i) => (
+                      <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-100 shadow-sm flex-shrink-0">
+                        <img src={src} alt="Upload Preview" className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={submittingReview}
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white text-sm font-black uppercase tracking-widest py-4 rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-primary-600/10 flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submittingReview && <Loader2 className="w-4 h-4 animate-spin" />}
+                Submit Review
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
