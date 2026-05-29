@@ -478,8 +478,8 @@ const cat = categories.find(c => c.name === catName);
 
       {activeMainTab === 'rooms' ? (
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar: Categories */}
-          <div className="w-full lg:w-64 flex-shrink-0 space-y-4">
+          {/* Sidebar: Categories (Desktop only) */}
+          <div className="hidden lg:block w-64 flex-shrink-0 space-y-4">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sticky top-6">
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
                 <h2 className="font-black text-gray-900 flex items-center gap-2">
@@ -540,6 +540,51 @@ const cat = categories.find(c => c.name === catName);
 
           {/* Main Content: Rooms */}
           <div className="flex-1 space-y-5 min-w-0">
+            {/* Mobile Categories (Horizontal Swipeable Strip) */}
+            <div className="block lg:hidden w-full pb-2">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-black text-gray-955 text-sm flex items-center gap-2">
+                  <Folder className="w-4 h-4 text-primary-500" /> Filter Categories
+                </h2>
+                <button onClick={openCatCreate} className="cursor-pointer p-1.5 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 transition-colors text-xs font-bold flex items-center gap-1">
+                  <Plus className="w-3.5 h-3.5" /> Category
+                </button>
+              </div>
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1 -mx-4 px-4">
+                <button
+                  onClick={() => setActiveCategory('All')}
+                  className={`cursor-pointer px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
+                    activeCategory === 'All' 
+                      ? 'bg-primary-600 text-white border-primary-600 shadow-md shadow-primary-500/20' 
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  All Properties ({rooms.length})
+                </button>
+                {categories.map((cat) => (
+                  <div key={cat._id} className="relative flex-shrink-0 group">
+                    <button
+                      onClick={() => setActiveCategory(cat.name)}
+                      className={`cursor-pointer px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap border ${
+                        activeCategory === cat.name 
+                          ? 'bg-primary-600 text-white border-primary-600 shadow-md shadow-primary-500/20' 
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${cat.color.split(' ')[0]}`} />
+                      {cat.name} ({rooms.filter(r => r.category === cat.name).length})
+                    </button>
+                    {activeCategory === cat.name && (
+                      <span className="absolute -top-1 -right-1 flex gap-0.5 bg-white border border-gray-200 rounded-full p-0.5 shadow-sm">
+                        <button onClick={() => openCatEdit(cat)} className="p-0.5 text-gray-500 hover:text-primary-600"><Edit2 className="w-2.5 h-2.5" /></button>
+                        <button onClick={() => setDeleteCatTarget(cat)} className="p-0.5 text-gray-500 hover:text-red-500"><Trash2 className="w-2.5 h-2.5" /></button>
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Toolbar */}
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
               <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 w-full sm:w-80 shadow-sm focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all">
@@ -552,7 +597,7 @@ const cat = categories.find(c => c.name === catName);
                   className="text-sm text-gray-700 placeholder-gray-400 outline-none w-full bg-transparent"
                 />
               </div>
-              <button onClick={openRoomCreate} className="cursor-pointer flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary-500/20">
+              <button onClick={openRoomCreate} className="cursor-pointer flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary-500/20 w-full sm:w-auto">
                 <Plus className="w-4 h-4" /> Add Room
               </button>
             </div>
@@ -615,15 +660,15 @@ const cat = categories.find(c => c.name === catName);
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 mt-4">
-                     <button onClick={() => setViewRoomTarget(room)} className="cursor-pointer flex items-center justify-center gap-1.5 py-2 bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-bold rounded-xl transition-all border border-primary-200">
-                       <Info className="w-3.5 h-3.5" /> View
+                  <div className="grid grid-cols-3 gap-1.5 mt-4">
+                     <button onClick={() => setViewRoomTarget(room)} className="cursor-pointer flex items-center justify-center gap-1 px-1 py-2 bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-bold rounded-xl transition-all border border-primary-200">
+                       <Info className="w-3.5 h-3.5" /> <span className="hidden sm:inline">View</span>
                      </button>
-                     <button onClick={() => openRoomEdit(room)} className="cursor-pointer flex items-center justify-center gap-1.5 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold rounded-xl transition-all border border-gray-200">
-                       <Edit2 className="w-3.5 h-3.5" /> Edit
+                     <button onClick={() => openRoomEdit(room)} className="cursor-pointer flex items-center justify-center gap-1 px-1 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold rounded-xl transition-all border border-gray-200">
+                       <Edit2 className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Edit</span>
                      </button>
-                     <button onClick={() => setDeleteRoomTarget(room)} className="cursor-pointer flex items-center justify-center gap-1.5 py-2 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-all border border-red-200">
-                       <Trash2 className="w-3.5 h-3.5" /> Delete
+                     <button onClick={() => setDeleteRoomTarget(room)} className="cursor-pointer flex items-center justify-center gap-1 px-1 py-2 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-all border border-red-200">
+                       <Trash2 className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Delete</span>
                      </button>
                   </div>
                 </div>
@@ -741,7 +786,7 @@ const cat = categories.find(c => c.name === catName);
       {/* Room Modal */}
       {showRoomModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-6 md:p-8 space-y-6 max-h-[95vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-4 sm:p-6 md:p-8 space-y-6 max-h-[95vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <div>
                 <h2 className="font-black text-gray-900 text-xl">{editRoomTarget ? 'Edit Property' : 'Add New Property'}</h2>
@@ -1136,14 +1181,14 @@ const cat = categories.find(c => c.name === catName);
               )}
             </div>
 
-            <div className="flex flex-wrap gap-3 pt-6 border-t border-gray-100">
-              <button onClick={() => setShowRoomModal(false)} className="cursor-pointer px-5 py-3.5 border border-gray-200 text-gray-600 text-sm font-bold rounded-2xl hover:bg-gray-50 transition-all">Cancel</button>
-              <div className="flex gap-3 flex-1 justify-end">
+            <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-100">
+              <button onClick={() => setShowRoomModal(false)} className="cursor-pointer w-full sm:w-auto px-5 py-3.5 border border-gray-200 text-gray-600 text-sm font-bold rounded-2xl hover:bg-gray-50 transition-all text-center">Cancel</button>
+              <div className="flex flex-col sm:flex-row gap-3 flex-1 justify-end">
                 {!editRoomTarget && (
                   <button
                     onClick={handleSaveDraft}
                     disabled={savingDraft || submittingRoom}
-                    className="cursor-pointer px-5 py-3.5 border border-amber-300 bg-amber-50 text-amber-700 text-sm font-bold rounded-2xl hover:bg-amber-100 transition-all disabled:opacity-50 flex items-center gap-2"
+                    className="cursor-pointer w-full sm:w-auto px-5 py-3.5 border border-amber-300 bg-amber-50 text-amber-700 text-sm font-bold rounded-2xl hover:bg-amber-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {savingDraft && <Loader2 className="w-4 h-4 animate-spin" />}
                     {draftId ? 'Update Draft' : 'Save Draft'}
@@ -1152,7 +1197,7 @@ const cat = categories.find(c => c.name === catName);
                 <button
                   onClick={handleSaveRoom}
                   disabled={submittingRoom || savingDraft}
-                  className="cursor-pointer px-6 py-3.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-primary-500/25 disabled:opacity-50 flex justify-center items-center gap-2 active:scale-[0.98]"
+                  className="cursor-pointer w-full sm:w-auto px-6 py-3.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-primary-500/25 disabled:opacity-50 flex justify-center items-center gap-2 active:scale-[0.98]"
                 >
                   {submittingRoom && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editRoomTarget ? 'Save Changes' : 'Publish Property'}
@@ -1308,7 +1353,7 @@ const cat = categories.find(c => c.name === catName);
             </div>
 
             {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto p-8 space-y-10">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-10">
               {/* Image Gallery Preview */}
               {viewRoomTarget.images?.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1333,7 +1378,7 @@ const cat = categories.find(c => c.name === catName);
                 {/* Left: Main Details */}
                 <div className="md:col-span-2 space-y-8">
                   {/* Stats Bar */}
-                  <div className="grid grid-cols-4 gap-4 bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 bg-gray-50 rounded-2xl p-4 sm:p-5 border border-gray-100">
                     <div className="text-center">
                       <Users className="w-4 h-4 text-primary-500 mx-auto mb-1" />
                       <p className="text-sm font-black text-gray-900">{viewRoomTarget.guests || viewRoomTarget.capacity}</p>
@@ -1458,16 +1503,16 @@ const cat = categories.find(c => c.name === catName);
             </div>
 
             {/* Modal Footer */}
-            <div className="px-8 py-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+            <div className="px-4 sm:px-8 py-4 sm:py-5 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-end gap-2.5 sm:gap-3">
               <button 
                 onClick={() => setViewRoomTarget(null)}
-                className="px-6 py-2.5 bg-white border border-gray-200 text-gray-600 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-gray-100 transition-all"
+                className="w-full sm:w-auto px-6 py-2.5 bg-white border border-gray-200 text-gray-600 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-gray-100 transition-all text-center"
               >
                 Close View
               </button>
               <button 
                 onClick={() => { setViewRoomTarget(null); openRoomEdit(viewRoomTarget); }}
-                className="px-6 py-2.5 bg-primary-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-500/20 transition-all"
+                className="w-full sm:w-auto px-6 py-2.5 bg-primary-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-500/20 transition-all text-center"
               >
                 Edit Property
               </button>

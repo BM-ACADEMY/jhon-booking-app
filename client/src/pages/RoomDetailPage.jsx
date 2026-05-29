@@ -164,9 +164,9 @@ const RoomDetailPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pt-24 lg:pt-28">
       {/* Back Nav */}
-      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-100 px-4 py-3">
+      <div className="sticky top-[80px] lg:top-[100px] z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 py-3 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.02)]">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button onClick={() => navigate(-1)}
             className="cursor-pointer flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold text-sm transition-colors">
@@ -373,13 +373,13 @@ const RoomDetailPage = () => {
 
           {/* Right: Booking Card */}
           <div className="lg:col-span-1">
-            <div className="sticky top-20 bg-white rounded-3xl border border-gray-200 shadow-2xl shadow-gray-200/50 p-6 space-y-5">
+            <div className="lg:sticky lg:top-28 bg-white rounded-3xl border border-gray-200 shadow-2xl shadow-gray-200/50 p-6 space-y-5">
               {/* Price */}
               <div className="border-b border-gray-100 pb-5">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-gray-900">${room.price}</span>
+                  <span className="text-3xl font-black text-gray-900">₹{room.price}</span>
                   {room.originalPrice && (
-                    <span className="text-gray-400 text-base line-through">${room.originalPrice}</span>
+                    <span className="text-gray-400 text-base line-through">₹{room.originalPrice}</span>
                   )}
                 </div>
                 <span className="text-xs font-black text-gray-400 uppercase tracking-widest">
@@ -425,12 +425,12 @@ const RoomDetailPage = () => {
               {nights > 0 && (
                 <div className="bg-gray-50 rounded-2xl p-4 space-y-2 border border-gray-100">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 font-medium">${room.price} × {nights} night{nights !== 1 ? 's' : ''}</span>
-                    <span className="font-bold text-gray-900">${room.price * nights}</span>
+                    <span className="text-gray-500 font-medium">₹{room.price} × {nights} night{nights !== 1 ? 's' : ''}</span>
+                    <span className="font-bold text-gray-900">₹{room.price * nights}</span>
                   </div>
                   <div className="border-t border-gray-200 pt-2 flex justify-between font-black text-gray-900">
                     <span>Total</span>
-                    <span>${total}</span>
+                    <span>₹{total}</span>
                   </div>
                 </div>
               )}

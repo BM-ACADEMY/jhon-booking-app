@@ -13,7 +13,7 @@ export const getHero = async (req, res) => {
 
 export const updateHero = async (req, res) => {
   try {
-    let { titleLine1, titleLine2, subtitle, ctaPrimaryText, ctaSecondaryText, videoUrl, backgroundImage, stats } = req.body;
+    let { titleLine1, titleLine2, subtitle, videoUrl, backgroundImage, stats } = req.body;
   if (titleLine1 === '') titleLine1 = undefined;
   if (titleLine2 === '') titleLine2 = undefined;
     let videoPath = videoUrl;
@@ -69,8 +69,6 @@ let imagePath = null;
       hero.titleLine1 = titleLine1 || hero.titleLine1;
       hero.titleLine2 = titleLine2 || hero.titleLine2;
       hero.subtitle = subtitle || hero.subtitle;
-      hero.ctaPrimaryText = ctaPrimaryText || hero.ctaPrimaryText;
-      hero.ctaSecondaryText = ctaSecondaryText || hero.ctaSecondaryText;
       hero.videoUrl = videoPath !== undefined ? videoPath : hero.videoUrl;
       hero.backgroundImage = imagePath ? imagePath : hero.backgroundImage;
       hero.stats = parsedStats || hero.stats;
@@ -80,8 +78,6 @@ let imagePath = null;
         ...(titleLine1 ? { titleLine1 } : {}),
         ...(titleLine2 ? { titleLine2 } : {}),
         subtitle,
-        ctaPrimaryText,
-        ctaSecondaryText,
         videoUrl: videoPath,
         backgroundImage: imagePath,
         stats: parsedStats || []

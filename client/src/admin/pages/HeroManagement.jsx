@@ -10,8 +10,6 @@ const HeroManagement = () => {
     titleLine1: '', // main title line 1
     titleLine2: '', // optional second line
     subtitle: '',
-    ctaPrimaryText: '',
-    ctaSecondaryText: '',
     videoUrl: '',
     backgroundImage: '',
     stats: [
@@ -36,8 +34,6 @@ const HeroManagement = () => {
           titleLine1: res.data.titleLine1 ,
           titleLine2: res.data.titleLine2 ,
           subtitle: res.data.subtitle ,
-          ctaPrimaryText: res.data.ctaPrimaryText ,
-          ctaSecondaryText: res.data.ctaSecondaryText ,
           videoUrl: res.data.videoUrl ,
           backgroundImage: res.data.backgroundImage ,
           stats: res.data.stats && res.data.stats.length > 0 ? res.data.stats : [
@@ -95,8 +91,6 @@ const HeroManagement = () => {
       formData.append('titleLine1', form.titleLine1);
       formData.append('titleLine2', form.titleLine2);
       formData.append('subtitle', form.subtitle);
-      formData.append('ctaPrimaryText', form.ctaPrimaryText);
-      formData.append('ctaSecondaryText', form.ctaSecondaryText);
       
       // Validation to ensure only one media asset is saved: prioritize video over image
       if (form.videoUrl && form.backgroundImage) {
@@ -195,28 +189,6 @@ const HeroManagement = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Primary CTA Text</label>
-                <input
-                  type="text"
-                  name="ctaPrimaryText"
-                  value={form.ctaPrimaryText}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary-400 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Secondary CTA Text</label>
-                <input
-                  type="text"
-                  name="ctaSecondaryText"
-                  value={form.ctaSecondaryText}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary-400 transition-all"
-                />
-              </div>
-            </div>
 
 
 
@@ -361,19 +333,17 @@ const HeroManagement = () => {
             
             <div className="relative z-10 h-full flex flex-col items-center justify-center text-center p-8">
               <h2 className="text-white font-extrabold text-2xl leading-tight mb-2 drop-shadow-lg">
-                {form.title || 'Your Title Here'}
+                <span className="text-white">
+                  {form.titleLine1 || 'Experience Luxury Like'}
+                </span>
+                <br />
+                <span className="text-[#d9f969]">
+                  {form.titleLine2 || 'Never Before'}
+                </span>
               </h2>
               <p className="text-gray-200 text-[10px] leading-relaxed max-w-xs mb-4 line-clamp-2">
                 {form.subtitle || 'Your subtitle or description will appear here...'}
               </p>
-              <div className="flex gap-2 justify-center">
-                <span className="px-5 py-1.5 bg-primary-500 text-white text-[10px] font-bold rounded-full shadow-lg shadow-primary-500/30">
-                  {form.ctaPrimaryText || 'CTA 1'}
-                </span>
-                <span className="px-5 py-1.5 border border-white/50 text-white text-[10px] font-bold rounded-full backdrop-blur-sm">
-                  {form.ctaSecondaryText || 'CTA 2'}
-                </span>
-              </div>
             </div>
 
             {!previewUrl && (

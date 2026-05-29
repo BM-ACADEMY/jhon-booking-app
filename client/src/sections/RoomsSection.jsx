@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Loader2, BedDouble, Star, Heart } from 'lucide-react';
+import { ArrowRight, Loader2, BedDouble, Star, Heart, Users, Bath, Maximize } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api, { getRoomSlug } from '../api';
 
@@ -85,7 +85,7 @@ const RoomsSection = () => {
                 <Link
                   key={room._id}
                   to={`/rooms/${getRoomSlug(room.name)}`}
-                  className="group bg-transparent rounded-none border-none outline-none flex flex-col hover:-translate-y-1 transition-all duration-300"
+                  className="group bg-white rounded-[32px] border border-gray-100 p-3 flex flex-col hover:-translate-y-1.5 hover:shadow-xl hover:border-gray-200/80 transition-all duration-350"
                 >
                   {/* Image Container */}
                   <div className="relative aspect-[4/3] rounded-[24px] overflow-hidden bg-gray-150 shadow-sm">
@@ -98,6 +98,13 @@ const RoomsSection = () => {
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                         <BedDouble className="w-16 h-16 text-gray-300" />
+                      </div>
+                    )}
+
+                    {/* Featured Badge */}
+                    {room.isFeatured && (
+                      <div className="absolute top-4 left-4 z-10 bg-amber-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+                        <span>✦</span> Featured
                       </div>
                     )}
 
@@ -118,20 +125,30 @@ const RoomsSection = () => {
                     </button>
 
                     {/* Premium Price Tag Badge on Bottom-Right */}
-                    <div className="absolute bottom-4 right-4 z-10 bg-black/60 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full tracking-wide">
-                      ₹{room.price} <span className="text-[9px] font-medium text-white/80">/ {room.priceUnit || 'night'}</span>
+                    <div className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full tracking-wide flex items-center gap-1.5 shadow-sm">
+                      {room.originalPrice && (
+                        <span className="text-[10px] text-white/50 line-through font-medium">₹{room.originalPrice}</span>
+                      )}
+                      <span>₹{room.price}</span>
+                      <span className="text-[9px] font-medium text-white/80">/ {room.priceUnit || 'night'}</span>
                     </div>
                   </div>
 
                   {/* Content Panel */}
-                  <div className="pt-4 flex-1 flex flex-col text-left">
+                  <div className="pt-4 pb-2 px-2 flex-1 flex flex-col text-left">
+                    <div className="mb-2">
+                      <span className="text-[9px] font-black text-primary-600 uppercase tracking-widest bg-gray-100 px-2.5 py-1 rounded-full">
+                        {room.category}
+                      </span>
+                    </div>
                     <h3 className="font-bold text-gray-900 text-lg group-hover:text-primary-600 transition-colors line-clamp-1">
                       {room.name}
                     </h3>
-                    <p className="text-sm text-gray-400 font-medium mt-0.5 mb-1.5">
+                    <p className="text-sm text-gray-400 font-medium mt-0.5 mb-2">
                       {room.address || `${room.city || 'Serenity Beach'}, India`}
                     </p>
-                    <div className="flex items-center gap-1.5">
+                    
+                    <div className="flex items-center gap-1.5 mb-3">
                       <div className="flex gap-0.5">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star 
@@ -147,6 +164,28 @@ const RoomsSection = () => {
                       <span className="text-xs text-gray-500 font-bold">
                         ({room.reviewCount > 0 ? room.reviewCount * 12 + 5 : 429} Visitors)
                       </span>
+                    </div>
+
+                    {/* Specs Row */}
+                    <div className="flex flex-wrap items-center gap-y-2 gap-x-4 border-t border-gray-100 pt-3.5 mt-auto text-xs text-gray-500 font-bold">
+                      <div className="flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-gray-400" />
+                        <span>{room.guests || 2} Guests</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <BedDouble className="w-3.5 h-3.5 text-gray-400" />
+                        <span>{room.bedrooms || 1} Bed{room.bedrooms > 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Bath className="w-3.5 h-3.5 text-gray-400" />
+                        <span>{room.bathrooms || 1} Bath{room.bathrooms > 1 ? 's' : ''}</span>
+                      </div>
+                      {room.size && (
+                        <div className="flex items-center gap-1.5">
+                          <Maximize className="w-3.5 h-3.5 text-gray-400" />
+                          <span>{room.size}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Link>

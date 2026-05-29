@@ -1,5 +1,6 @@
-import { Hotel, Award, Users, ShieldCheck, Coffee, MapPin } from 'lucide-react';
-import aboutHero from '../assets/about-hero.png';
+import React from 'react';
+import { Hotel, Award, ShieldCheck, Coffee, MapPin, ArrowRight } from 'lucide-react';
+// import aboutHero from '../assets/about-hero.png'; // Make sure your path is correct
 
 const AboutPage = () => {
   const stats = [
@@ -33,36 +34,43 @@ const AboutPage = () => {
   ];
 
   return (
-    <div className="bg-white">
+    <div className="bg-stone-50 font-sans text-stone-800">
       {/* Hero Section */}
-      <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
+    <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
+        {/* Background Image & Overlay */}
         <div className="absolute inset-0">
           <img
-            src={aboutHero}
-            alt="Luxury Hotel"
+            src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1920&q=80"
+            alt="The Balified Villa Exterior"
             className="w-full h-full object-cover"
           />
+          {/* Dark overlay to ensure text readability, similar to the image */}
           <div className="absolute inset-0 bg-black/50" />
         </div>
-        <div className="relative z-10 text-center px-4">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
-            Our Legacy of <span className="text-primary-400">Luxury</span>
+        
+        {/* Content Container */}
+        <div className="relative z-10 text-center px-4 flex flex-col items-center w-full max-w-5xl mx-auto mt-12">
+     
+          
+          {/* Main Title */}
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white mb-6">
+           About <span className="text-[#d9f969]">Us</span>
           </h1>
-          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-light">
-            Crafting unforgettable experiences and timeless memories since 2009.
-          </p>
         </div>
       </section>
 
       {/* Story Section */}
-      <section className="py-20 px-4 max-w-7xl mx-auto">
+      <section className="py-24 px-4 max-w-7xl mx-auto">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <span className="text-primary-600 font-semibold tracking-wider uppercase text-sm">Our Story</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="h-px w-12 bg-amber-600"></div>
+              <span className="text-amber-700 font-semibold tracking-wider uppercase text-sm">Our Story</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-serif text-stone-900 mb-8 leading-tight">
               A New Standard of Hospitality
             </h2>
-            <div className="space-y-4 text-gray-600 leading-relaxed">
+            <div className="space-y-6 text-stone-600 leading-relaxed text-lg font-light">
               <p>
                 Founded on the principles of elegance and exceptional service, The Balified Villa has grown from a single boutique hotel to a world-renowned destination for luxury travelers.
               </p>
@@ -74,35 +82,37 @@ const AboutPage = () => {
               </p>
             </div>
           </div>
+
+          {/* Staggered Image Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-4">
-              <div className="h-64 rounded-2xl overflow-hidden shadow-lg">
-                <img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800" alt="Hotel Interior" className="w-full h-full object-cover" />
+            <div className="space-y-4 translate-y-8">
+              <div className="h-64 overflow-hidden rounded-sm shadow-xl">
+                <img src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=800" alt="Hotel Interior" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
               </div>
-              <div className="h-48 rounded-2xl overflow-hidden shadow-lg">
-                <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800" alt="Spa" className="w-full h-full object-cover" />
+              <div className="h-48 overflow-hidden rounded-sm shadow-xl">
+                <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800" alt="Spa" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
               </div>
             </div>
-            <div className="space-y-4 pt-8">
-              <div className="h-48 rounded-2xl overflow-hidden shadow-lg">
-                <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800" alt="Dining" className="w-full h-full object-cover" />
+            <div className="space-y-4">
+              <div className="h-48 overflow-hidden rounded-sm shadow-xl">
+                <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800" alt="Dining" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
               </div>
-              <div className="h-64 rounded-2xl overflow-hidden shadow-lg">
-                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800" alt="Pool" className="w-full h-full object-cover" />
+              <div className="h-64 overflow-hidden rounded-sm shadow-xl">
+                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800" alt="Pool" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="bg-gray-50 py-16">
+      {/* Stats Section - Redesigned with Dark Background for Contrast */}
+      <section className="bg-stone-900 py-20">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-stone-800">
             {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <p className="text-4xl md:text-5xl font-bold text-primary-600 mb-2">{stat.value}</p>
-                <p className="text-sm text-gray-500 font-medium uppercase tracking-wide">{stat.label}</p>
+              <div key={index} className="text-center px-4">
+                <p className="text-4xl md:text-5xl font-serif text-amber-500 mb-3">{stat.value}</p>
+                <p className="text-xs md:text-sm text-stone-400 font-medium uppercase tracking-widest">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -111,18 +121,23 @@ const AboutPage = () => {
 
       {/* Why Choose Us */}
       <section className="py-24 px-4 max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <span className="text-primary-600 font-semibold tracking-wider uppercase text-sm">Experience</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">Why Guests Love Us</h2>
+        <div className="text-center mb-16 flex flex-col items-center">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="h-px w-8 bg-amber-600"></div>
+            <span className="text-amber-700 font-semibold tracking-wider uppercase text-sm">Experience</span>
+            <div className="h-px w-8 bg-amber-600"></div>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-serif text-stone-900 mt-2">Why Guests Love Us</h2>
         </div>
+        
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="p-8 rounded-3xl bg-white border border-gray-100 hover:shadow-xl hover:shadow-primary-500/5 transition-all duration-300 group">
-              <div className="w-14 h-14 rounded-2xl bg-primary-50 flex items-center justify-center text-primary-600 mb-6 group-hover:bg-primary-600 group-hover:text-white transition-colors duration-300">
+            <div key={index} className="p-8 bg-white border border-stone-100 hover:border-amber-200 hover:shadow-2xl hover:shadow-amber-900/5 transition-all duration-300 group rounded-sm">
+              <div className="w-14 h-14 bg-stone-50 flex items-center justify-center text-amber-700 mb-6 group-hover:bg-amber-600 group-hover:text-white transition-colors duration-300 rounded-sm">
                 {feature.icon}
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
+              <h3 className="text-xl font-serif text-stone-900 mb-3">{feature.title}</h3>
+              <p className="text-stone-500 text-sm leading-relaxed font-light">
                 {feature.description}
               </p>
             </div>
@@ -131,17 +146,14 @@ const AboutPage = () => {
       </section>
 
       {/* Mission Section */}
-      <section className="py-20 bg-primary-900 text-white overflow-hidden relative">
-        <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
-
+      <section className="py-24 bg-stone-200 text-stone-900 relative">
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-          <Hotel className="w-12 h-12 text-primary-400 mx-auto mb-8" />
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Our Mission</h2>
-          <p className="text-xl md:text-2xl font-light italic leading-relaxed text-primary-100">
+          <Hotel className="w-12 h-12 text-amber-700 mx-auto mb-8" />
+          <h2 className="text-3xl md:text-4xl font-serif mb-8">Our Mission</h2>
+          <p className="text-xl md:text-3xl font-serif italic leading-relaxed text-stone-700">
             "To define the future of luxury hospitality by creating personalized experiences that inspire and delight every guest, every time."
           </p>
-          <div className="mt-10 h-1 w-20 bg-primary-500 mx-auto rounded-full" />
+          <div className="mt-12 h-px w-24 bg-amber-600 mx-auto" />
         </div>
       </section>
     </div>

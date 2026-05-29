@@ -137,6 +137,23 @@ const RoomsPage = () => {
     setGuestsInput(queryGuests);
   }, [queryCheckIn, queryCheckOut, queryGuests]);
 
+  // Hero section data
+  const [hero, setHero] = useState(null);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [tickerIndex, setTickerIndex] = useState(0);
+
+  // Ticker animation for mobile pill
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTickerIndex((prev) => (prev === 0 ? 1 : 0));
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    api.get('/hero').then(res => setHero(res.data)).catch(() => {});
+  }, []);
+
   // General Page Data States
   const [rooms, setRooms] = useState([]);
   const [categories, setCategories] = useState(['All']);
@@ -152,7 +169,7 @@ const RoomsPage = () => {
   const [filterBedrooms, setFilterBedrooms] = useState('Any');
   const [filterBeds, setFilterBeds] = useState('Any');
   const [filterBathrooms, setFilterBathrooms] = useState('Any');
-  const [filterPropertyType, setFilterPropertyType] = useState('Any');
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   // Wishlist Heart toggles (from global Auth state)
   const { user, toggleUserWishlist } = useAuth();
@@ -160,7 +177,7 @@ const RoomsPage = () => {
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(9);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Load Rooms & Categories from database
   useEffect(() => {
@@ -199,7 +216,8 @@ const RoomsPage = () => {
     setFilterBedrooms('Any');
     setFilterBeds('Any');
     setFilterBathrooms('Any');
-    setFilterPropertyType('Any');
+    setActiveCategory('All');
+    setSortBy('latest');
   };
 
   const activeFilterCount = 
@@ -208,7 +226,8 @@ const RoomsPage = () => {
     (filterBedrooms !== 'Any' ? 1 : 0) +
     (filterBeds !== 'Any' ? 1 : 0) +
     (filterBathrooms !== 'Any' ? 1 : 0) +
-    (filterPropertyType !== 'Any' ? 1 : 0);
+    (activeCategory !== 'All' ? 1 : 0) +
+    (sortBy !== 'latest' ? 1 : 0);
 
   // Toggle wishlist state
   const toggleWishlist = async (id) => {
@@ -273,13 +292,7 @@ const RoomsPage = () => {
       if (room.bathrooms < count) return false;
     }
 
-    // 6. Property type selection
-    if (filterPropertyType !== 'Any') {
-      const filterTypeLower = filterPropertyType.toLowerCase();
-      const roomTypeLower = (room.propertyType ).toLowerCase();
-      const roomCategoryLower = (room.category ).toLowerCase();
-      if (!roomTypeLower.includes(filterTypeLower) && !roomCategoryLower.includes(filterTypeLower)) return false;
-    }
+
 
     return true;
   });
@@ -299,7 +312,7 @@ const RoomsPage = () => {
   }, [
     activeCategory, queryCheckIn, queryCheckOut, queryGuests, 
     minPrice, maxPrice, filterBedrooms, filterBeds, filterBathrooms, 
-    filterPropertyType, sortBy, itemsPerPage
+    sortBy, itemsPerPage
   ]);
 
   // Pagination calculation
@@ -309,87 +322,362 @@ const RoomsPage = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const paginatedRooms = sortedRooms.slice(indexOfFirstItem, indexOfLastItem);
 
-  return (
-    <div className="min-h-screen bg-gray-50/50 pt-24 pb-20">
-      
-      {/* Top Search bar - Match image style */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.03)] p-5 md:p-6">
-          {/* Input Form */}
-          <form onSubmit={handleUpdateSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-            {/* Check In */}
-            <div className="md:col-span-3 flex items-center gap-3 bg-gray-50 border border-gray-150 rounded-2xl px-4 py-3 hover:border-gray-300 hover:bg-white transition-all">
-              <CalendarDays className="w-5 h-5 text-gray-400 flex-shrink-0" />
-              <div className="flex-1 text-left min-w-0">
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check In</label>
-                <DatePicker
-                  selected={checkInInput}
-                  onChange={(date) => setCheckInInput(date)}
-                  selectsStart
-                  startDate={checkInInput}
-                  endDate={checkOutInput}
-                  minDate={new Date()}
-                  dateFormat="dd MMM yyyy"
-                  placeholderText="Add Date"
-                  className="w-full text-sm font-bold text-gray-800 bg-transparent outline-none cursor-pointer"
-                  popperProps={{ strategy: "fixed" }}
-                />
-              </div>
-            </div>
+  // Hero derived values
+  const heroVideoSrc = hero?.videoUrl
+    ? (hero.videoUrl.startsWith('http') ? hero.videoUrl : `${SERVER_URL}${hero.videoUrl}`)
+    : null;
+  const heroImageSrc = hero?.backgroundImage
+    ? (hero.backgroundImage.startsWith('http') ? hero.backgroundImage : `${SERVER_URL}${hero.backgroundImage}`)
+    : 'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop';
 
-            {/* Check Out */}
-            <div className="md:col-span-3 flex items-center gap-3 bg-gray-50 border border-gray-150 rounded-2xl px-4 py-3 hover:border-gray-300 hover:bg-white transition-all">
-              <CalendarDays className="w-5 h-5 text-gray-400 flex-shrink-0" />
-              <div className="flex-1 text-left min-w-0">
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check Out</label>
-                <DatePicker
-                  selected={checkOutInput}
-                  onChange={(date) => setCheckOutInput(date)}
-                  selectsEnd
-                  startDate={checkInInput}
-                  endDate={checkOutInput}
-                  minDate={checkInInput || new Date()}
-                  dateFormat="dd MMM yyyy"
-                  placeholderText="Add Date"
-                  className="w-full text-sm font-bold text-gray-800 bg-transparent outline-none cursor-pointer"
-                  popperProps={{ strategy: "fixed" }}
-                />
-              </div>
-            </div>
-
-            {/* Guests */}
-            <div className="md:col-span-3 flex items-center gap-3 bg-gray-50 border border-gray-150 rounded-2xl px-4 py-3 hover:border-gray-300 hover:bg-white transition-all">
-              <Users className="w-5 h-5 text-gray-400 flex-shrink-0" />
-              <div className="flex-1 text-left min-w-0">
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guests</label>
-                <select
-                  value={guestsInput}
-                  onChange={(e) => setGuestsInput(e.target.value)}
-                  className="w-full text-sm font-bold text-gray-800 bg-transparent outline-none cursor-pointer"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                    <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Update button */}
-            <div className="md:col-span-3">
-              <button
-                type="submit"
-                className="w-full bg-violet-600 hover:bg-violet-700 text-white font-extrabold rounded-2xl py-3.5 px-4 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20 active:scale-[0.98] transition-all cursor-pointer text-sm"
-              >
-                <Search className="w-4 h-4" />
-                <span>Update Search</span>
-              </button>
-            </div>
-          </form>
+  const dateText = checkInInput && checkOutInput
+    ? `${checkInInput.getDate()} ${checkInInput.toLocaleString('default', { month: 'short' })} – ${checkOutInput.getDate()} ${checkOutInput.toLocaleString('default', { month: 'short' })}`
+    : 'Add your dates';
+  const guestText = guestsInput ? `${guestsInput} Guest${guestsInput > 1 ? 's' : ''}` : 'Select guests';  const renderFilterContent = () => (
+    <>
+      {/* Sort By Dropdown */}
+      <div className="space-y-2 border-b border-gray-100 pb-5">
+        <p className="font-extrabold text-sm text-gray-850">Sort by</p>
+        <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 flex items-center shadow-sm">
+          <select 
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value)} 
+            className="w-full text-xs font-bold text-gray-800 bg-transparent outline-none cursor-pointer"
+          >
+            <option value="latest">Latest</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Top Rated</option>
+          </select>
         </div>
       </div>
 
+      {/* Price Range */}
+      <div className="space-y-3.5 border-b border-gray-100 pb-5">
+        <div>
+          <p className="font-extrabold text-sm text-gray-850 mb-0.5">Price range</p>
+          {totalNights > 0 && (
+            <p className="text-[10px] text-gray-400 font-bold">The average total price for {totalNights} night{totalNights !== 1 ? 's' : ''}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2 shadow-sm">
+            <span className="text-gray-400 text-xs font-bold">₹</span>
+            <input
+              type="number"
+              placeholder="Min"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              className="w-full text-xs font-bold text-gray-800 bg-transparent outline-none"
+            />
+          </div>
+          <div className="text-gray-400 text-xs">—</div>
+          <div className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2 shadow-sm">
+            <span className="text-gray-400 text-xs font-bold">₹</span>
+            <input
+              type="number"
+              placeholder="Max"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              className="w-full text-xs font-bold text-gray-800 bg-transparent outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Rooms and beds selectors */}
+      <div className="space-y-4 border-b border-gray-100 pb-5">
+        <p className="font-extrabold text-sm text-gray-850">Rooms and beds</p>
+        
+        {/* Bedrooms */}
+        <div className="space-y-2">
+          <span className="block text-xs font-bold text-gray-500">Bedrooms</span>
+          <div className="flex flex-wrap gap-1.5">
+            {['Any', '1', '2', '3', '4', '5+'].map(val => (
+              <button
+                key={val}
+                onClick={() => setFilterBedrooms(val)}
+                className={`cursor-pointer w-9 h-9 rounded-lg font-bold text-[11px] transition-all border ${
+                  filterBedrooms === val
+                    ? 'bg-violet-600 border-violet-600 text-white shadow-sm'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                {val}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Beds */}
+        <div className="space-y-2">
+          <span className="block text-xs font-bold text-gray-500">Beds</span>
+          <div className="flex flex-wrap gap-1.5">
+            {['Any', '1', '2', '3', '4', '5+'].map(val => (
+              <button
+                key={val}
+                onClick={() => setFilterBeds(val)}
+                className={`cursor-pointer w-9 h-9 rounded-lg font-bold text-[11px] transition-all border ${
+                  filterBeds === val
+                    ? 'bg-violet-600 border-violet-600 text-white shadow-sm'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                {val}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Bathrooms */}
+        <div className="space-y-2">
+          <span className="block text-xs font-bold text-gray-500">Bathrooms</span>
+          <div className="flex flex-wrap gap-1.5">
+            {['Any', '1', '2', '3', '4', '5+'].map(val => (
+              <button
+                key={val}
+                onClick={() => setFilterBathrooms(val)}
+                className={`cursor-pointer w-9 h-9 rounded-lg font-bold text-[11px] transition-all border ${
+                  filterBathrooms === val
+                    ? 'bg-violet-600 border-violet-600 text-white shadow-sm'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                {val}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Category selector */}
+      <div className="space-y-4">
+        <p className="font-extrabold text-sm text-gray-850">Category</p>
+        <div className="flex flex-wrap gap-2.5">
+          {categories.map(cat => {
+            const Icon = getCategoryIcon(cat);
+            const isActive = activeCategory === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black transition-all border shrink-0 ${
+                  isActive
+                    ? 'bg-gray-900 border-gray-900 text-white shadow-md'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-950'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{cat}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50/50 pb-20">
+
+      {/* ══════════════════════════════════════════
+           HERO SECTION  (mirrors HomePage HeroSection)
+         ══════════════════════════════════════════ */}
+      <>
+        <section className="relative h-[220px] md:h-[260px] lg:h-[300px] font-sans flex flex-col bg-gray-900 rounded-b-[2.5rem] lg:rounded-b-none shadow-xl">
+          <style>{`
+            @keyframes rooms-reveal {
+              from { opacity: 0; transform: translateY(22px); filter: blur(8px); }
+              to   { opacity: 1; transform: translateY(0);   filter: blur(0);   }
+            }
+            .rooms-reveal-d1 { animation: rooms-reveal 0.9s cubic-bezier(0.22,1,0.36,1) 0.15s both; }
+            .rooms-reveal-d2 { animation: rooms-reveal 0.9s cubic-bezier(0.22,1,0.36,1) 0.30s both; }
+            .rooms-reveal-d3 { animation: rooms-reveal 0.9s cubic-bezier(0.22,1,0.36,1) 0.50s both; }
+            @keyframes slide-in-right {
+              from { transform: translateX(100%); }
+              to   { transform: translateX(0); }
+            }
+            .animate-slide-in-right {
+              animation: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+          `}</style>
+
+          {/* Background — overflow-hidden + matching radius so image clips to curved bottom */}
+          <div className="absolute inset-0 z-0 overflow-hidden rounded-b-[2.5rem] lg:rounded-b-none">
+            {heroVideoSrc ? (
+              <video key={heroVideoSrc} autoPlay muted loop playsInline className="w-full h-full object-cover opacity-90">
+                <source src={heroVideoSrc} />
+              </video>
+            ) : (
+              <img src={heroImageSrc} alt="Rooms hero" className="w-full h-full object-cover" />
+            )}
+            <div className="absolute inset-0 bg-black/45" />
+          </div>
+
+          {/* Content — search bar only, no title/subtitle */}
+          <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center h-full pt-24 pb-4">
+
+            {/* ── Mobile search pill ── */}
+            <div
+              onClick={() => setIsMobileSearchOpen(true)}
+              className="lg:hidden w-full max-w-xs bg-black/40 backdrop-blur-xl border border-white/10 rounded-full px-4 py-3 flex items-center gap-3 cursor-pointer shadow-xl rooms-reveal-d3 transition-transform active:scale-95"
+            >
+              <Search className="w-4 h-4 text-white ml-1 opacity-80 shrink-0" />
+              <div className="relative h-5 w-full flex items-center overflow-hidden text-left">
+                <p className={`absolute w-full text-white/90 font-medium text-sm transition-all duration-500 ease-in-out ${tickerIndex === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full'}`}>{dateText}</p>
+                <p className={`absolute w-full text-white/90 font-medium text-sm transition-all duration-500 ease-in-out ${tickerIndex === 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`}>{guestText}</p>
+              </div>
+            </div>
+
+            {/* ── Desktop booking bar ── */}
+            <div className="hidden lg:flex bg-white rounded-[2.5rem] p-2 max-w-4xl w-full shadow-2xl flex-row items-center gap-2 divide-x divide-gray-100 rooms-reveal-d3 relative z-40">
+
+              {/* Check-In */}
+              <div className="flex-1 flex items-center gap-3 px-4 py-2 group">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <CalendarDays className="w-5 h-5 text-gray-500" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check In</p>
+                  <DatePicker
+                    selected={checkInInput}
+                    onChange={(date) => setCheckInInput(date)}
+                    selectsStart
+                    startDate={checkInInput}
+                    endDate={checkOutInput}
+                    minDate={new Date()}
+                    dateFormat="dd MMM yyyy"
+                    placeholderText="Add Date"
+                    className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer placeholder-gray-400"
+                    popperPlacement="bottom-start"
+                    popperProps={{ strategy: 'fixed', modifiers: [{ name: 'flip', enabled: false }, { name: 'preventOverflow', options: { mainAxis: false } }] }}
+                    popperClassName="z-[200]"
+                  />
+                </div>
+              </div>
+
+              {/* Check-Out */}
+              <div className="flex-1 flex items-center gap-3 px-4 py-2 group">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <CalendarDays className="w-5 h-5 text-gray-500" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check Out</p>
+                  <DatePicker
+                    selected={checkOutInput}
+                    onChange={(date) => setCheckOutInput(date)}
+                    selectsEnd
+                    startDate={checkInInput}
+                    endDate={checkOutInput}
+                    minDate={checkInInput || new Date()}
+                    dateFormat="dd MMM yyyy"
+                    placeholderText="Add Date"
+                    className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer placeholder-gray-400"
+                    popperPlacement="bottom-start"
+                    popperProps={{ strategy: 'fixed', modifiers: [{ name: 'flip', enabled: false }, { name: 'preventOverflow', options: { mainAxis: false } }] }}
+                    popperClassName="z-[200]"
+                  />
+                </div>
+              </div>
+
+              {/* Guests */}
+              <div className="flex-1 flex items-center gap-3 px-4 py-2 group">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <Users className="w-5 h-5 text-gray-500" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guests</p>
+                  <select
+                    value={guestsInput}
+                    onChange={(e) => setGuestsInput(e.target.value)}
+                    className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer"
+                  >
+                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                      <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Search button */}
+              <div className="px-2 flex self-stretch py-1">
+                <button
+                  onClick={handleUpdateSearch}
+                  className="w-full bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-sm rounded-full px-8 py-4 flex items-center justify-center gap-2 transition-all hover:shadow-lg active:scale-95 group cursor-pointer"
+                >
+                  <Search className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
+                  <span>SEARCH</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ── Mobile search modal ── */}
+        {isMobileSearchOpen && (
+          <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm lg:hidden">
+            <div className="bg-white w-full rounded-t-[2.5rem] p-6 pb-8 shadow-2xl relative rooms-reveal [animation-duration:300ms]">
+              <button
+                onClick={() => setIsMobileSearchOpen(false)}
+                className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+              <h3 className="text-2xl font-bold mb-6 text-gray-900 mt-2">Find your stay</h3>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <CalendarDays className="w-6 h-6 text-gray-400" />
+                  <div className="flex-1">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Check-In</p>
+                    <DatePicker
+                      selected={checkInInput}
+                      onChange={(date) => setCheckInInput(date)}
+                      selectsStart startDate={checkInInput} endDate={checkOutInput}
+                      minDate={new Date()} dateFormat="dd MMM yyyy" placeholderText="Select date"
+                      className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer"
+                      popperProps={{ strategy: 'fixed' }} popperClassName="z-[110]"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <CalendarDays className="w-6 h-6 text-gray-400" />
+                  <div className="flex-1">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Check-Out</p>
+                    <DatePicker
+                      selected={checkOutInput}
+                      onChange={(date) => setCheckOutInput(date)}
+                      selectsEnd startDate={checkInInput} endDate={checkOutInput}
+                      minDate={checkInInput || new Date()} dateFormat="dd MMM yyyy" placeholderText="Select date"
+                      className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer"
+                      popperProps={{ strategy: 'fixed' }} popperClassName="z-[110]"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <Users className="w-6 h-6 text-gray-400" />
+                  <div className="flex-1">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Guests</p>
+                    <select value={guestsInput} onChange={(e) => setGuestsInput(e.target.value)} className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer">
+                      {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { handleUpdateSearch(); setIsMobileSearchOpen(false); }}
+                  className="w-full bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-sm rounded-2xl px-8 py-4 mt-2 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                >
+                  <Search className="w-5 h-5" />
+                  <span>SEARCH</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+
       {/* Main Container Layout */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
         
         {/* Results summary and toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200/60 pb-5 mb-8 gap-4">
@@ -399,32 +687,7 @@ const RoomsPage = () => {
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Sorting */}
-            <div className="flex items-center bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-sm font-bold">
-              <span className="text-gray-400 mr-2">Sort:</span>
-              <select 
-                value={sortBy} 
-                onChange={(e) => setSortBy(e.target.value)} 
-                className="bg-transparent outline-none text-gray-800 cursor-pointer font-extrabold"
-              >
-                <option value="latest">Latest</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="rating">Top Rated</option>
-              </select>
-            </div>
 
-            {/* View selectors */}
-            <div className="hidden sm:flex items-center border border-gray-200 bg-white rounded-xl p-1">
-              <button className="p-1.5 rounded-lg text-gray-400 hover:text-gray-800 transition-colors" title="Map View">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-              </button>
-              <button className="p-1.5 rounded-lg bg-gray-100 text-gray-800" title="Card View">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Categories Scroller - styled as pills */}
@@ -459,7 +722,7 @@ const RoomsPage = () => {
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Searching stays...</p>
               </div>
             ) : paginatedRooms.length === 0 ? (
-              <div className="text-center bg-white rounded-3xl border border-gray-150 p-16">
+              <div className="text-center bg-white rounded-xl border border-gray-200 p-16">
                 <BedDouble className="w-16 h-16 mx-auto mb-4 text-gray-200" />
                 <h3 className="font-extrabold text-gray-800 text-lg mb-1">No stays match your criteria</h3>
                 <p className="text-sm text-gray-400 max-w-sm mx-auto mb-6">Try adjusting your filters, location search, or widening your dates.</p>
@@ -548,42 +811,46 @@ const RoomsPage = () => {
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
+                {/* Pagination */}
+                {totalItems > 0 && (
                   <div className="flex flex-col sm:flex-row items-center justify-between border-t border-gray-200/60 pt-8 mt-10 gap-4">
                     <div className="text-xs text-gray-400 font-bold uppercase tracking-widest">
                       Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, totalItems)} of {totalItems} stays
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="w-9 h-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    
+                    {totalPages > 1 && (
+                      <div className="flex items-center gap-1.5">
                         <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`w-9 h-9 rounded-xl font-bold text-sm transition-all cursor-pointer ${
-                            currentPage === page
-                              ? 'bg-violet-600 text-white shadow-md'
-                              : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                          }`}
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                          className="w-9 h-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                         >
-                          {page}
+                          <ChevronLeft className="w-4 h-4" />
                         </button>
-                      ))}
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`w-9 h-9 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+                              currentPage === page
+                                ? 'bg-violet-600 text-white shadow-md'
+                                : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
 
-                      <button
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="w-9 h-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
+                        <button
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="w-9 h-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
 
                     <div className="flex items-center gap-2 text-xs text-gray-400 font-bold uppercase tracking-widest">
                       <span>Per page:</span>
@@ -592,9 +859,10 @@ const RoomsPage = () => {
                         onChange={(e) => setItemsPerPage(parseInt(e.target.value, 10))}
                         className="bg-transparent border border-gray-200 rounded-lg py-1 px-1.5 text-gray-700 outline-none cursor-pointer"
                       >
-                        <option value={6}>6</option>
-                        <option value={9}>9</option>
-                        <option value={12}>12</option>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={30}>30</option>
+                        <option value={50}>50</option>
                       </select>
                     </div>
                   </div>
@@ -604,7 +872,7 @@ const RoomsPage = () => {
           </div>
 
           {/* RIGHT side: Sidebar Filters */}
-          <div className="lg:col-span-4 bg-white border border-gray-150 rounded-3xl shadow-[0_4px_30px_rgba(0,0,0,0.02)] p-6 space-y-6">
+          <div className="hidden lg:block lg:col-span-4 bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-6 sticky top-24">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-base font-black text-gray-800 uppercase tracking-wider flex items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4 text-violet-600" />
@@ -619,140 +887,81 @@ const RoomsPage = () => {
                 </button>
               )}
             </div>
-
-            {/* Price Range */}
-            <div className="space-y-3.5 border-b border-gray-100 pb-5">
-              <div>
-                <p className="font-extrabold text-sm text-gray-800 mb-0.5">Price range</p>
-                {totalNights > 0 && (
-                  <p className="text-[10px] text-gray-400 font-bold">The average total price for {totalNights} night{totalNights !== 1 ? 's' : ''}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 bg-gray-50 border border-gray-150 rounded-xl px-3 py-2 flex items-center gap-2">
-                  <span className="text-gray-400 text-xs font-bold">₹</span>
-                  <input
-                    type="number"
-                    placeholder="Min"
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
-                    className="w-full text-xs font-bold text-gray-800 bg-transparent outline-none"
-                  />
-                </div>
-                <div className="text-gray-400 text-xs">—</div>
-                <div className="flex-1 bg-gray-50 border border-gray-150 rounded-xl px-3 py-2 flex items-center gap-2">
-                  <span className="text-gray-400 text-xs font-bold">₹</span>
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                    className="w-full text-xs font-bold text-gray-800 bg-transparent outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Removed Type of Place */}
-
-            {/* Rooms and beds selectors */}
-            <div className="space-y-4 border-b border-gray-100 pb-5">
-              <p className="font-extrabold text-sm text-gray-800">Rooms and beds</p>
-              
-              {/* Bedrooms */}
-              <div className="space-y-2">
-                <span className="block text-xs font-extrabold text-gray-500">Bedrooms</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {['Any', '1', '2', '3', '4', '5+'].map(val => (
-                    <button
-                      key={val}
-                      onClick={() => setFilterBedrooms(val)}
-                      className={`cursor-pointer min-w-9 h-9 rounded-full font-bold text-[11px] transition-all border ${
-                        filterBedrooms === val
-                          ? 'bg-violet-600 border-violet-600 text-white shadow-md'
-                          : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                      }`}
-                    >
-                      {val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Beds */}
-              <div className="space-y-2">
-                <span className="block text-xs font-extrabold text-gray-500">Beds</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {['Any', '1', '2', '3', '4', '5+'].map(val => (
-                    <button
-                      key={val}
-                      onClick={() => setFilterBeds(val)}
-                      className={`cursor-pointer min-w-9 h-9 rounded-full font-bold text-[11px] transition-all border ${
-                        filterBeds === val
-                          ? 'bg-violet-600 border-violet-600 text-white shadow-md'
-                          : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                      }`}
-                    >
-                      {val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bathrooms */}
-              <div className="space-y-2">
-                <span className="block text-xs font-extrabold text-gray-500">Bathrooms</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {['Any', '1', '2', '3', '4', '5+'].map(val => (
-                    <button
-                      key={val}
-                      onClick={() => setFilterBathrooms(val)}
-                      className={`cursor-pointer min-w-9 h-9 rounded-full font-bold text-[11px] transition-all border ${
-                        filterBathrooms === val
-                          ? 'bg-violet-600 border-violet-600 text-white shadow-md'
-                          : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                      }`}
-                    >
-                      {val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Property Type Grid selectors */}
-            <div className="space-y-4">
-              <p className="font-extrabold text-sm text-gray-800">Property type</p>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { name: 'House', icon: Home },
-                  { name: 'Apartment', icon: Building },
-                  { name: 'Guesthouse', icon: Warehouse },
-                  { name: 'Hotel', icon: Hotel }
-                ].map(({ name, icon: Icon }) => {
-                  const isActive = filterPropertyType === name;
-                  return (
-                    <button
-                      key={name}
-                      onClick={() => setFilterPropertyType(isActive ? 'Any' : name)}
-                      className={`cursor-pointer p-4 rounded-2xl border text-left transition-all space-y-2 flex flex-col justify-between ${
-                        isActive
-                          ? 'border-violet-600 bg-violet-50/50 text-violet-700 shadow-sm'
-                          : 'border-gray-200 bg-white hover:border-gray-350 text-gray-600'
-                      }`}
-                    >
-                      <Icon className={`w-5 h-5 ${isActive ? 'text-violet-600' : 'text-gray-400'}`} />
-                      <span className="block text-xs font-extrabold leading-tight">{name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            {renderFilterContent()}
           </div>
 
         </div>
 
       </div>
+
+      {/* Floating Mobile Filter Trigger Button */}
+      <div className="lg:hidden fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => setIsMobileFilterOpen(true)}
+          className="flex items-center gap-2 bg-gray-900 text-white hover:bg-black font-extrabold text-sm px-5 py-3.5 rounded-full shadow-[0_12px_32px_-6px_rgba(0,0,0,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/10"
+        >
+          <SlidersHorizontal className="w-4 h-4 text-[#d9f969]" />
+          <span>Filters</span>
+          {activeFilterCount > 0 && (
+            <span className="w-5 h-5 rounded-full bg-[#d9f969] text-black text-[10px] font-black flex items-center justify-center">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Mobile Filters Drawer Modal */}
+      {isMobileFilterOpen && (
+        <div className="lg:hidden fixed inset-0 z-[100] flex justify-end">
+          {/* Backdrop */}
+          <div 
+            onClick={() => setIsMobileFilterOpen(false)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+          />
+          {/* Drawer Content */}
+          <div className="relative w-[85%] max-w-sm h-full bg-white flex flex-col shadow-2xl animate-slide-in-right z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
+              <h2 className="text-base font-black text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-violet-600" />
+                Filters
+              </h2>
+              <div className="flex items-center gap-3">
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={handleClearFilters}
+                    className="text-violet-600 hover:text-violet-700 font-bold text-xs uppercase tracking-wider cursor-pointer"
+                  >
+                    Clear all
+                  </button>
+                )}
+                <button 
+                  onClick={() => setIsMobileFilterOpen(false)}
+                  className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer border-none bg-transparent"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {renderFilterContent()}
+            </div>
+
+            {/* Footer CTA */}
+            <div className="border-t border-gray-100 p-4 bg-gray-50/50">
+              <button
+                onClick={() => setIsMobileFilterOpen(false)}
+                className="w-full bg-[#d9f969] hover:bg-[#cbf046] text-black font-extrabold py-4 px-6 rounded-2xl tracking-widest uppercase text-xs transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 border-none animate-none"
+              >
+                <span>Show stays</span>
+                <span>({filteredRooms.length})</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -172,7 +172,7 @@ const Footer = () => {
       <div className="absolute -right-36 -bottom-36 w-72 h-72 rounded-full bg-slate-800/10 blur-3xl pointer-events-none"></div>
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-36 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 sm:pb-24 lg:pb-36 relative z-10">
 
         {/* Middle Section: Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 mb-16">
@@ -294,7 +294,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom Section: Copyright & Legal & Payments */}
-        <div className="border-t border-white/15 pt-8 flex flex-col lg:flex-row justify-between items-center gap-6 text-xs text-slate-400 mb-6">
+        <div className="border-t border-white/15 pt-8 flex flex-col lg:flex-row justify-between items-center gap-4 lg:gap-6 text-xs text-slate-400 mb-4 lg:mb-6">
           <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
             <p>© {new Date().getFullYear()} The Balified Villa. All rights reserved.</p>
             <span className="hidden sm:inline text-slate-800">|</span>
@@ -305,7 +305,7 @@ const Footer = () => {
           </div>
 
           {/* Payment Methods - Pushed completely to the right side */}
-          <div className="flex items-center gap-4 w-full justify-between sm:justify-center lg:w-auto lg:justify-end lg:ml-auto">
+          <div className="flex items-center justify-center gap-4 w-full lg:w-auto lg:justify-end lg:ml-auto">
             <img src={upiIcon} alt="Accepted Payment Method: UPI" className="h-5 w-auto object-contain opacity-90" />
             <img src={gpayIcon} alt="Accepted Payment Method: GPay" className="h-5 w-auto object-contain opacity-90" />
             <img src={ruPayIcon} alt="Accepted Payment Method: RuPay" className="h-5 w-auto object-contain opacity-90" />
@@ -319,7 +319,7 @@ const Footer = () => {
       {/* Giant Background Outline Text */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full text-center pointer-events-none select-none z-0">
         <span
-          className="text-[7vw] md:text-[6vw] font-black uppercase tracking-[0.06em] text-transparent leading-none whitespace-nowrap block"
+          className="text-[11vw] sm:text-[10vw] md:text-[9vw] lg:text-[6vw] font-black uppercase tracking-[0.06em] text-transparent leading-none whitespace-nowrap block"
           style={{
             WebkitTextStroke: '1.5px rgba(255, 255, 255, 0.15)',
             WebkitMaskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 100%)',

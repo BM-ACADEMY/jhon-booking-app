@@ -7,9 +7,6 @@ const heroSchema = new mongoose.Schema({
   subtitle: { type: String },
   videoUrl: { type: String },
   backgroundImage: { type: String },
-  ctaPrimaryText: { type: String, default: 'Book Now' },
-  ctaSecondaryText: { type: String, default: 'Explore' },
-
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 

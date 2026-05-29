@@ -249,6 +249,52 @@ export const getDashboardStats = async (req, res) => {
       status: b.status || 'pending'
     }));
 
+    // Calculate monthly stats for the last 6 months
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const monthlyStatsAgg = await Booking.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: sixMonthsAgo },
+          status: { $ne: 'cancelled' }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          revenue: { $sum: '$totalAmount' },
+          bookings: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { '_id.year': 1, '_id.month': 1 }
+      }
+    ]);
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const last6Months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const year = d.getFullYear();
+      const monthIndex = d.getMonth();
+      const label = `${monthNames[monthIndex]} ${year}`;
+      
+      const match = monthlyStatsAgg.find(item => item._id.year === year && item._id.month === (monthIndex + 1));
+      
+      last6Months.push({
+        name: label,
+        revenue: match ? match.revenue : 0,
+        bookings: match ? match.bookings : 0
+      });
+    }
+
     res.json({
       totalBookings,
       totalRevenue,
@@ -259,7 +305,8 @@ export const getDashboardStats = async (req, res) => {
       pendingBookings,
       todayCheckIns,
       todayCheckOuts,
-      recentBookings: formattedRecent
+      recentBookings: formattedRecent,
+      monthlyStats: last6Months
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
