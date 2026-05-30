@@ -60,20 +60,6 @@ const Header = ({ onMenuClick }) => {
       {/* Right */}
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Search */}
-        <div className="hidden md:flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2 w-52">
-          <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="bg-transparent text-sm text-gray-600 placeholder-gray-400 outline-none w-full"
-          />
-        </div>
-
-        {/* Notifications */}
-        <button className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-        </button>
 
         {/* User dropdown */}
         <div className="relative" ref={dropdownRef}>
@@ -96,14 +82,14 @@ const Header = ({ onMenuClick }) => {
                 <p className="text-sm font-semibold text-gray-800">{user?.name || 'Administrator'}</p>
                 <p className="text-xs text-gray-500">{user?.email || 'admin@jhon.com'}</p>
               </div>
-              <button 
+              <button
                 onClick={() => { setDropdownOpen(false); navigate('/admin/profile'); }}
                 className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
               >
                 <User className="w-4 h-4" />
                 Profile
               </button>
-              <button 
+              <button
                 onClick={() => { setDropdownOpen(false); navigate('/admin/settings'); }}
                 className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
               >

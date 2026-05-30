@@ -31,11 +31,11 @@ const HeroManagement = () => {
       const res = await api.get('/hero');
       if (res.data) {
         setForm({
-          titleLine1: res.data.titleLine1 ,
-          titleLine2: res.data.titleLine2 ,
-          subtitle: res.data.subtitle ,
-          videoUrl: res.data.videoUrl ,
-          backgroundImage: res.data.backgroundImage ,
+          titleLine1: res.data.titleLine1,
+          titleLine2: res.data.titleLine2,
+          subtitle: res.data.subtitle,
+          videoUrl: res.data.videoUrl,
+          backgroundImage: res.data.backgroundImage,
           stats: res.data.stats && res.data.stats.length > 0 ? res.data.stats : [
             { label: 'Luxury Stays', value: '500+' },
             { label: 'Premium Suites', value: '24' },
@@ -66,7 +66,7 @@ const HeroManagement = () => {
   }, []);
 
   const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
-  
+
   const handleStatChange = (index, field, value) => {
     const newStats = [...form.stats];
     newStats[index][field] = value;
@@ -76,11 +76,17 @@ const HeroManagement = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const maxVideoSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxVideoSize) {
+        toast.error('Video size cannot exceed 10MB');
+        e.target.value = ''; // Reset input selection
+        return;
+      }
       setVideoFile(file);
       setPreviewUrl(URL.createObjectURL(file));
-        setForm(prev => ({ ...prev, videoUrl: '' })); // Clear URL if video file is chosen
-        setImageFile(null);
-        setImagePreviewUrl('');
+      setForm(prev => ({ ...prev, videoUrl: '' })); // Clear URL if video file is chosen
+      setImageFile(null);
+      setImagePreviewUrl('');
     }
   };
 
@@ -91,7 +97,7 @@ const HeroManagement = () => {
       formData.append('titleLine1', form.titleLine1);
       formData.append('titleLine2', form.titleLine2);
       formData.append('subtitle', form.subtitle);
-      
+
       // Validation to ensure only one media asset is saved: prioritize video over image
       if (form.videoUrl && form.backgroundImage) {
         // If both URLs are set, clear the image URL to keep only video
@@ -103,7 +109,7 @@ const HeroManagement = () => {
       formData.append('videoUrl', form.videoUrl);
       formData.append('backgroundImage', form.backgroundImage);
       formData.append('stats', JSON.stringify(form.stats));
-      
+
       if (videoFile) {
         formData.append('video', videoFile);
       }
@@ -114,7 +120,7 @@ const HeroManagement = () => {
       await api.post('/hero', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
+
       toast.success('Hero section updated successfully!');
       fetchHero();
       setVideoFile(null);
@@ -157,24 +163,24 @@ const HeroManagement = () => {
 
           <div className="grid grid-cols-1 gap-5">
             <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Title Line 1</label>
-                <input
-                  type="text"
-                  name="titleLine1"
-                  value={form.titleLine1}
-                  onChange={handleChange}
-                  placeholder="e.g. Experience Luxury Like Never Before"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400/20 transition-all"
-                />
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 mt-2">Title Line 2 (optional)</label>
-                <input
-                  type="text"
-                  name="titleLine2"
-                  value={form.titleLine2}
-                  onChange={handleChange}
-                  placeholder="e.g. Premium Suites Await"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400/20 transition-all"
-                />
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Title Line 1</label>
+              <input
+                type="text"
+                name="titleLine1"
+                value={form.titleLine1}
+                onChange={handleChange}
+                placeholder="e.g. Experience Luxury Like Never Before"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400/20 transition-all"
+              />
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 mt-2">Title Line 2 (optional)</label>
+              <input
+                type="text"
+                name="titleLine2"
+                value={form.titleLine2}
+                onChange={handleChange}
+                placeholder="e.g. Premium Suites Await"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400/20 transition-all"
+              />
             </div>
 
             <div>
@@ -232,7 +238,7 @@ const HeroManagement = () => {
                 accept="video/*"
                 className="hidden"
               />
-              <div 
+              <div
                 onClick={() => fileInputRef.current.click()}
                 className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${videoFile ? 'border-primary-500 bg-primary-50/30' : 'border-gray-200 hover:border-primary-300'}`}
               >
@@ -240,7 +246,7 @@ const HeroManagement = () => {
                 <p className="text-sm text-gray-600 font-medium">
                   {videoFile ? videoFile.name : 'Click to upload or drag and drop'}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">MP4, WebM up to 500MB</p>
+                <p className="text-xs text-gray-400 mt-1">MP4, WebM up to 10MB</p>
               </div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 mt-4">Or Upload Local Image</label>
               <input
@@ -249,6 +255,12 @@ const HeroManagement = () => {
                 onChange={(e) => {
                   const file = e.target.files[0];
                   if (file) {
+                    const maxImageSize = 5 * 1024 * 1024; // 5MB
+                    if (file.size > maxImageSize) {
+                      toast.error('Image size cannot exceed 5MB');
+                      e.target.value = ''; // Reset input selection
+                      return;
+                    }
                     setImageFile(file);
                     setImagePreviewUrl(URL.createObjectURL(file));
                     setForm(prev => ({ ...prev, backgroundImage: '' }));
@@ -259,7 +271,7 @@ const HeroManagement = () => {
                 accept="image/*"
                 className="hidden"
               />
-              <div 
+              <div
                 onClick={() => imageInputRef.current.click()}
                 className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${imageFile ? 'border-primary-500 bg-primary-50/30' : 'border-gray-200 hover:border-primary-300'}`}
               >
@@ -272,7 +284,7 @@ const HeroManagement = () => {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button 
+              <button
                 disabled={submitting}
                 onClick={handleSave}
                 className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-bold transition-all shadow-lg shadow-primary-500/20 cursor-pointer disabled:opacity-50"
@@ -281,7 +293,7 @@ const HeroManagement = () => {
                 {submitting ? 'Saving...' : 'Save Changes'}
               </button>
               {previewUrl && (
-                <button 
+                <button
                   onClick={handleDeleteVideo}
                   className="flex items-center gap-2 px-5 py-2.5 border border-red-200 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-all cursor-pointer"
                 >
@@ -289,7 +301,7 @@ const HeroManagement = () => {
                 </button>
               )}
               {imagePreviewUrl && (
-                <button 
+                <button
                   onClick={() => {
                     setImageFile(null);
                     setImagePreviewUrl('');
@@ -308,29 +320,29 @@ const HeroManagement = () => {
         <div className="xl:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col">
           <h3 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider">Live Preview</h3>
           <div className="rounded-2xl overflow-hidden bg-gray-900 aspect-video relative group">
-              {previewUrl ? (
-                <video
-                  key={previewUrl}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="absolute inset-0 w-full h-full object-cover"
-                >
-                  <source src={previewUrl} />
-                </video>
-              ) : imagePreviewUrl ? (
-                <img
-                  src={imagePreviewUrl}
-                  alt="Hero background"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
-              )}
-            
+            {previewUrl ? (
+              <video
+                key={previewUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              >
+                <source src={previewUrl} />
+              </video>
+            ) : imagePreviewUrl ? (
+              <img
+                src={imagePreviewUrl}
+                alt="Hero background"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+            )}
+
             <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
-            
+
             <div className="relative z-10 h-full flex flex-col items-center justify-center text-center p-8">
               <h2 className="text-white font-extrabold text-2xl leading-tight mb-2 drop-shadow-lg">
                 <span className="text-white">

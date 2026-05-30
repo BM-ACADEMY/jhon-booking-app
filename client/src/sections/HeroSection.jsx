@@ -69,11 +69,12 @@ const HeroSection = () => {
 
 
 
+  const baseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:5000';
   const videoSrc = hero?.videoUrl
-    ? (hero.videoUrl.startsWith('http') ? hero.videoUrl : `${import.meta.env.VITE_BASE_URL}${hero.videoUrl}`)
+    ? (hero.videoUrl.startsWith('http') ? hero.videoUrl : `${baseUrl}${hero.videoUrl}`)
     : null;
   const imageSrc = hero?.backgroundImage
-    ? (hero.backgroundImage.startsWith('http') ? hero.backgroundImage : `${import.meta.env.VITE_BASE_URL}${hero.backgroundImage}`)
+    ? (hero.backgroundImage.startsWith('http') ? hero.backgroundImage : `${baseUrl}${hero.backgroundImage}`)
     : 'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop';
 
   // Dynamic texts for the animated pill

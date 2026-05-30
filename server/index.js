@@ -1,8 +1,8 @@
+import './config/env.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.routes.js';
 import roomRoutes from './routes/room.routes.js';
@@ -17,7 +17,6 @@ import settingRoutes from './routes/setting.routes.js';
 import reviewRoutes from './routes/review.routes.js';
 import messageRoutes from './routes/message.routes.js';
 
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

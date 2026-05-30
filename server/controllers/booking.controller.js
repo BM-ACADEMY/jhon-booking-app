@@ -4,15 +4,18 @@ import User from '../models/User.js';
 import Review from '../models/Review.js';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
-import dotenv from 'dotenv';
-dotenv.config();
 
-// Note: Some versions of razorpay in ESM might need a different import style
-// but usually this works if keys are provided.
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'dummy_id',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_secret',
-});
+let razorpayInstance = null;
+
+const getRazorpayInstance = () => {
+  if (!razorpayInstance) {
+    razorpayInstance = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+  }
+  return razorpayInstance;
+};
 
 // Helper to calculate dates between check-in and check-out
 const getDatesInRange = (startDate, endDate) => {
@@ -32,20 +35,20 @@ const checkRoomAvailability = async (roomId, checkIn, checkOut) => {
   if (!roomId || !checkIn || !checkOut) return true; // skip validation if params missing
   const room = await Room.findById(roomId);
   if (!room) return false;
-  
+
   if (!room.unavailableDates || room.unavailableDates.length === 0) return true;
-  
+
   const start = new Date(checkIn);
   const end = new Date(checkOut);
   const requestedDates = getDatesInRange(start, end);
-  
+
   const hasOverlap = requestedDates.some(reqDate => {
     return room.unavailableDates.some(unDate => {
       const uDate = new Date(unDate);
       return uDate.toDateString() === reqDate.toDateString();
     });
   });
-  
+
   return !hasOverlap;
 };
 
@@ -85,7 +88,7 @@ export const getMyBookings = async (req, res) => {
 export const createRazorpayOrder = async (req, res) => {
   try {
     const { amount, currency = 'INR', roomId, checkIn, checkOut } = req.body;
-    
+
     // Check room availability first
     if (roomId && checkIn && checkOut) {
       const isAvailable = await checkRoomAvailability(roomId, checkIn, checkOut);
@@ -100,6 +103,7 @@ export const createRazorpayOrder = async (req, res) => {
       receipt: `receipt_${Date.now()}`,
     };
 
+    const razorpay = getRazorpayInstance();
     const order = await razorpay.orders.create(options);
     res.json(order);
   } catch (err) {
@@ -109,12 +113,16 @@ export const createRazorpayOrder = async (req, res) => {
 
 export const verifyRazorpayPayment = async (req, res) => {
   try {
-    const { 
-      razorpay_order_id, 
-      razorpay_payment_id, 
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
       razorpay_signature,
-      bookingData 
+      bookingData
     } = req.body;
+
+    if (!bookingData) {
+      return res.status(400).json({ message: 'Booking data is required for verification!' });
+    }
 
     const shasum = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
     shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
@@ -147,9 +155,9 @@ export const verifyRazorpayPayment = async (req, res) => {
       $addToSet: { unavailableDates: { $each: bookedDates } }
     });
 
-    res.status(201).json({ 
-      message: 'Payment verified and booking created successfully', 
-      booking 
+    res.status(201).json({
+      message: 'Payment verified and booking created successfully',
+      booking
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -159,7 +167,7 @@ export const verifyRazorpayPayment = async (req, res) => {
 export const createBooking = async (req, res) => {
   try {
     const { room, checkIn, checkOut } = req.body;
-    
+
     // Check availability
     const isAvailable = await checkRoomAvailability(room, checkIn, checkOut);
     if (!isAvailable) {
@@ -197,7 +205,7 @@ export const updateBookingStatus = async (req, res) => {
 export const getDashboardStats = async (req, res) => {
   try {
     const totalBookings = await Booking.countDocuments();
-    
+
     // Sum totalAmount of all bookings except cancelled ones
     const revenueResult = await Booking.aggregate([
       { $match: { status: { $ne: 'cancelled' } } },
@@ -225,8 +233,8 @@ export const getDashboardStats = async (req, res) => {
       checkIn: { $lte: today },
       checkOut: { $gte: today }
     });
-    
-    const occupiedRoomIds = [...new Set(activeBookings.map(b => b.room.toString()))];
+
+    const occupiedRoomIds = [...new Set(activeBookings.filter(b => b && b.room).map(b => b.room.toString()))];
     const occupiedRoomsCount = occupiedRoomIds.length;
     const occupancyRate = totalRooms > 0 ? Math.round((occupiedRoomsCount / totalRooms) * 100) : 0;
 
@@ -237,7 +245,7 @@ export const getDashboardStats = async (req, res) => {
       checkIn: { $gte: today, $lt: tomorrow },
       status: { $ne: 'cancelled' }
     });
-    
+
     const todayCheckOuts = await Booking.countDocuments({
       checkOut: { $gte: today, $lt: tomorrow },
       status: { $ne: 'cancelled' }
@@ -292,13 +300,14 @@ export const getDashboardStats = async (req, res) => {
     const last6Months = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date();
+      d.setDate(1); // Prevent day-of-month overflow (e.g., Feb 30th -> March 2nd)
       d.setMonth(d.getMonth() - i);
       const year = d.getFullYear();
       const monthIndex = d.getMonth();
       const label = `${monthNames[monthIndex]} ${year}`;
-      
+
       const match = monthlyStatsAgg.find(item => item._id.year === year && item._id.month === (monthIndex + 1));
-      
+
       last6Months.push({
         name: label,
         revenue: match ? match.revenue : 0,

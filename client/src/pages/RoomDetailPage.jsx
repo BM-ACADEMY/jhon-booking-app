@@ -73,6 +73,71 @@ const RoomDetailPage = () => {
   const [checkOut, setCheckOut] = useState(checkOutQuery);
   const [guests, setGuests] = useState(guestsQuery);
 
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [hoveredDate, setHoveredDate] = useState(null);
+  const [activeSelectType, setActiveSelectType] = useState('checkIn'); // 'checkIn' or 'checkOut'
+
+  const getDatesInRangeList = (startDate, endDate) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const date = new Date(start.getTime());
+    const dates = [];
+    while (date <= end) {
+      dates.push(new Date(date.getTime()));
+      date.setDate(date.getDate() + 1);
+    }
+    return dates;
+  };
+
+  const isDateBooked = (date) => {
+    if (!room || !room.unavailableDates) return false;
+    return room.unavailableDates.some(d => {
+      const unDate = new Date(d);
+      return unDate.getFullYear() === date.getFullYear() &&
+             unDate.getMonth() === date.getMonth() &&
+             unDate.getDate() === date.getDate();
+    });
+  };
+
+  const isDateInPast = (date) => {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    return date < today;
+  };
+
+  const handleDateClick = (date) => {
+    const dateStr = date.toISOString().split('T')[0];
+
+    if (activeSelectType === 'checkIn') {
+      setCheckIn(dateStr);
+      setCheckOut('');
+      setActiveSelectType('checkOut');
+    } else {
+      if (!checkIn) {
+        setCheckIn(dateStr);
+        setActiveSelectType('checkOut');
+      } else if (dateStr < checkIn) {
+        setCheckIn(dateStr);
+        setCheckOut('');
+        setActiveSelectType('checkOut');
+      } else {
+        const datesInRange = getDatesInRangeList(new Date(checkIn), date);
+        const hasBookedOverlap = datesInRange.some(d => isDateBooked(d));
+
+        if (hasBookedOverlap) {
+          toast.error("Selected range overlaps with already booked dates. Please try another range.");
+          setCheckIn(dateStr);
+          setCheckOut('');
+          setActiveSelectType('checkOut');
+        } else {
+          setCheckOut(dateStr);
+          setShowCalendarModal(false);
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     if (checkInQuery) setCheckIn(checkInQuery);
     if (checkOutQuery) setCheckOut(checkOutQuery);
@@ -190,7 +255,7 @@ const RoomDetailPage = () => {
                 </span>
               )}
             </div>
-            
+
             {/* Stars and Date Row on the Top Left Side */}
             <div className="flex items-center gap-2 text-[12px] mt-0.5">
               <div className="flex gap-0.5">
@@ -274,6 +339,162 @@ const RoomDetailPage = () => {
   };
 
   const dynamicStats = calculateDynamicStats();
+
+  const renderMonthCalendar = (monthDate) => {
+    const year = monthDate.getFullYear();
+    const month = monthDate.getMonth();
+
+    // Month details
+    const monthName = monthDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+    // First day of month
+    const firstDay = new Date(year, month, 1).getDay();
+
+    // Total days in month
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    // Weekdays S M T W T F S
+    const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+    // Generate days array
+    const dayCells = [];
+
+    // Empty cells for first day padding
+    for (let i = 0; i < firstDay; i++) {
+      dayCells.push(<div key={`pad-${i}`} className="w-10 h-10" />);
+    }
+
+    // Days numbers
+    for (let day = 1; day <= totalDays; day++) {
+      const thisDate = new Date(year, month, day);
+      const isPast = isDateInPast(thisDate);
+      const isBooked = isDateBooked(thisDate);
+      const isDisabled = isPast || isBooked;
+
+      const dateStr = thisDate.toISOString().split('T')[0];
+      const isCheckIn = checkIn === dateStr;
+      const isCheckOut = checkOut === dateStr;
+
+      // Determine if date is inside selected range
+      let inRange = false;
+      if (checkIn && checkOut) {
+        inRange = dateStr > checkIn && dateStr < checkOut;
+      } else if (checkIn && hoveredDate) {
+        inRange = dateStr > checkIn && dateStr <= hoveredDate;
+      }
+
+      // Check if day is hovered
+      const isHovered = hoveredDate === dateStr;
+
+      // Class names for styling
+      let dayBtnClass = "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all relative ";
+      let rangeBgClass = "";
+
+      if (isDisabled) {
+        dayBtnClass += "text-gray-300 cursor-not-allowed ";
+        if (isBooked) {
+          dayBtnClass += "line-through grayscale ";
+        }
+      } else if (isCheckIn || isCheckOut) {
+        dayBtnClass += "bg-black text-white shadow-md z-10 scale-105 ";
+      } else if (inRange) {
+        dayBtnClass += "text-gray-900 font-bold ";
+        rangeBgClass = "bg-[#f3db01]/20 scale-y-90 "; // Soft highlight matching our yellow theme
+        if (isHovered) {
+          dayBtnClass += "ring-2 ring-[#f3db01] ";
+        }
+      } else {
+        dayBtnClass += "text-gray-800 hover:bg-gray-100 hover:scale-105 cursor-pointer ";
+      }
+
+      dayCells.push(
+        <div
+          key={`day-${day}`}
+          className={`relative w-10 h-10 flex items-center justify-center ${rangeBgClass}`}
+          onMouseEnter={() => !isDisabled && checkIn && !checkOut && setHoveredDate(dateStr)}
+          onMouseLeave={() => setHoveredDate(null)}
+          onClick={() => !isDisabled && handleDateClick(thisDate)}
+        >
+          <button
+            type="button"
+            disabled={isDisabled}
+            className={dayBtnClass}
+          >
+            {day}
+          </button>
+        </div>
+      );
+    }
+
+    // Determine navigation buttons to render (only render prev on left calendar, next on right, etc.)
+    const isLeftCalendar = month === currentMonth.getMonth();
+
+    return (
+      <div className="flex flex-col gap-4">
+        {/* Month Header with optional Arrow Nav */}
+        <div className="flex items-center justify-between px-2">
+          {isLeftCalendar ? (
+            <button
+              type="button"
+              onClick={() => {
+                const prev = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+                const today = new Date();
+                today.setDate(1);
+                today.setHours(0,0,0,0);
+                if (prev >= today || (currentMonth.getMonth() !== today.getMonth() || currentMonth.getFullYear() !== today.getFullYear())) {
+                  setCurrentMonth(prev);
+                }
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer text-gray-700"
+            >
+              <Icons.ChevronLeft className="w-5 h-5" />
+            </button>
+          ) : <div className="w-9 h-9" />}
+
+          <span className="font-bold text-gray-900 text-[15px] sm:text-base">
+            {monthName}
+          </span>
+
+          {!isLeftCalendar ? (
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer text-gray-700"
+            >
+              <Icons.ChevronRight className="w-5 h-5" />
+            </button>
+          ) : <div className="w-9 h-9 md:hidden">
+            {/* On mobile, only left calendar is shown, so show next month arrow on it */}
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer text-gray-700"
+            >
+              <Icons.ChevronRight className="w-5 h-5" />
+            </button>
+          </div>}
+        </div>
+
+        {/* Weekday Grid */}
+        <div className="grid grid-cols-7 text-center font-bold text-xs text-gray-400 mb-1">
+          {weekdays.map((day, idx) => (
+            <div key={idx} className="h-6 flex items-center justify-center">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Days Grid */}
+        <div className="grid grid-cols-7 gap-y-1 text-center">
+          {dayCells}
+        </div>
+      </div>
+    );
+  };
 
   const nights = checkIn && checkOut
     ? Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000))
@@ -671,13 +892,29 @@ const RoomDetailPage = () => {
 
                 <div className="bg-white border border-gray-300 rounded-2xl overflow-hidden mb-6">
                   <div className="flex border-b border-gray-300">
-                    <div className="flex-1 p-3 border-r border-gray-300">
-                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Check-in</label>
-                      <input type="date" value={checkIn} onChange={e => setCheckIn(e.target.value)} min={new Date().toISOString().split('T')[0]} className="w-full text-sm outline-none bg-transparent cursor-pointer text-gray-700" />
+                    <div
+                      onClick={() => {
+                        setActiveSelectType('checkIn');
+                        setShowCalendarModal(true);
+                      }}
+                      className="flex-1 p-3 border-r border-gray-300 cursor-pointer hover:bg-gray-50 transition-colors"
+                    >
+                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1 cursor-pointer">Check-in</label>
+                      <div className="text-sm font-semibold text-gray-700">
+                        {checkIn ? new Date(checkIn).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Add date'}
+                      </div>
                     </div>
-                    <div className="flex-1 p-3">
-                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Check-out</label>
-                      <input type="date" value={checkOut} onChange={e => setCheckOut(e.target.value)} min={checkIn || new Date().toISOString().split('T')[0]} className="w-full text-sm outline-none bg-transparent cursor-pointer text-gray-700" />
+                    <div
+                      onClick={() => {
+                        setActiveSelectType('checkOut');
+                        setShowCalendarModal(true);
+                      }}
+                      className="flex-1 p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                    >
+                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1 cursor-pointer">Check-out</label>
+                      <div className="text-sm font-semibold text-gray-700">
+                        {checkOut ? new Date(checkOut).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Add date'}
+                      </div>
                     </div>
                   </div>
                   <div className="p-3 flex items-center justify-between">
@@ -753,32 +990,36 @@ const RoomDetailPage = () => {
             {/* Stacked Input Cards */}
             <div className="space-y-3 mb-2">
               {/* Check-In Card */}
-              <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80 relative">
+              <div
+                onClick={() => {
+                  setActiveSelectType('checkIn');
+                  setShowCalendarModal(true);
+                }}
+                className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80 cursor-pointer active:bg-gray-100 transition-colors"
+              >
                 <Calendar className="w-6 h-6 text-gray-400" />
-                <div className="flex flex-col w-full">
+                <div className="flex flex-col w-full text-left">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Check-in</label>
-                  <input
-                    type="date"
-                    value={checkIn}
-                    onChange={e => setCheckIn(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className={`bg-transparent w-full text-[15px] outline-none ${checkIn ? 'font-bold text-gray-900' : 'font-medium text-gray-400'}`}
-                  />
+                  <div className={`text-[15px] ${checkIn ? 'font-bold text-gray-900' : 'font-medium text-gray-400'}`}>
+                    {checkIn ? new Date(checkIn).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Add date'}
+                  </div>
                 </div>
               </div>
 
               {/* Check-Out Card */}
-              <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80 relative">
+              <div
+                onClick={() => {
+                  setActiveSelectType('checkOut');
+                  setShowCalendarModal(true);
+                }}
+                className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80 cursor-pointer active:bg-gray-100 transition-colors"
+              >
                 <Calendar className="w-6 h-6 text-gray-400" />
-                <div className="flex flex-col w-full">
+                <div className="flex flex-col w-full text-left">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Check-out</label>
-                  <input
-                    type="date"
-                    value={checkOut}
-                    onChange={e => setCheckOut(e.target.value)}
-                    min={checkIn || new Date().toISOString().split('T')[0]}
-                    className={`bg-transparent w-full text-[15px] outline-none ${checkOut ? 'font-bold text-gray-900' : 'font-medium text-gray-400'}`}
-                  />
+                  <div className={`text-[15px] ${checkOut ? 'font-bold text-gray-900' : 'font-medium text-gray-400'}`}>
+                    {checkOut ? new Date(checkOut).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Add date'}
+                  </div>
                 </div>
               </div>
 
@@ -894,6 +1135,127 @@ const RoomDetailPage = () => {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- CUSTOM CALENDAR MODAL --- */}
+      {showCalendarModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+            onClick={() => setShowCalendarModal(false)}
+          />
+
+          {/* Modal Container */}
+          <div className="relative w-full max-w-4xl bg-white rounded-3xl shadow-[0_10px_50px_rgba(0,0,0,0.15)] overflow-hidden p-6 sm:p-8 z-10 animate-in zoom-in-95 duration-200">
+
+            {/* Top Row: Nights Info and Inputs */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-gray-100">
+              <div className="text-left">
+                <h3 className="text-2xl font-bold text-gray-900">
+                  {nights > 0 ? `${nights} night${nights !== 1 ? 's' : ''}` : 'Select dates'}
+                </h3>
+                <p className="text-sm text-gray-500 font-medium mt-1">
+                  {checkIn && checkOut
+                    ? `${new Date(checkIn).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })} - ${new Date(checkOut).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                    : 'Add your travel dates for exact pricing'
+                  }
+                </p>
+              </div>
+
+              {/* Top Inputs: CHECK-IN & CHECKOUT */}
+              <div className="flex border border-gray-300 rounded-xl overflow-hidden shadow-sm max-w-md w-full">
+                <div
+                  onClick={() => setActiveSelectType('checkIn')}
+                  className={`flex-1 p-3 cursor-pointer transition-all flex items-center justify-between ${activeSelectType === 'checkIn' ? 'bg-gray-50 ring-2 ring-black ring-inset' : 'hover:bg-gray-50'}`}
+                >
+                  <div className="text-left">
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider">Check-in</label>
+                    <span className="text-sm font-bold text-gray-800">
+                      {checkIn ? new Date(checkIn).toLocaleDateString('en-US') : 'Add date'}
+                    </span>
+                  </div>
+                  {checkIn && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCheckIn('');
+                        setCheckOut('');
+                      }}
+                      className="p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div
+                  onClick={() => setActiveSelectType('checkOut')}
+                  className={`flex-1 p-3 cursor-pointer transition-all flex items-center justify-between border-l border-gray-300 ${activeSelectType === 'checkOut' ? 'bg-gray-50 ring-2 ring-black ring-inset' : 'hover:bg-gray-50'}`}
+                >
+                  <div className="text-left">
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider">Checkout</label>
+                    <span className="text-sm font-bold text-gray-800">
+                      {checkOut ? new Date(checkOut).toLocaleDateString('en-US') : 'Add date'}
+                    </span>
+                  </div>
+                  {checkOut && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCheckOut('');
+                      }}
+                      className="p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Middle Row: Dual Calendar Views */}
+            <div className="py-6 flex flex-col md:flex-row gap-8 justify-center select-none">
+
+              {/* Left Month View */}
+              <div className="flex-1 max-w-[360px]">
+                {renderMonthCalendar(currentMonth)}
+              </div>
+
+              {/* Right Month View (Only on Desktop) */}
+              <div className="hidden md:block flex-1 max-w-[360px]">
+                {renderMonthCalendar(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
+              </div>
+            </div>
+
+            {/* Bottom Row: Actions */}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+              <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-700 transition-colors" title="Keyboard accessibility">
+                {/* <span className="text-lg">⌨️</span> */}
+              </button>
+
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    setCheckIn('');
+                    setCheckOut('');
+                    setHoveredDate(null);
+                  }}
+                  className="text-sm font-bold text-gray-700 hover:text-black underline cursor-pointer px-4 py-2 hover:bg-gray-50 rounded-xl transition-all"
+                >
+                  Clear dates
+                </button>
+                <button
+                  onClick={() => setShowCalendarModal(false)}
+                  className="bg-black hover:bg-black/90 text-white font-bold text-sm px-6 py-3 rounded-xl transition-all active:scale-95 cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
