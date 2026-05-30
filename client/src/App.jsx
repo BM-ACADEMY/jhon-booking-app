@@ -84,22 +84,36 @@ const AppRoutes = () => (
 
 import { Toaster } from 'react-hot-toast';
 import ScrollToTop from './components/ScrollToTop';
+import { useState, useEffect } from 'react';
 
-const App = () => (
-  <BrowserRouter>
-    <ScrollToTop />
-    <AuthProvider>
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-        gutter={12}
-        toastOptions={{
-          duration: 4000,
-        }}
-      />
-      <AppRoutes />
-    </AuthProvider>
-  </BrowserRouter>
-);
+const App = () => {
+  const [toastPosition, setToastPosition] = useState(
+    typeof window !== 'undefined' && window.innerWidth >= 640 ? 'top-right' : 'top-center'
+  );
+
+  useEffect(() => {
+    const handler = () =>
+      setToastPosition(window.innerWidth >= 640 ? 'top-right' : 'top-center');
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
+  return (
+    <BrowserRouter>
+      <ScrollToTop />
+      <AuthProvider>
+        <Toaster
+          position={toastPosition}
+          reverseOrder={false}
+          gutter={12}
+          toastOptions={{
+            duration: 4000,
+          }}
+        />
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
 
 export default App;

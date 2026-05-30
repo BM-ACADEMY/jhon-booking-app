@@ -240,7 +240,10 @@ export const getDashboardStats = async (req, res) => {
     const occupiedRoomsCount = occupiedRoomIds.length;
     const occupancyRate = totalRooms > 0 ? Math.round((occupiedRoomsCount / totalRooms) * 100) : 0;
 
-    const pendingBookings = await Booking.countDocuments({ status: 'pending' });
+    const pendingBookings   = await Booking.countDocuments({ status: 'pending' });
+    const confirmedBookings = await Booking.countDocuments({ status: 'confirmed' });
+    const completedBookings = await Booking.countDocuments({ status: 'completed' });
+    const cancelledBookings = await Booking.countDocuments({ status: 'cancelled' });
 
     // Check-ins / check-outs today
     const todayCheckIns = await Booking.countDocuments({
@@ -253,12 +256,12 @@ export const getDashboardStats = async (req, res) => {
       status: { $ne: 'cancelled' }
     });
 
-    // Recent bookings (last 5)
+    // Recent bookings for dashboard table (paginated client-side)
     const recentBookings = await Booking.find()
       .populate('user', 'name')
       .populate('room', 'name')
       .sort({ createdAt: -1 })
-      .limit(5);
+      .limit(100);
 
     const formattedRecent = recentBookings.map(b => ({
       id: b._id,
@@ -266,7 +269,7 @@ export const getDashboardStats = async (req, res) => {
       room: b.room?.name || 'Deleted Room',
       checkIn: b.checkIn ? new Date(b.checkIn).toISOString().split('T')[0] : 'N/A',
       checkOut: b.checkOut ? new Date(b.checkOut).toISOString().split('T')[0] : 'N/A',
-      amount: `$${b.totalAmount}`,
+      amount: `₹${b.totalAmount?.toLocaleString('en-IN')}`,
       status: b.status || 'pending'
     }));
 
@@ -325,6 +328,9 @@ export const getDashboardStats = async (req, res) => {
       occupancyRate,
       occupiedRoomsCount,
       pendingBookings,
+      confirmedBookings,
+      completedBookings,
+      cancelledBookings,
       todayCheckIns,
       todayCheckOuts,
       recentBookings: formattedRecent,

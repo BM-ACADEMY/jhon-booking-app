@@ -209,81 +209,54 @@ const MyBookings = () => {
                     </div>
                   </div>
 
-                  {/* Bottom Section: Feedback Bar */}
-                  {isPast && (
-                    booking.isReviewed && booking.review ? (
-                      <div
-                        onClick={() => handleOpenReviewModal(booking)}
-                        className="bg-gray-50/50 hover:bg-gray-100 border-t border-gray-100 px-6 md:px-8 py-4 flex items-center justify-between cursor-pointer transition-all gap-4 group"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mb-1 group-hover:text-primary-700 transition-colors">
-                            Your Feedback
-                          </p>
-                          <p className="text-sm font-bold text-gray-700 truncate pr-4">
-                            {booking.review.comment || 'No comment provided.'}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0 bg-white shadow-sm border border-gray-100 px-3.5 py-1.5 rounded-xl group-hover:border-primary-100 transition-all">
-                          <div className="flex items-center gap-1.5">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-3.5 h-3.5 ${i < Math.round(booking.review.rating || 5) ? 'fill-[#FCE83A] text-[#FCE83A]' : 'text-gray-200'}`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-xs font-black text-gray-600 ml-3">
-                            {booking.review.rating?.toFixed(1) || '5.0'}
-                          </span>
-                        </div>
+                  {/* Bottom Section: Feedback Bar — all cards, hidden once reviewed */}
+                  {!booking.isReviewed && (
+                    <div
+                      onClick={() => handleOpenReviewModal(booking)}
+                      className="bg-gray-50/30 hover:bg-primary-50/30 border-t border-gray-100 px-6 md:px-8 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between transition-all gap-2 sm:gap-4 group cursor-pointer"
+                    >
+                      {/* Text label */}
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest group-hover:text-primary-700 transition-colors">
+                          Rate Us
+                        </p>
+                        <p className="text-xs font-bold text-gray-400 group-hover:text-primary-600/80 transition-colors">
+                          Leave a quick review
+                        </p>
                       </div>
-                    ) : (
+
+                      {/* Stars + Rate label */}
                       <div
-                        className="bg-gray-50/30 hover:bg-primary-50/30 border-t border-gray-100 px-6 md:px-8 py-4 flex items-center justify-between transition-all gap-4 group"
+                        className="flex items-center gap-1.5 flex-shrink-0"
+                        onMouseLeave={() => setHoveredStars(prev => ({ ...prev, [booking._id]: 0 }))}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <div
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((starIndex) => {
+                            const isHovered = starIndex <= (hoveredStars[booking._id] || 0);
+                            return (
+                              <button
+                                key={starIndex}
+                                type="button"
+                                onMouseEnter={() => setHoveredStars(prev => ({ ...prev, [booking._id]: starIndex }))}
+                                onClick={() => handleOpenReviewModal(booking, starIndex)}
+                                className="p-0.5 hover:scale-110 active:scale-95 transition-all focus:outline-none cursor-pointer"
+                              >
+                                <Star
+                                  className={`w-4 h-4 transition-colors ${isHovered ? 'fill-[#FCE83A] text-[#cabb31]' : 'text-gray-300'}`}
+                                />
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <span
                           onClick={() => handleOpenReviewModal(booking)}
-                          className="flex-1 min-w-0 cursor-pointer"
+                          className="text-xs font-black text-gray-400 hover:text-primary-600 ml-1 transition-colors cursor-pointer"
                         >
-                          <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mb-1 group-hover:text-primary-700 transition-colors">
-                            Share Your Experience
-                          </p>
-                          <p className="text-xs font-bold text-gray-400 group-hover:text-primary-600/80 transition-colors">
-                            Tap to rate your stay and write a review
-                          </p>
-                        </div>
-                        <div
-                          className="flex items-center gap-1.5 flex-shrink-0 bg-white px-3.5 py-1.5 rounded-xl transition-all"
-                          onMouseLeave={() => setHoveredStars(prev => ({ ...prev, [booking._id]: 0 }))}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            {[1, 2, 3, 4, 5].map((starIndex) => {
-                              const isHovered = starIndex <= (hoveredStars[booking._id] || 0);
-                              return (
-                                <button
-                                  key={starIndex}
-                                  type="button"
-                                  onMouseEnter={() => setHoveredStars(prev => ({ ...prev, [booking._id]: starIndex }))}
-                                  onClick={() => handleOpenReviewModal(booking, starIndex)}
-                                  className="p-0.5 hover:scale-110 active:scale-95 transition-all text-[#FCE83A] focus:outline-none cursor-pointer"
-                                >
-                                  <Star
-                                    className={`w-4 h-4 transition-colors ${isHovered ? 'fill-[#FCE83A] text-[#cabb31]' : 'text-gray-400'}`}
-                                  />
-                                </button>
-                              );
-                            })}
-                          </div>
-                          <span
-                            onClick={() => handleOpenReviewModal(booking)}
-                            className="text-xs font-black text-gray-400 hover:text-primary-600 ml-3 transition-colors cursor-pointer"
-                          >
-                            Rate
-                          </span>
-                        </div>
+                          Rate
+                        </span>
                       </div>
-                    )
+                    </div>
                   )}
                 </div>
             );

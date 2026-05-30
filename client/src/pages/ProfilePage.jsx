@@ -53,20 +53,13 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#eaf0f5] py-12 px-4 sm:px-6 lg:px-8 font-sans">
+    <div className="min-h-screen bg-[#eaf0f5] pt-28 sm:pt-32 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-4xl mx-auto">
 
         {/* Header Section */}
         <div className="mb-8 relative">
-          <button
-            onClick={() => navigate(-1)}
-            className="absolute -top-8 left-0 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
           <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">Profile Settings</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage your account information and preferences</p>
+          <p className="text-gray-500 text-sm mt-3">Manage your account information and preferences</p>
         </div>
 
         {/* Main Content Card */}
@@ -134,7 +127,7 @@ const ProfilePage = () => {
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1 (555) 123-4567"
+                    placeholder="+91 9934917445"
                     disabled={saving}
                     className="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all disabled:opacity-50"
                     required

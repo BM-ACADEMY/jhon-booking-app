@@ -284,13 +284,13 @@ const RoomsReview = () => {
                     {/* Room Category */}
                     <div>
                       <p className="text-xs font-semibold text-[#4F46E5] uppercase tracking-wider mb-1">{rev.room?.category || 'Room'}</p>
-                      <h4 className="text-md font-medium text-gray-900 truncate">{rev.room?.name || 'Deleted Room'}</h4>
+                      <h4 className="text-md font-medium text-gray-900">{rev.room?.name || 'Deleted Room'}</h4>
                     </div>
 
                     {/* Comment & Overall Rating */}
                     <div className="flex-1">
                       <div className="mb-3"><StarRow rating={rev.rating} /></div>
-                      <p className="text-gray-600 text-sm leading-relaxed italic line-clamp-3">"{rev.comment}"</p>
+                      <p className="text-gray-600 text-sm leading-relaxed italic">"{rev.comment}"</p>
                     </div>
 
                     {/* Sub-ratings Grid */}
