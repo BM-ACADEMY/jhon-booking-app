@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { User, Mail, Phone, Lock, Save, Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, Save, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
@@ -53,46 +53,49 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-xl mx-auto">
+    <div className="min-h-screen bg-[#eaf0f5] py-12 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-4xl mx-auto">
 
-        {/* Back navigation */}
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Go back"
-          className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-black uppercase tracking-widest text-[10px] mb-6 cursor-pointer transition-transform hover:-translate-x-1 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md px-1"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </button>
+        {/* Header Section */}
+        <div className="mb-8 relative">
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute -top-8 left-0 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">Profile Settings</h1>
+          <p className="text-gray-500 text-sm mt-1">Manage your account information and preferences</p>
+        </div>
 
-        {/* Profile Card */}
-        <div className="bg-white rounded-[32px] border border-gray-100 shadow-xl overflow-hidden">
+        {/* Main Content Card */}
+        <div className="bg-white rounded-[20px] shadow-sm border border-gray-100 p-6 sm:p-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">My Profile</h2>
 
-          {/* Cover gradient */}
-          <div className="h-36 bg-gradient-to-r from-violet-600 to-indigo-600 relative">
-            <div className="absolute -bottom-10 left-8">
-              <div className="w-20 h-20 rounded-2xl bg-white p-1 shadow-md">
-                <div className="w-full h-full rounded-xl bg-violet-100 flex items-center justify-center text-violet-700 font-black text-2xl uppercase">
-                  {name ? name.charAt(0) : 'U'}
+          <form onSubmit={handleSubmit}>
+
+            {/* Avatar & Summary Card */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border border-gray-200 rounded-xl p-5 mb-6 gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-[#E8E8FF] text-[#4F46E5] flex items-center justify-center text-2xl font-semibold flex-shrink-0">
+                  {name ? name.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{name || 'Your Name'}</h3>
+                  <p className="text-sm text-gray-500">{email || 'your.email@example.com'}</p>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="px-8 pt-16 pb-8 space-y-6">
-            <div>
-              <h1 className="text-xl font-black text-gray-900 leading-tight">Edit Profile</h1>
-              <p className="text-xs text-gray-400 font-semibold mt-0.5">Manage your account information and password settings</p>
-            </div>
+            {/* Personal Information Card */}
+            <div className="border border-gray-200 rounded-xl p-5 sm:p-6 mb-6">
+              <h3 className="text-md font-semibold text-gray-900 mb-5">Personal Information</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-
-              {/* Name */}
-              <div className="space-y-1.5">
-                <label htmlFor="fullName" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Full Name</label>
-                <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-violet-500 focus-within:bg-white transition-all">
-                  <User className="w-4.5 h-4.5 text-gray-400 flex-shrink-0" />
+                {/* Full Name */}
+                <div>
+                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-600 mb-1.5">Full Name</label>
                   <input
                     id="fullName"
                     type="text"
@@ -100,107 +103,100 @@ const ProfilePage = () => {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="John Doe"
                     disabled={saving}
-                    className="w-full text-sm font-bold text-gray-800 bg-transparent outline-none placeholder-gray-400 disabled:opacity-50"
+                    className="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all disabled:opacity-50"
                     required
                   />
                 </div>
-              </div>
 
-              {/* Email */}
-              <div className="space-y-1.5">
-                <label htmlFor="email" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Email Address</label>
-                <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-violet-500 focus-within:bg-white transition-all">
-                  <Mail className="w-4.5 h-4.5 text-gray-400 flex-shrink-0" />
+                {/* Blank space to match design grid if needed */}
+                <div className="hidden sm:block"></div>
+
+                {/* Email */}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-1.5">Email Address</label>
                   <input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="user@example.com"
+                    placeholder="john.doe@example.com"
                     disabled={saving}
-                    className="w-full text-sm font-bold text-gray-800 bg-transparent outline-none placeholder-gray-400 disabled:opacity-50"
+                    className="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all disabled:opacity-50"
                     required
                   />
                 </div>
-              </div>
 
-              {/* Phone */}
-              <div className="space-y-1.5">
-                <label htmlFor="phone" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone Number</label>
-                <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-violet-500 focus-within:bg-white transition-all">
-                  <Phone className="w-4.5 h-4.5 text-gray-400 flex-shrink-0" />
+                {/* Phone */}
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-600 mb-1.5">Phone Number</label>
                   <input
                     id="phone"
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1 555-123-4567"
+                    placeholder="+1 (555) 123-4567"
                     disabled={saving}
-                    className="w-full text-sm font-bold text-gray-800 bg-transparent outline-none placeholder-gray-400 disabled:opacity-50"
+                    className="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all disabled:opacity-50"
                     required
                   />
                 </div>
+
               </div>
+            </div>
 
-              {/* Password Section */}
-              <div className="border-t border-gray-100 pt-5 space-y-4">
-                <h3 className="font-extrabold text-sm text-gray-800">Change Password</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Security / Password Card */}
+            <div className="border border-gray-200 rounded-xl p-5 sm:p-6 mb-8">
+              <h3 className="text-md font-semibold text-gray-900 mb-5">Security</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-                  {/* New Password */}
-                  <div className="space-y-1.5">
-                    <label htmlFor="newPassword" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">New Password</label>
-                    <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-violet-500 focus-within:bg-white transition-all">
-                      <Lock className="w-4.5 h-4.5 text-gray-400 flex-shrink-0" />
-                      <input
-                        id="newPassword"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        disabled={saving}
-                        className="w-full text-sm font-bold text-gray-800 bg-transparent outline-none placeholder-gray-400 disabled:opacity-50"
-                        minLength={6}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Confirm Password */}
-                  <div className="space-y-1.5">
-                    <label htmlFor="confirmPassword" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Confirm Password</label>
-                    <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-violet-500 focus-within:bg-white transition-all">
-                      <Lock className="w-4.5 h-4.5 text-gray-400 flex-shrink-0" />
-                      <input
-                        id="confirmPassword"
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="••••••••"
-                        disabled={saving}
-                        className="w-full text-sm font-bold text-gray-800 bg-transparent outline-none placeholder-gray-400 disabled:opacity-50"
-                        minLength={6}
-                      />
-                    </div>
-                  </div>
-
+                {/* New Password */}
+                <div>
+                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-600 mb-1.5">New Password</label>
+                  <input
+                    id="newPassword"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    disabled={saving}
+                    className="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all disabled:opacity-50 placeholder-gray-400"
+                    minLength={6}
+                  />
                 </div>
-              </div>
 
-              {/* Submit CTA */}
-              <div className="pt-4 border-t border-gray-100 flex justify-end">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs uppercase tracking-wider px-6 py-3 rounded-2xl flex items-center gap-2 shadow-lg shadow-violet-500/25 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
-                >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  <span>{saving ? 'Saving...' : 'Save Changes'}</span>
-                </button>
-              </div>
+                {/* Confirm Password */}
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-600 mb-1.5">Confirm Password</label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                    disabled={saving}
+                    className="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all disabled:opacity-50 placeholder-gray-400"
+                    minLength={6}
+                  />
+                </div>
 
-            </form>
-          </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={saving}
+                className="bg-[#4F46E5] hover:bg-[#4338CA] text-white text-sm font-medium px-6 py-2.5 rounded-lg flex items-center gap-2 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+
+          </form>
         </div>
+
       </div>
     </div>
   );

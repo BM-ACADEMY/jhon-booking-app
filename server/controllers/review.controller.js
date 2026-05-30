@@ -59,12 +59,6 @@ export const createReview = async (req, res) => {
       return res.status(400).json({ message: 'You can only review a room after your checkout date' });
     }
 
-    // Prevent duplicate reviews for the same booking
-    const existingReview = await Review.findOne({ booking: bookingId });
-    if (existingReview) {
-      return res.status(400).json({ message: 'You have already reviewed this booking' });
-    }
-
     // Parse ratings (supporting both individual fields and nested ratings object)
     let comm = req.body.communication;
     let clean = req.body.cleanliness;
@@ -96,6 +90,29 @@ export const createReview = async (req, res) => {
     }
 
     const rating = Math.round(((communication + cleanliness + comfort + facilities) / 4) * 10) / 10;
+
+    // Update if review already exists
+    const existingReview = await Review.findOne({ booking: bookingId });
+    if (existingReview) {
+      existingReview.ratings = {
+        communication,
+        cleanliness,
+        comfort,
+        facilities
+      };
+      existingReview.rating = rating;
+      existingReview.comment = comment || '';
+      existingReview.verified = false; // require verification again on edit
+      await existingReview.save();
+
+      // Recalculate room rating
+      await updateRoomRating(booking.room);
+
+      return res.status(200).json({
+        message: 'Review updated successfully. It will be visible after admin verification.',
+        review: existingReview
+      });
+    }
 
     // Handle image uploads
     const images = [];

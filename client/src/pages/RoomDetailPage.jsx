@@ -65,9 +65,26 @@ const RoomDetailPage = () => {
     return doc.body.textContent || "";
   };
 
-  const checkInQuery = searchParams.get('checkIn') || '';
-  const checkOutQuery = searchParams.get('checkOut') || '';
-  const guestsQuery = parseInt(searchParams.get('guests') || '1', 10);
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const formatDisplayDate = (dateStr, locales = 'en-US', options = {}) => {
+    if (!dateStr) return '';
+    const localDate = parseLocalDate(dateStr);
+    return localDate ? localDate.toLocaleDateString(locales, options) : '';
+  };
+
+  const getQueryParam = (name) => {
+    const val = searchParams.get(name);
+    return (val === 'null' || val === 'undefined') ? '' : (val || '');
+  };
+
+  const checkInQuery = getQueryParam('checkIn');
+  const checkOutQuery = getQueryParam('checkOut');
+  const guestsQuery = parseInt(getQueryParam('guests') || '1', 10);
 
   const [checkIn, setCheckIn] = useState(checkInQuery);
   const [checkOut, setCheckOut] = useState(checkOutQuery);
@@ -107,7 +124,7 @@ const RoomDetailPage = () => {
   };
 
   const handleDateClick = (date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
     if (activeSelectType === 'checkIn') {
       setCheckIn(dateStr);
@@ -122,11 +139,12 @@ const RoomDetailPage = () => {
         setCheckOut('');
         setActiveSelectType('checkOut');
       } else {
-        const datesInRange = getDatesInRangeList(new Date(checkIn), date);
+        const localCheckInDate = parseLocalDate(checkIn);
+        const datesInRange = getDatesInRangeList(localCheckInDate, date);
         const hasBookedOverlap = datesInRange.some(d => isDateBooked(d));
 
         if (hasBookedOverlap) {
-          toast.error("Selected range overlaps with already booked dates. Please try another range.");
+          toast.error("Dates already booked. Try another Date.");
           setCheckIn(dateStr);
           setCheckOut('');
           setActiveSelectType('checkOut');
@@ -371,7 +389,7 @@ const RoomDetailPage = () => {
       const isBooked = isDateBooked(thisDate);
       const isDisabled = isPast || isBooked;
 
-      const dateStr = thisDate.toISOString().split('T')[0];
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const isCheckIn = checkIn === dateStr;
       const isCheckOut = checkOut === dateStr;
 
@@ -388,7 +406,6 @@ const RoomDetailPage = () => {
 
       // Class names for styling
       let dayBtnClass = "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all relative ";
-      let rangeBgClass = "";
 
       if (isDisabled) {
         dayBtnClass += "text-gray-300 cursor-not-allowed ";
@@ -396,12 +413,11 @@ const RoomDetailPage = () => {
           dayBtnClass += "line-through grayscale ";
         }
       } else if (isCheckIn || isCheckOut) {
-        dayBtnClass += "bg-black text-white shadow-md z-10 scale-105 ";
+        dayBtnClass += "bg-[#708090] text-white shadow-md z-10 scale-105 ";
       } else if (inRange) {
-        dayBtnClass += "text-gray-900 font-bold ";
-        rangeBgClass = "bg-[#f3db01]/20 scale-y-90 "; // Soft highlight matching our yellow theme
+        dayBtnClass += "bg-[#708090]/15 text-gray-900 font-bold ";
         if (isHovered) {
-          dayBtnClass += "ring-2 ring-[#f3db01] ";
+          dayBtnClass += "bg-[#708090]/30 ";
         }
       } else {
         dayBtnClass += "text-gray-800 hover:bg-gray-100 hover:scale-105 cursor-pointer ";
@@ -410,7 +426,7 @@ const RoomDetailPage = () => {
       dayCells.push(
         <div
           key={`day-${day}`}
-          className={`relative w-10 h-10 flex items-center justify-center ${rangeBgClass}`}
+          className="relative w-10 h-10 flex items-center justify-center"
           onMouseEnter={() => !isDisabled && checkIn && !checkOut && setHoveredDate(dateStr)}
           onMouseLeave={() => setHoveredDate(null)}
           onClick={() => !isDisabled && handleDateClick(thisDate)}
@@ -497,7 +513,7 @@ const RoomDetailPage = () => {
   };
 
   const nights = checkIn && checkOut
-    ? Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000))
+    ? Math.max(1, Math.round((parseLocalDate(checkOut) - parseLocalDate(checkIn)) / 86400000))
     : 0;
   const total = nights * (room.price || 0);
 
@@ -901,7 +917,7 @@ const RoomDetailPage = () => {
                     >
                       <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1 cursor-pointer">Check-in</label>
                       <div className="text-sm font-semibold text-gray-700">
-                        {checkIn ? new Date(checkIn).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Add date'}
+                        {checkIn ? formatDisplayDate(checkIn, 'en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Add date'}
                       </div>
                     </div>
                     <div
@@ -913,7 +929,7 @@ const RoomDetailPage = () => {
                     >
                       <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1 cursor-pointer">Check-out</label>
                       <div className="text-sm font-semibold text-gray-700">
-                        {checkOut ? new Date(checkOut).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Add date'}
+                        {checkOut ? formatDisplayDate(checkOut, 'en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Add date'}
                       </div>
                     </div>
                   </div>
@@ -1001,7 +1017,7 @@ const RoomDetailPage = () => {
                 <div className="flex flex-col w-full text-left">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Check-in</label>
                   <div className={`text-[15px] ${checkIn ? 'font-bold text-gray-900' : 'font-medium text-gray-400'}`}>
-                    {checkIn ? new Date(checkIn).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Add date'}
+                    {checkIn ? formatDisplayDate(checkIn, 'en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Add date'}
                   </div>
                 </div>
               </div>
@@ -1018,7 +1034,7 @@ const RoomDetailPage = () => {
                 <div className="flex flex-col w-full text-left">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Check-out</label>
                   <div className={`text-[15px] ${checkOut ? 'font-bold text-gray-900' : 'font-medium text-gray-400'}`}>
-                    {checkOut ? new Date(checkOut).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Add date'}
+                    {checkOut ? formatDisplayDate(checkOut, 'en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Add date'}
                   </div>
                 </div>
               </div>
@@ -1159,7 +1175,7 @@ const RoomDetailPage = () => {
                 </h3>
                 <p className="text-sm text-gray-500 font-medium mt-1">
                   {checkIn && checkOut
-                    ? `${new Date(checkIn).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })} - ${new Date(checkOut).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                    ? `${formatDisplayDate(checkIn, 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })} - ${formatDisplayDate(checkOut, 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`
                     : 'Add your travel dates for exact pricing'
                   }
                 </p>
@@ -1169,12 +1185,12 @@ const RoomDetailPage = () => {
               <div className="flex border border-gray-300 rounded-xl overflow-hidden shadow-sm max-w-md w-full">
                 <div
                   onClick={() => setActiveSelectType('checkIn')}
-                  className={`flex-1 p-3 cursor-pointer transition-all flex items-center justify-between ${activeSelectType === 'checkIn' ? 'bg-gray-50 ring-2 ring-black ring-inset' : 'hover:bg-gray-50'}`}
+                  className={`flex-1 p-3 cursor-pointer transition-all flex items-center justify-between rounded-l-xl ${activeSelectType === 'checkIn' ? 'bg-gray-50 ring-2 ring-gray-900/40 ring-inset' : 'hover:bg-gray-50'}`}
                 >
                   <div className="text-left">
                     <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider">Check-in</label>
                     <span className="text-sm font-bold text-gray-800">
-                      {checkIn ? new Date(checkIn).toLocaleDateString('en-US') : 'Add date'}
+                      {checkIn ? formatDisplayDate(checkIn, 'en-US') : 'Add date'}
                     </span>
                   </div>
                   {checkIn && (
@@ -1193,12 +1209,12 @@ const RoomDetailPage = () => {
 
                 <div
                   onClick={() => setActiveSelectType('checkOut')}
-                  className={`flex-1 p-3 cursor-pointer transition-all flex items-center justify-between border-l border-gray-300 ${activeSelectType === 'checkOut' ? 'bg-gray-50 ring-2 ring-black ring-inset' : 'hover:bg-gray-50'}`}
+                  className={`flex-1 p-3 cursor-pointer transition-all flex items-center justify-between rounded-r-xl border-l border-gray-300 ${activeSelectType === 'checkOut' ? 'bg-gray-50 ring-2 ring-black/40 ring-inset' : 'hover:bg-gray-50'}`}
                 >
                   <div className="text-left">
                     <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider">Checkout</label>
                     <span className="text-sm font-bold text-gray-800">
-                      {checkOut ? new Date(checkOut).toLocaleDateString('en-US') : 'Add date'}
+                      {checkOut ? formatDisplayDate(checkOut, 'en-US') : 'Add date'}
                     </span>
                   </div>
                   {checkOut && (

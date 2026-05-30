@@ -5,20 +5,20 @@ import api from '../../api';
 
 const AVATAR_COLORS = [
   'bg-blue-500', 'bg-rose-500', 'bg-emerald-500',
-  'bg-violet-500', 'bg-amber-500', 'bg-cyan-500', 'bg-primary-500',
+  'bg-violet-500', 'bg-amber-500', 'bg-cyan-500', 'bg-[#4F46E5]',
 ];
 
 const getInitials = (name) =>
   name?.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2) || '??';
 
 const StarRow = ({ rating, interactive = false, onRate }) => (
-  <div className="flex gap-0.5">
+  <div className="flex gap-1">
     {[1, 2, 3, 4, 5].map((s) => (
       <Star
         key={s}
-        className={`w-4 h-4 transition-colors ${
-          s <= rating ? 'fill-primary-400 text-primary-400' : 'text-gray-300'
-        } ${interactive ? 'cursor-pointer hover:text-primary-300' : ''}`}
+        className={`w-4 h-4 transition-all duration-300 ${
+          s <= rating ? 'fill-[#FBBF24] text-[#FBBF24]' : 'text-gray-200'
+        } ${interactive ? 'cursor-pointer hover:scale-110' : ''}`}
         onClick={() => interactive && onRate && onRate(s)}
       />
     ))}
@@ -26,13 +26,13 @@ const StarRow = ({ rating, interactive = false, onRate }) => (
 );
 
 const statusConfig = {
-  approved: { label: 'Approved', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  pending:  { label: 'Pending',  cls: 'bg-amber-50  text-amber-700  border-amber-200'  },
-  rejected: { label: 'Rejected', cls: 'bg-red-50    text-red-700    border-red-200'    },
+  approved: { label: 'Approved', cls: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+  pending:  { label: 'Pending',  cls: 'bg-amber-50 text-amber-600 border-amber-100' },
+  rejected: { label: 'Rejected', cls: 'bg-rose-50 text-rose-600 border-rose-100' },
 };
 
 const EMPTY_FORM = { name: '', designation: '', message: '', rating: 5, color: AVATAR_COLORS[0] };
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 10;
 
 const TestimonialsManagement = () => {
   const [testimonials, setTestimonials] = useState([]);
@@ -58,14 +58,19 @@ const TestimonialsManagement = () => {
   };
 
   useEffect(() => { fetchAll(); }, []);
-
-  // Reset to page 1 when filter changes
   useEffect(() => { setCurrentPage(1); }, [filter]);
 
   const openCreate = () => { setEditTarget(null); setForm(EMPTY_FORM); setShowModal(true); };
+
   const openEdit = (t) => {
     setEditTarget(t);
-    setForm({ name: t.name, designation: t.designation , message: t.message, rating: t.rating, color: t.color || AVATAR_COLORS[0] });
+    setForm({
+      name: t.name,
+      designation: t.designation || '',
+      message: t.message,
+      rating: t.rating,
+      color: t.color || AVATAR_COLORS[0]
+    });
     setShowModal(true);
   };
 
@@ -132,7 +137,6 @@ const TestimonialsManagement = () => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
-  // Generate page numbers with ellipsis
   const getPageNumbers = () => {
     const pages = [];
     if (totalPages <= 7) {
@@ -150,301 +154,332 @@ const TestimonialsManagement = () => {
   };
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-black text-gray-900">Testimonials</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage and approve guest reviews</p>
-        </div>
-        <button
-          onClick={openCreate}
-          className="cursor-pointer flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-primary-500/20"
-        >
-          <Plus className="w-4 h-4" /> Add Testimonial
-        </button>
-      </div>
+    <div className="min-h-screen bg-[#F8F9FA] p-4 sm:p-8 font-sans">
+      <div className="max-w-8xl mx-auto space-y-8">
 
-      {/* Filter Tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {[
-          { key: 'all', label: 'All', icon: MessageSquare },
-          { key: 'pending', label: 'Pending', icon: Clock },
-          { key: 'approved', label: 'Approved', icon: ShieldCheck },
-          { key: 'rejected', label: 'Rejected', icon: X },
-        ].map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setFilter(key)}
-            className={`cursor-pointer flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-              filter === key
-                ? 'bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-500/20'
-                : 'bg-white text-gray-500 border-gray-200 hover:border-primary-300'
-            }`}
-          >
-            <Icon className="w-3.5 h-3.5" />
-            {label}
-            <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-              filter === key ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
-            }`}>{counts[key]}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Content */}
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
-          <Quote className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">No testimonials found for this filter.</p>
-        </div>
-      ) : (
-        <>
-          {/* Result count */}
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>
-              Showing <span className="font-bold text-gray-700">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)}</span> of <span className="font-bold text-gray-700">{filtered.length}</span> testimonials
-            </span>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight">Testimonials</h1>
+            <p className="text-sm text-gray-500 mt-1">Manage, moderate, and publish guest reviews.</p>
           </div>
+          <button
+            onClick={openCreate}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-sm font-medium rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95"
+          >
+            <Plus className="w-4 h-4" /> Add Testimonial
+          </button>
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            {paginated.map((t) => {
-              const cfg = statusConfig[t.isApproved] || statusConfig.pending;
-              const initials = getInitials(t.name);
-              return (
-                <div key={t._id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col gap-4">
-                  {/* Status badge */}
-                  <div className="flex items-center justify-between">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${cfg.cls}`}>{cfg.label}</span>
-                    <span className="text-[10px] text-gray-400">{t.source === 'user' ? 'User Submission' : 'Admin Created'}</span>
-                  </div>
+        {/* Filter Tabs */}
+        <div className="flex gap-3 flex-wrap border-b border-gray-200 pb-4">
+          {[
+            { key: 'all', label: 'All', icon: MessageSquare },
+            { key: 'pending', label: 'Pending', icon: Clock },
+            { key: 'approved', label: 'Approved', icon: ShieldCheck },
+            { key: 'rejected', label: 'Rejected', icon: X },
+          ].map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+                filter === key
+                  ? 'bg-gray-900 text-white shadow-md'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                filter === key ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
+              }`}>{counts[key]}</span>
+            </button>
+          ))}
+        </div>
 
-                  {/* Message */}
-                  <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">"{t.message}"</p>
-                  <StarRow rating={t.rating} />
+        {/* Content */}
+        {loading ? (
+          <div className="flex justify-center items-center py-32">
+            <Loader2 className="w-8 h-8 animate-spin text-[#4F46E5]" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-32 bg-white border border-gray-100 rounded-3xl shadow-sm">
+            <Quote className="w-12 h-12 mx-auto mb-4 text-gray-200" />
+            <p className="text-gray-500 font-medium">No testimonials found in this category.</p>
+          </div>
+        ) : (
+          <>
+            {/* Result count */}
+            <div className="text-sm text-gray-500 font-medium">
+              Showing <span className="text-gray-900">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)}</span> of <span className="text-gray-900">{filtered.length}</span> testimonials
+            </div>
 
-                  {/* Author */}
-                  <div className="flex items-center gap-3 pt-2 border-t border-gray-50">
-                    <div className={`w-9 h-9 rounded-full ${t.color || 'bg-primary-500'} flex items-center justify-center text-white text-xs font-black flex-shrink-0`}>
-                      {initials}
+            {/* Testimonials Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {paginated.map((t) => {
+                const cfg = statusConfig[t.isApproved] || statusConfig.pending;
+                const initials = getInitials(t.name);
+
+                return (
+                  <div key={t._id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-5">
+
+                    {/* Header: Status & Source */}
+                    <div className="flex items-center justify-between">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${cfg.cls}`}>
+                        {cfg.label}
+                      </span>
+                      <span className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-md">
+                        {t.source === 'user' ? 'User Submission' : 'Admin Created'}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-gray-900 font-bold text-sm truncate">{t.name}</p>
-                      {t.designation && <p className="text-gray-400 text-[10px] uppercase tracking-wide">{t.designation}</p>}
-                    </div>
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 pt-1">
-                    {t.isApproved === 'pending' && (
-                      <>
+                    {/* Message & Rating */}
+                    <div className="flex-1 space-y-3">
+                      <StarRow rating={t.rating} />
+                      <p className="text-gray-600 text-sm leading-relaxed italic line-clamp-3">"{t.message}"</p>
+                    </div>
+
+                    {/* Author Details */}
+                    <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                      <div className={`w-10 h-10 rounded-full ${t.color || 'bg-[#4F46E5]'} flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-inner`}>
+                        {initials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-900 font-semibold text-sm truncate">{t.name}</p>
+                        {t.designation && <p className="text-gray-500 text-xs truncate mt-0.5">{t.designation}</p>}
+                      </div>
+                    </div>
+
+                    {/* Actions Grid */}
+                    <div className="grid grid-cols-4 gap-2 pt-1 mt-auto">
+                      {t.isApproved === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(t._id, 'approved')}
+                            className="col-span-2 flex items-center justify-center gap-1.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-sm font-medium rounded-lg transition-colors"
+                          >
+                            <Check className="w-4 h-4" /> Approve
+                          </button>
+                          <button
+                            onClick={() => handleApprove(t._id, 'rejected')}
+                            className="col-span-2 flex items-center justify-center gap-1.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-sm font-medium rounded-lg transition-colors"
+                          >
+                            <X className="w-4 h-4" /> Reject
+                          </button>
+                        </>
+                      )}
+
+                      {t.isApproved === 'rejected' && (
                         <button
                           onClick={() => handleApprove(t._id, 'approved')}
-                          className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-xl transition-all border border-emerald-200"
+                          className="col-span-4 flex items-center justify-center gap-1.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-sm font-medium rounded-lg transition-colors"
                         >
-                          <Check className="w-3.5 h-3.5" /> Approve
+                          <Check className="w-4 h-4" /> Approve
                         </button>
+                      )}
+
+                      {t.isApproved === 'approved' && (
                         <button
                           onClick={() => handleApprove(t._id, 'rejected')}
-                          className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-xl transition-all border border-red-200"
+                          className="col-span-4 flex items-center justify-center gap-1.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-sm font-medium rounded-lg transition-colors"
                         >
-                          <X className="w-3.5 h-3.5" /> Reject
+                          <X className="w-4 h-4" /> Revoke Approval
                         </button>
-                      </>
-                    )}
-                    {t.isApproved === 'rejected' && (
-                      <button
-                        onClick={() => handleApprove(t._id, 'approved')}
-                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-xl transition-all border border-emerald-200"
-                      >
-                        <Check className="w-3.5 h-3.5" /> Approve
-                      </button>
-                    )}
-                    {t.isApproved === 'approved' && (
-                      <button
-                        onClick={() => handleApprove(t._id, 'rejected')}
-                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-xl transition-all border border-red-200"
-                      >
-                        <X className="w-3.5 h-3.5" /> Revoke
-                      </button>
-                    )}
+                      )}
+
+                      {/* Edit & Delete (Shared across all states, pushed to a new row if buttons above exist) */}
+                      <div className="col-span-4 flex gap-2">
+                        <button
+                          onClick={() => openEdit(t)}
+                          className="flex-1 flex justify-center items-center py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(t)}
+                          className="flex-1 flex justify-center items-center py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-8">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all disabled:opacity-50"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                {getPageNumbers().map((page, idx) =>
+                  page === '...' ? (
+                    <span key={`ellipsis-${idx}`} className="px-3 text-gray-400">…</span>
+                  ) : (
                     <button
-                      onClick={() => openEdit(t)}
-                      className="cursor-pointer p-2 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl border border-gray-200 transition-all"
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all ${
+                        currentPage === page
+                          ? 'bg-gray-900 text-white shadow-md'
+                          : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
                     >
-                      <Edit2 className="w-3.5 h-3.5" />
+                      {page}
                     </button>
-                    <button
-                      onClick={() => setDeleteTarget(t)}
-                      className="cursor-pointer p-2 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl border border-red-200 transition-all"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                  )
+                )}
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all disabled:opacity-50"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Create/Edit Modal - Glassmorphism Style */}
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4">
+            <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+
+              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <h2 className="font-semibold text-gray-900 text-lg">{editTarget ? 'Edit Testimonial' : 'Add Testimonial'}</h2>
+                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">Guest Name *</label>
+                    <input
+                      type="text"
+                      value={form.name}
+                      onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+                      placeholder="John Doe"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#4F46E5] focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">Title / Role</label>
+                    <input
+                      type="text"
+                      value={form.designation}
+                      onChange={(e) => setForm(p => ({ ...p, designation: e.target.value }))}
+                      placeholder="e.g. Travel Blogger"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#4F46E5] focus:border-transparent transition-all"
+                    />
                   </div>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1.5 pt-4">
-              <button
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="cursor-pointer p-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:border-primary-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-2">Rating *</label>
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 w-fit">
+                    <StarRow rating={form.rating} interactive onRate={(s) => setForm(p => ({ ...p, rating: s }))} />
+                  </div>
+                </div>
 
-              {getPageNumbers().map((page, idx) =>
-                page === '...' ? (
-                  <span key={`ellipsis-${idx}`} className="px-2 text-gray-400 text-sm font-bold">…</span>
-                ) : (
-                  <button
-                    key={page}
-                    onClick={() => goToPage(page)}
-                    className={`cursor-pointer w-9 h-9 rounded-xl text-xs font-black transition-all border ${
-                      currentPage === page
-                        ? 'bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-500/25'
-                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-primary-300'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                )
-              )}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-3">Avatar Color</label>
+                  <div className="flex gap-3 flex-wrap">
+                    {AVATAR_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setForm(p => ({ ...p, color: c }))}
+                        className={`w-8 h-8 rounded-full ${c} shadow-sm transition-all duration-200 ${
+                          form.color === c ? 'ring-2 ring-offset-2 ring-[#4F46E5] scale-110' : 'hover:scale-105'
+                        }`}
+                        type="button"
+                      />
+                    ))}
+                  </div>
+                </div>
 
-              <button
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="cursor-pointer p-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:border-primary-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Create/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="font-black text-gray-900 text-lg">{editTarget ? 'Edit Testimonial' : 'Add Testimonial'}</h2>
-              <button onClick={() => setShowModal(false)} className="cursor-pointer p-2 hover:bg-gray-100 rounded-xl transition-all">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 sm:col-span-1">
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Name *</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
-                  placeholder="Guest name"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary-400"
-                />
-              </div>
-              <div className="col-span-2 sm:col-span-1">
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Title / Role</label>
-                <input
-                  type="text"
-                  value={form.designation}
-                  onChange={(e) => setForm(p => ({ ...p, designation: e.target.value }))}
-                  placeholder="e.g. Travel Blogger"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary-400"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Rating *</label>
-              <StarRow rating={form.rating} interactive onRate={(s) => setForm(p => ({ ...p, rating: s }))} />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Avatar Color</label>
-              <div className="flex gap-2 flex-wrap">
-                {AVATAR_COLORS.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setForm(p => ({ ...p, color: c }))}
-                    className={`cursor-pointer w-7 h-7 rounded-full ${c} transition-all ${form.color === c ? 'ring-2 ring-offset-2 ring-primary-500 scale-110' : ''}`}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-xs font-semibold text-gray-600">Review Message *</label>
+                    <span className={`text-xs font-medium ${form.message.length > 150 ? 'text-rose-500' : 'text-gray-400'}`}>
+                      {form.message.length} / 160
+                    </span>
+                  </div>
+                  <textarea
+                    value={form.message}
+                    onChange={(e) => setForm(p => ({ ...p, message: e.target.value }))}
+                    rows={4}
+                    maxLength={160}
+                    placeholder="Guest review text..."
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#4F46E5] focus:border-transparent transition-all resize-none"
                   />
-                ))}
-              </div>
-            </div>
+                </div>
 
-            <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Review *</label>
-                <span className={`text-[10px] font-bold ${form.message.length > 150 ? 'text-red-500' : 'text-gray-400'}`}>
-                  {form.message.length} / 160
-                </span>
               </div>
-              <textarea
-                value={form.message}
-                onChange={(e) => setForm(p => ({ ...p, message: e.target.value }))}
-                rows={4}
-                maxLength={160}
-                placeholder="Guest review text (max 160 characters)..."
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary-400 resize-none"
-              />
-            </div>
 
-            <div className="flex gap-3 pt-1">
-              <button
-                onClick={() => setShowModal(false)}
-                className="cursor-pointer flex-1 py-2.5 border border-gray-200 text-gray-600 text-sm font-bold rounded-xl hover:bg-gray-50 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={submitting}
-                className="cursor-pointer flex-1 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                {editTarget ? 'Save Changes' : 'Create'}
-              </button>
+              {/* Action Buttons */}
+              <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={submitting}
+                  className="flex-1 py-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-sm font-medium rounded-xl transition-all shadow-md shadow-indigo-500/20 disabled:opacity-70 flex items-center justify-center gap-2"
+                >
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  {editTarget ? 'Save Changes' : 'Create'}
+                </button>
+              </div>
+
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Delete Confirm Modal */}
-      {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center space-y-4">
-            <div className="w-14 h-14 bg-red-50 border border-red-200 rounded-full flex items-center justify-center mx-auto">
-              <Trash2 className="w-6 h-6 text-red-500" />
-            </div>
-            <h3 className="font-black text-gray-900">Delete Testimonial?</h3>
-            <p className="text-sm text-gray-500">This will permanently remove <span className="font-bold text-gray-700">{deleteTarget.name}</span>'s review.</p>
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className="cursor-pointer flex-1 py-2.5 border border-gray-200 text-gray-600 text-sm font-bold rounded-xl hover:bg-gray-50 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                className="cursor-pointer flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-all"
-              >
-                Delete
-              </button>
+        {/* Delete Confirm Modal */}
+        {deleteTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4">
+            <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-sm p-8 text-center space-y-5 animate-in zoom-in-95 duration-200">
+              <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Trash2 className="w-8 h-8 text-rose-500" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 text-xl">Delete Testimonial?</h3>
+                <p className="text-sm text-gray-500 mt-2">This will permanently remove <span className="font-medium text-gray-800">{deleteTarget.name}</span>'s review. This action cannot be undone.</p>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  className="flex-1 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-medium rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium rounded-xl transition-all shadow-md shadow-rose-500/20"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+      </div>
     </div>
   );
 };

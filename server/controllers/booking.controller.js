@@ -75,7 +75,9 @@ export const getMyBookings = async (req, res) => {
 
     const bookingsWithReviewStatus = bookings.map(b => {
       const bObj = b.toObject();
-      bObj.isReviewed = reviewedBookingIds.includes(b._id.toString());
+      const matchingReview = reviews.find(r => r.booking?.toString() === b._id.toString());
+      bObj.isReviewed = !!matchingReview;
+      bObj.review = matchingReview || null;
       return bObj;
     });
 

@@ -17,7 +17,7 @@ const PAGE_SIZE = 6;
 const DEFAULT_ROOM_FORM = {
   name: '',
   category: '',
-  propertyType: '',
+  propertyType: 'Entire Villa',
   description: '',
   price: '',
   originalPrice: '',
@@ -71,13 +71,10 @@ const CATEGORY_COLORS = [
 const RoomManagement = () => {
   const [rooms, setRooms] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [propertyTypes, setPropertyTypes] = useState([]);
   const [priceUnits, setPriceUnits] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [loadingCats, setLoadingCats] = useState(true);
 
-  const [newPropType, setNewPropType] = useState('');
-  const [showPropTypeInput, setShowPropTypeInput] = useState(false);
   const [newPriceUnit, setNewPriceUnit] = useState({ name: '', label: '' });
   const [showPriceUnitInput, setShowPriceUnitInput] = useState(false);
 
@@ -108,15 +105,13 @@ const RoomManagement = () => {
     try {
       setLoadingRooms(true);
       setLoadingCats(true);
-      const [roomsRes, catsRes, typesRes, unitsRes] = await Promise.all([
+      const [roomsRes, catsRes, unitsRes] = await Promise.all([
         api.get('/rooms/admin/all'),
         api.get('/categories'),
-        api.get('/property-types'),
         api.get('/price-units')
       ]);
       setRooms(roomsRes.data);
       setCategories(catsRes.data);
-      setPropertyTypes(typesRes.data);
       setPriceUnits(unitsRes.data);
     } catch (err) {
       toast.error('Failed to load data');
@@ -129,19 +124,6 @@ const RoomManagement = () => {
   useEffect(() => { fetchData(); }, []);
   useEffect(() => { setCurrentPage(1); }, [activeCategory, search]);
 
-  const handleAddPropType = async () => {
-    if (!newPropType.trim()) return;
-    try {
-      const res = await api.post('/property-types', { name: newPropType });
-      setPropertyTypes(p => [...p, res.data]);
-      setRoomForm(p => ({ ...p, propertyType: res.data.name }));
-      setNewPropType('');
-      setShowPropTypeInput(false);
-      toast.success('Property type added');
-    } catch (err) {
-      toast.error('Error adding property type');
-    }
-  };
   const handleAddPriceUnit = async () => {
     if (!newPriceUnit.name.trim() || !newPriceUnit.label.trim()) return;
     try {
@@ -156,42 +138,9 @@ const RoomManagement = () => {
     }
   };
 
-  const [editTypeTarget, setEditTypeTarget] = useState(null);
-  const [showTypeModal, setShowTypeModal] = useState(false);
-  const [typeName, setTypeName] = useState('');
-
   const [editUnitTarget, setEditUnitTarget] = useState(null);
   const [showUnitModal, setShowUnitModal] = useState(false);
   const [unitForm, setUnitForm] = useState({ name: '', label: '' });
-
-  const handleSaveType = async () => {
-    if (!typeName.trim()) return;
-    try {
-      if (editTypeTarget) {
-        await api.put(`/property-types/${editTypeTarget._id}`, { name: typeName });
-        toast.success('Property type updated');
-      } else {
-        const res = await api.post('/property-types', { name: typeName });
-        setPropertyTypes(p => [...p, res.data]);
-        toast.success('Property type added');
-      }
-      setShowTypeModal(false);
-      fetchData();
-    } catch (err) {
-      toast.error('Error saving property type');
-    }
-  };
-
-  const handleDeleteType = async (id) => {
-    if (!window.confirm('Delete this property type?')) return;
-    try {
-      await api.delete(`/property-types/${id}`);
-      toast.success('Deleted');
-      fetchData();
-    } catch (err) {
-      toast.error('Error deleting');
-    }
-  };
 
   const handleSaveUnit = async () => {
     if (!unitForm.name.trim() || !unitForm.label.trim()) return;
@@ -284,7 +233,7 @@ const RoomManagement = () => {
         return; // show resume prompt instead of opening modal
       }
     } catch (_) { /* no draft found */ }
-    setRoomForm({ ...DEFAULT_ROOM_FORM, category: categories[0]?.name || '', propertyType: propertyTypes[0]?.name || '' });
+    setRoomForm({ ...DEFAULT_ROOM_FORM, category: categories[0]?.name || '' });
     setActiveTab('general');
     setShowRoomModal(true);
   };
@@ -296,7 +245,7 @@ const RoomManagement = () => {
     setRoomForm({
       name: draft.name || '',
       category: draft.category || categories[0]?.name || '',
-      propertyType: draft.propertyType || propertyTypes[0]?.name || '',
+      propertyType: draft.propertyType || 'Entire Villa',
       description: draft.description || '',
       price: draft.price || '',
       originalPrice: draft.originalPrice || '',
@@ -323,7 +272,7 @@ const RoomManagement = () => {
   const discardDraftAndCreate = () => {
     setDraftPrompt(null);
     setDraftId(null);
-    setRoomForm({ ...DEFAULT_ROOM_FORM, category: categories[0]?.name || '', propertyType: propertyTypes[0]?.name || '' });
+    setRoomForm({ ...DEFAULT_ROOM_FORM, category: categories[0]?.name || '' });
     setActiveTab('general');
     setShowRoomModal(true);
   };
@@ -710,27 +659,7 @@ const cat = categories.find(c => c.name === catName);
       </div>
     ) : (
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-         {/* Property Types Section */}
-         <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
-               <div>
-                  <h3 className="font-black text-gray-900 text-lg">Property Types</h3>
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Manage villa types, suites, etc.</p>
-               </div>
-               <button onClick={() => { setEditTypeTarget(null); setTypeName(''); setShowTypeModal(true); }} className="p-2 bg-primary-50 text-primary-600 rounded-xl hover:bg-primary-100 transition-all"><Plus className="w-5 h-5"/></button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-               {propertyTypes.map(t => (
-                 <div key={t._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 group">
-                    <span className="font-bold text-gray-700 text-sm">{t.name}</span>
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                       <button onClick={() => { setEditTypeTarget(t); setTypeName(t.name); setShowTypeModal(true); }} className="p-1.5 bg-white text-blue-500 rounded-lg shadow-sm hover:text-blue-600"><Edit2 className="w-3.5 h-3.5"/></button>
-                       <button onClick={() => handleDeleteType(t._id)} className="p-1.5 bg-white text-red-500 rounded-lg shadow-sm hover:text-red-600"><Trash2 className="w-3.5 h-3.5"/></button>
-                    </div>
-                 </div>
-               ))}
-            </div>
-         </div>
+
 
          {/* Price Units Section */}
          <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
@@ -831,34 +760,12 @@ const cat = categories.find(c => c.name === catName);
                     <input type="text" value={roomForm.name} onChange={(e) => setRoomForm(p => ({ ...p, name: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all bg-gray-50 focus:bg-white" placeholder="e.g. Villa Mandala Serenity" />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Property Type</label>
-                      {!showPropTypeInput ? (
-                        <div className="flex gap-2">
-                          <select value={roomForm.propertyType} onChange={(e) => {
-                            if (e.target.value === 'ADD_NEW') setShowPropTypeInput(true);
-                            else setRoomForm(p => ({ ...p, propertyType: e.target.value }));
-                          }} className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 transition-all bg-gray-50 focus:bg-white cursor-pointer">
-                            {propertyTypes.map(t => <option key={t._id} value={t.name}>{t.name}</option>)}
-                            <option value="ADD_NEW">+ Add New Type...</option>
-                          </select>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2 animate-in fade-in slide-in-from-right-2">
-                          <input type="text" value={newPropType} onChange={(e) => setNewPropType(e.target.value)} className="flex-1 border border-primary-300 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary-500/20" placeholder="New type name..." autoFocus />
-                          <button onClick={handleAddPropType} className="bg-primary-600 text-white p-3 rounded-xl hover:bg-primary-700 transition-all"><Check className="w-4 h-4"/></button>
-                          <button onClick={() => setShowPropTypeInput(false)} className="bg-gray-100 text-gray-500 p-3 rounded-xl hover:bg-gray-200 transition-all"><X className="w-4 h-4"/></button>
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Category *</label>
-                      <select value={roomForm.category} onChange={(e) => setRoomForm(p => ({ ...p, category: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 transition-all bg-gray-50 focus:bg-white cursor-pointer">
-                        <option value="" disabled>Select category</option>
-                        {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Category *</label>
+                    <select value={roomForm.category} onChange={(e) => setRoomForm(p => ({ ...p, category: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 transition-all bg-gray-50 focus:bg-white cursor-pointer">
+                      <option value="" disabled>Select category</option>
+                      {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
+                    </select>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1292,24 +1199,7 @@ const cat = categories.find(c => c.name === catName);
         </div>
       )}
 
-      {/* Property Type Modal */}
-      {showTypeModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 animate-in zoom-in-95 duration-200">
-             <h2 className="font-black text-gray-900 text-xl mb-6">{editTypeTarget ? 'Edit Type' : 'New Property Type'}</h2>
-             <div className="space-y-4">
-                <div>
-                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Type Name</label>
-                   <input type="text" value={typeName} onChange={(e) => setTypeName(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-gray-50 focus:bg-white" placeholder="e.g. Luxury Villa" />
-                </div>
-                <div className="flex gap-3 pt-4">
-                   <button onClick={() => setShowTypeModal(false)} className="flex-1 py-3 text-gray-500 font-bold text-sm">Cancel</button>
-                   <button onClick={handleSaveType} className="flex-[2] py-3 bg-primary-600 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-primary-500/20">Save Type</button>
-                </div>
-             </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Price Unit Modal */}
       {showUnitModal && (
@@ -1344,9 +1234,6 @@ const cat = categories.find(c => c.name === catName);
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-[10px] font-black text-primary-600 uppercase tracking-widest bg-primary-50 px-2 py-0.5 rounded-md">
                     {viewRoomTarget.category}
-                  </span>
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                    {viewRoomTarget.propertyType}
                   </span>
                 </div>
               </div>

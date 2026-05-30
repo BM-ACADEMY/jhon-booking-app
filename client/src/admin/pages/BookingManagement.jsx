@@ -1,5 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, CheckCircle, XCircle, Clock, Eye, X, Loader2, CreditCard, User, Home, Calendar } from 'lucide-react';
+import {
+  Search,
+  Filter,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Eye,
+  X,
+  Loader2,
+  CreditCard,
+  User,
+  Home,
+  Calendar,
+  DollarSign,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  ChevronDown,
+  Percent
+} from 'lucide-react';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
 
@@ -24,6 +43,10 @@ const BookingManagement = () => {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   // Fetch bookings from API
   const fetchBookings = async () => {
     try {
@@ -41,6 +64,11 @@ const BookingManagement = () => {
   useEffect(() => {
     fetchBookings();
   }, []);
+
+  // Reset page to 1 when search, filter or items per page change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, itemsPerPage]);
 
   // Update Booking Status Handler
   const handleUpdateStatus = async (id, status) => {
@@ -62,19 +90,19 @@ const BookingManagement = () => {
     }
   };
 
-  const statuses = ['All', 'pending', 'confirmed', 'completed', 'cancelled'];
-  
-  // Filtering Logic
-  const filtered = bookings.filter((b) => {
-    const guestName = b.user?.name ;
-    const guestEmail = b.user?.email ;
-    const guestPhone = b.user?.phone ;
-    const roomName = b.room?.name ;
-    const mongoId = b._id ;
-    const razorpayPayId = b.razorpayPaymentId ;
+  const statuses = ['All', 'pending', 'confirmed', 'completed'];
 
-    const matchSearch = 
-      guestName.toLowerCase().includes(search.toLowerCase()) || 
+  // Filtering Logic with safe fallbacks
+  const filtered = bookings.filter((b) => {
+    const guestName = b.user?.name || '';
+    const guestEmail = b.user?.email || '';
+    const guestPhone = b.user?.phone || '';
+    const roomName = b.room?.name || '';
+    const mongoId = b._id || '';
+    const razorpayPayId = b.razorpayPaymentId || '';
+
+    const matchSearch =
+      guestName.toLowerCase().includes(search.toLowerCase()) ||
       guestEmail.toLowerCase().includes(search.toLowerCase()) ||
       guestPhone.toLowerCase().includes(search.toLowerCase()) ||
       roomName.toLowerCase().includes(search.toLowerCase()) ||
@@ -84,6 +112,36 @@ const BookingManagement = () => {
     const matchStatus = statusFilter === 'All' || b.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  // Stats Calculations from full bookings list
+  const totalRevenue = bookings.reduce((sum, b) => b.status !== 'cancelled' ? sum + b.totalAmount : sum, 0);
+  const totalBookingsCount = bookings.length;
+  const confirmedCount = bookings.filter(b => b.status === 'confirmed').length;
+  const pendingCount = bookings.filter(b => b.status === 'pending').length;
+  const completedCount = bookings.filter(b => b.status === 'completed').length;
+
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filtered.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, '...', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
 
   // Calculate booking nights helper
   const getNights = (inDate, outDate) => {
@@ -95,7 +153,110 @@ const BookingManagement = () => {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* Dynamic Statistics Panel */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Total Revenue Card */}
+        <div
+          className="text-left bg-gradient-to-br from-emerald-50 to-white border border-gray-200 rounded-2xl p-5 shadow-sm transition-all duration-300 group relative overflow-hidden w-full"
+        >
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full -mr-6 -mt-6 group-hover:scale-125 transition-transform duration-500" />
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">Total Revenue</p>
+              <h3 className="text-2xl font-black text-gray-900 mt-1">₹{totalRevenue.toLocaleString()}</h3>
+            </div>
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 group-hover:scale-110 transition-transform">
+              <DollarSign className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="flex items-center gap-1 mt-4 text-[10px] text-emerald-600 font-bold">
+            <TrendingUp className="w-3 h-3" />
+            <span>Excludes Cancelled</span>
+          </div>
+        </div>
+
+        {/* Total Bookings Card */}
+        <div
+          className="text-left bg-gradient-to-br from-violet-50 to-white border border-gray-200 rounded-2xl p-5 shadow-sm transition-all duration-300 group relative overflow-hidden w-full"
+        >
+          <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full -mr-6 -mt-6 group-hover:scale-125 transition-transform duration-500" />
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-black uppercase text-violet-600 tracking-widest">Total Bookings</p>
+              <h3 className="text-2xl font-black text-gray-900 mt-1">{totalBookingsCount}</h3>
+            </div>
+            <div className="p-2 rounded-xl bg-violet-500/10 text-violet-600 group-hover:scale-110 transition-transform">
+              <Calendar className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="mt-4 text-[10px] text-gray-400 font-medium">All records history</p>
+        </div>
+
+        {/* Confirmed Card */}
+        <button
+          className={`text-left bg-gradient-to-br from-green-50 to-white hover:from-green-100/70 border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden focus:outline-none w-full ${
+            statusFilter === 'confirmed'
+              ? 'border-gray-200'
+              : 'border-gray-200'
+          }`}
+        >
+          <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full -mr-6 -mt-6 group-hover:scale-125 transition-transform duration-500" />
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-black uppercase text-green-600 tracking-widest">Confirmed</p>
+              <h3 className="text-2xl font-black text-gray-900 mt-1">{confirmedCount}</h3>
+            </div>
+            <div className="p-2 rounded-xl bg-green-500/10 text-green-600 group-hover:scale-110 transition-transform">
+              <CheckCircle className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="mt-4 text-[10px] text-gray-400 font-medium">Awaiting check-in</p>
+        </button>
+
+        {/* Pending Card */}
+        <button
+          className={`text-left bg-gradient-to-br from-amber-50 to-white hover:from-amber-100/70 border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden focus:outline-none w-full ${
+            statusFilter === 'pending'
+              ? 'border-gray-200'
+              : 'border-gray-200'
+          }`}
+        >
+          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full -mr-6 -mt-6 group-hover:scale-125 transition-transform duration-500" />
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest">Pending Action</p>
+              <h3 className="text-2xl font-black text-gray-900 mt-1">{pendingCount}</h3>
+            </div>
+            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 group-hover:scale-110 transition-transform">
+              <Clock className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="mt-4 text-[10px] text-gray-400 font-medium">Requires approval</p>
+        </button>
+
+        {/* Completed Card */}
+        <button
+          className={`text-left bg-gradient-to-br from-blue-50 to-white hover:from-blue-100/70 border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden focus:outline-none w-full ${
+            statusFilter === 'completed'
+              ? 'border-gray-200'
+              : 'border-gray-200'
+          }`}
+        >
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-6 -mt-6 group-hover:scale-125 transition-transform duration-500" />
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-black uppercase text-blue-600 tracking-widest">Completed</p>
+              <h3 className="text-2xl font-black text-gray-900 mt-1">{completedCount}</h3>
+            </div>
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 group-hover:scale-110 transition-transform">
+              <Home className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="mt-4 text-[10px] text-gray-400 font-medium">Successfully completed</p>
+        </button>
+      </div>
+
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 flex-1 sm:max-w-xs shadow-sm">
@@ -105,7 +266,7 @@ const BookingManagement = () => {
             placeholder="Search guest, room, ID, transaction..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="text-sm text-gray-600 placeholder-gray-400 outline-none w-full"
+            className="text-sm text-gray-600 placeholder-gray-400 outline-none w-full bg-transparent"
           />
         </div>
         <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm">
@@ -124,18 +285,18 @@ const BookingManagement = () => {
         </div>
       </div>
 
-      {/* Bookings Table */}
+      {/* Bookings Table Container */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Loading records...</p>
+            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest animate-pulse">Loading records...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-150">
+                <tr className="bg-gray-50 border-b border-gray-200">
                   {['Booking ID', 'Guest details', 'Room type', 'Check In / Out', 'Guests', 'Amount', 'Payment status', 'Booking status', 'Actions'].map((h) => (
                     <th key={h} className="text-left text-xs font-bold text-gray-500 uppercase tracking-wider px-5 py-4 whitespace-nowrap">
                       {h}
@@ -144,7 +305,7 @@ const BookingManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.map((b) => (
+                {currentItems.map((b) => (
                   <tr key={b._id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-5 py-3.5 text-xs font-mono text-gray-500" title={b._id}>
                       {b._id ? `${b._id.slice(-8).toUpperCase()}` : 'N/A'}
@@ -163,7 +324,7 @@ const BookingManagement = () => {
                       <p className="text-gray-400 font-medium">to {b.checkOut ? new Date(b.checkOut).toLocaleDateString() : 'N/A'}</p>
                     </td>
                     <td className="px-5 py-3.5 text-sm font-bold text-center text-gray-600">{b.guests}</td>
-                    <td className="px-5 py-3.5 text-sm font-black text-gray-800">${b.totalAmount}</td>
+                    <td className="px-5 py-3.5 text-sm font-black text-gray-800">₹{b.totalAmount}</td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${paymentConfig[b.paymentStatus || 'unpaid']}`}>
                         {b.paymentStatus || 'unpaid'}
@@ -176,27 +337,27 @@ const BookingManagement = () => {
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1">
-                        <button 
+                        <button
                           onClick={() => setSelectedBooking(b)}
-                          className="p-1.5 rounded-lg hover:bg-violet-50 text-violet-600 transition-colors cursor-pointer" 
+                          className="p-1.5 rounded-lg hover:bg-violet-50 text-violet-600 transition-colors cursor-pointer"
                           title="View Details"
                         >
                           <Eye className="w-4.5 h-4.5" />
                         </button>
                         {b.status === 'pending' && (
                           <>
-                            <button 
+                            <button
                               disabled={actionLoading}
                               onClick={() => handleUpdateStatus(b._id, 'confirmed')}
-                              className="p-1.5 rounded-lg hover:bg-green-50 text-green-600 transition-colors disabled:opacity-40 cursor-pointer" 
+                              className="p-1.5 rounded-lg hover:bg-green-50 text-green-600 transition-colors disabled:opacity-40 cursor-pointer"
                               title="Confirm"
                             >
                               <CheckCircle className="w-4.5 h-4.5" />
                             </button>
-                            <button 
+                            <button
                               disabled={actionLoading}
                               onClick={() => handleUpdateStatus(b._id, 'cancelled')}
-                              className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 transition-colors disabled:opacity-40 cursor-pointer" 
+                              className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 transition-colors disabled:opacity-40 cursor-pointer"
                               title="Cancel"
                             >
                               <XCircle className="w-4.5 h-4.5" />
@@ -204,10 +365,10 @@ const BookingManagement = () => {
                           </>
                         )}
                         {b.status === 'confirmed' && (
-                          <button 
+                          <button
                             disabled={actionLoading}
                             onClick={() => handleUpdateStatus(b._id, 'completed')}
-                            className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors disabled:opacity-40 cursor-pointer" 
+                            className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors disabled:opacity-40 cursor-pointer"
                             title="Complete Booking"
                           >
                             <CheckCircle className="w-4.5 h-4.5" />
@@ -223,18 +384,98 @@ const BookingManagement = () => {
         )}
         {!loading && filtered.length === 0 && (
           <div className="text-center py-16 text-gray-400 bg-white">
-            <Clock className="w-12 h-12 mx-auto mb-3 text-gray-200" />
+            <Clock className="w-12 h-12 mx-auto mb-3 text-gray-250" />
             <h4 className="font-bold text-gray-700 text-sm">No records found</h4>
             <p className="text-xs text-gray-400 mt-1">Try adjusting your filters or search term.</p>
           </div>
         )}
       </div>
 
+      {/* Pagination Controls */}
+      {!loading && filtered.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-gray-200 rounded-xl px-6 py-4 shadow-sm">
+          {/* Entries Indicator */}
+          <div className="text-xs text-gray-500 font-medium">
+            Showing <span className="font-bold text-gray-800">{indexOfFirstItem + 1}</span> to{' '}
+            <span className="font-bold text-gray-800">
+              {Math.min(indexOfLastItem, filtered.length)}
+            </span>{' '}
+            of <span className="font-bold text-gray-800">{filtered.length}</span> bookings
+          </div>
+
+          {/* Right Controls Group */}
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Show Entries Selector */}
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span>Show</span>
+              <div className="relative">
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  className="appearance-none bg-gray-50 border border-gray-200 rounded-lg pl-3 pr-8 py-1.5 font-bold text-gray-700 outline-none cursor-pointer"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+              <span>entries</span>
+            </div>
+
+            {/* Pagination Navigation */}
+            <div className="flex items-center gap-1 bg-gray-50 p-1 border border-gray-200/60 rounded-xl">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                className="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400 transition-all cursor-pointer"
+                title="Previous Page"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {getPageNumbers().map((page, index) => {
+                if (page === '...') {
+                  return (
+                    <span key={`ellipsis-${index}`} className="px-2 text-xs text-gray-400 font-bold select-none">
+                      ...
+                    </span>
+                  );
+                }
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      currentPage === page
+                        ? 'bg-violet-600 text-white shadow shadow-violet-500/10'
+                        : 'hover:bg-white text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                className="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400 transition-all cursor-pointer"
+                title="Next Page"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Details Modal */}
       {selectedBooking && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col max-h-[90vh]">
-            
+
             {/* Header */}
             <div className="px-6 py-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
               <div>
@@ -244,7 +485,7 @@ const BookingManagement = () => {
                 </h3>
                 <p className="text-xs text-gray-400 font-mono mt-0.5">ID: {selectedBooking._id}</p>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedBooking(null)}
                 className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-150 rounded-xl transition-all cursor-pointer"
               >
@@ -254,7 +495,7 @@ const BookingManagement = () => {
 
             {/* Scrollable details content */}
             <div className="p-6 overflow-y-auto space-y-6">
-              
+
               {/* Guest Details */}
               <div className="space-y-3">
                 <h4 className="text-xs font-black uppercase text-violet-600 tracking-wider flex items-center gap-1.5">
