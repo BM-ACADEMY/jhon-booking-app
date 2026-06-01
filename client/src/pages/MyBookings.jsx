@@ -129,9 +129,9 @@ const MyBookings = () => {
               return (
                 <div key={booking._id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col">
                   {/* Top Section: Room Preview & Info Row */}
-                  <div className="flex flex-col md:flex-row md:h-[260px]">
+                  <div className="flex flex-col md:flex-row md:h-[310px]">
                     {/* Room Preview */}
-                    <div className="w-full md:w-80 h-52 md:h-[260px] relative bg-gray-100 flex-shrink-0">
+                    <div className="w-full md:w-80 h-52 md:h-[310px] relative bg-gray-100 flex-shrink-0">
                       {booking.room.images?.[0] ? (
                         <img
                           src={getImageUrl(booking.room.images[0])}
@@ -156,7 +156,7 @@ const MyBookings = () => {
                     </div>
 
                     {/* Booking Info */}
-                    <div className="p-6 md:p-8 flex-1 flex flex-col justify-between md:h-[260px]">
+                    <div className="p-6 md:p-8 flex-1 flex flex-col justify-between md:h-[310px]">
                       <div>
                         <div className="flex justify-between items-start mb-4">
                           <div>
@@ -186,9 +186,9 @@ const MyBookings = () => {
                           </div>
                         </div>
 
-                        {booking.addons && booking.addons.length > 0 && (
-                          <div className="mt-3">
-                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Selected Add-ons</span>
+                        {booking.addons && booking.addons.length > 0 ? (
+                          <div className="mt-3 h-[42px] overflow-hidden">
+                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Selected Add-ons</span>
                             <div className="flex flex-wrap gap-1.5">
                               {booking.addons.map((addon, aIdx) => (
                                 <span key={aIdx} className="inline-flex items-center gap-1 bg-primary-50 text-primary-700 px-2 py-0.5 rounded-md text-[10px] font-bold border border-primary-100">
@@ -197,6 +197,8 @@ const MyBookings = () => {
                               ))}
                             </div>
                           </div>
+                        ) : (
+                          <div className="mt-3 h-[42px] invisible" aria-hidden="true" />
                         )}
                       </div>
 

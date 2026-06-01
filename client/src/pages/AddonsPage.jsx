@@ -5,7 +5,7 @@ import api from '../api';
 import toast from 'react-hot-toast';
 import {
   Utensils, Bell, Car, Sparkles, Heart, Layers, ArrowRight,
-  ShieldCheck, Loader2, Calendar, Users, Info, ChevronRight, Check
+  ShieldCheck, Loader2, Calendar, Users, Info, ChevronRight, Check, ArrowLeft
 } from 'lucide-react';
 
 const categoryIcons = {
@@ -22,6 +22,7 @@ const AddonsPage = () => {
   const { user } = useAuth();
 
   const [room, setRoom] = useState(null);
+  const [addons, setAddons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAddons, setSelectedAddons] = useState([]);
   const [bookingLoading, setBookingLoading] = useState(false);
@@ -37,22 +38,26 @@ const AddonsPage = () => {
   const { roomId, checkIn, checkOut, guests, total: staySubtotal, nights, breakdown } = state || {};
 
   useEffect(() => {
-    const fetchRoomDetails = async () => {
+    const fetchRoomDetailsAndAddons = async () => {
       if (!roomId) return;
       try {
         setLoading(true);
         // Wait 1200ms to show the beautifully designed skeleton-loading state as requested
         await new Promise(resolve => setTimeout(resolve, 1200));
-        const res = await api.get(`/rooms/${roomId}`);
-        setRoom(res.data);
+        const [roomRes, addonsRes] = await Promise.all([
+          api.get(`/rooms/${roomId}`),
+          api.get('/addons')
+        ]);
+        setRoom(roomRes.data);
+        setAddons(addonsRes.data);
       } catch (err) {
-        toast.error('Failed to load room details');
+        toast.error('Failed to load details');
         navigate('/rooms');
       } finally {
         setLoading(false);
       }
     };
-    fetchRoomDetails();
+    fetchRoomDetailsAndAddons();
   }, [roomId, navigate]);
 
   if (!state || !state.roomId) return null;
@@ -81,7 +86,7 @@ const AddonsPage = () => {
 
     try {
       setBookingLoading(true);
-      
+
       const addonsPayload = isSkipping ? [] : selectedAddons.map(a => ({
         name: a.name,
         price: a.price,
@@ -100,7 +105,7 @@ const AddonsPage = () => {
       const order = orderRes.data;
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_HERE',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
         name: 'The Balified Villa',
@@ -194,40 +199,44 @@ const AddonsPage = () => {
     );
   }
 
-  const roomAddons = room?.addons || [];
+  const roomAddons = addons;
 
   return (
-    <div className="min-h-screen bg-gray-50/50 py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50/50 pt-10 pb-28 lg:pb-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        
-        {/* Step Progress Tracker */}
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400">
-          <span>1. Dates & Room</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-primary-600">2. Enhance Stay</span>
-          <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
-          <span className="text-gray-300">3. Confirmation</span>
+
+        {/* Back Button */}
+        <div>
+          <button
+            onClick={() => navigate(-1)}
+            className="group flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-950 transition-colors border-none bg-transparent p-0 cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            Back
+          </button>
         </div>
 
         {/* Page Header */}
         <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Enhance Your Experience</h1>
-          <p className="text-sm text-gray-500 mt-1">Select from our premium handpicked services to make your stay unforgettable.</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Enhance Your Experience</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Select from our premium handpicked services to make your stay unforgettable.</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+
           {/* LEFT SIDE: Selectable Add-on Services List */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <Layers className="w-5 h-5 text-primary-500" />
-                    Premium Add-on Services
-                  </h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Customize your villa stay with these amenities</p>
-                </div>
+            <div className="bg-white p-4 sm:p-8 rounded-3xl border border-gray-200 shadow-sm">
+              <div className="border-b border-gray-100 pb-5 mb-6">
+                <h2 className="text-xl font-bold text-gray-950 mb-2">
+                  <span className="bg-[#ffd4d4] text-gray-900 px-2 py-0.5 rounded font-bold inline-block text-[17px] tracking-tight">
+                    Add-ons and Extras
+                  </span>
+                </h2>
+                <p className="text-sm font-semibold text-gray-800">Enhance your stay with our special perks & upgrades.</p>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                  Add-ons are on a per-room basis, please select the items individually for each accommodation below.
+                </p>
               </div>
 
               {roomAddons.length === 0 ? (
@@ -244,7 +253,7 @@ const AddonsPage = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-3">
                     {roomAddons.map((addon) => {
                       const IconComponent = categoryIcons[addon.iconType] || Layers;
                       const isSelected = selectedAddons.some(a => a._id === addon._id);
@@ -252,47 +261,57 @@ const AddonsPage = () => {
                         <div
                           key={addon._id}
                           onClick={() => handleAddonClick(addon)}
-                          className={`group relative p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between h-36 ${
+                          className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
                             isSelected
-                              ? 'border-primary-500 bg-primary-50/20 shadow-md shadow-primary-500/5'
-                              : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                              ? 'border-slate-300 bg-white shadow-sm'
+                              : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50/40'
                           }`}
                         >
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                                isSelected ? 'bg-primary-500 text-white' : 'bg-gray-50 text-gray-500 group-hover:bg-primary-50 group-hover:text-primary-600'
-                              }`}>
-                                <IconComponent className="w-4 h-4" />
-                              </div>
-                              <div className={`w-5 h-5 rounded-full border transition-all flex items-center justify-center ${
-                                isSelected ? 'bg-primary-500 border-primary-500 text-white' : 'border-gray-300 bg-white'
-                              }`}>
-                                {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                              </div>
+                          <div className="flex items-center gap-4">
+                            {/* Styled Checkbox */}
+                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+                              isSelected
+                                ? 'bg-blue-600 border-blue-600 text-white'
+                                : 'border-gray-300 bg-white group-hover:border-gray-400'
+                            }`}>
+                              {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                             </div>
-                            <h3 className="font-bold text-gray-800 text-sm line-clamp-1">{addon.name}</h3>
+
+                            {/* Icon Container */}
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50 text-[#006749]">
+                              <IconComponent className="w-5 h-5" />
+                            </div>
+
+                            {/* Addon Details */}
+                            <div>
+                              <h3 className="font-bold text-gray-800 text-sm sm:text-base">{addon.name}</h3>
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{addon.iconType || 'Extra'}</span>
+                            </div>
                           </div>
-                          <p className="text-lg font-black text-gray-900 mt-2">
-                            ₹{addon.price.toLocaleString('en-IN')}
-                          </p>
+
+                          {/* Price */}
+                          <div className="text-right pl-4">
+                            <p className="text-lg font-black text-gray-900">
+                              ₹{addon.price.toLocaleString('en-IN')}
+                            </p>
+                          </div>
                         </div>
                       );
                     })}
                   </div>
 
                   {/* Skip Option Footer */}
-                  <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between gap-4">
+                  <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-end sm:justify-between gap-4">
                     <div className="hidden sm:block">
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">No Addons Needed?</p>
                       <p className="text-[11px] text-gray-500 mt-0.5">Skip these extras and proceed directly to room checkout.</p>
                     </div>
-                    <button
+                    <div
                       onClick={() => initiatePayment(true)}
-                      className="px-5 py-2.5 text-gray-600 hover:text-gray-900 border border-gray-200 hover:bg-gray-50 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                      className="text-gray-500 hover:text-[#f35757] bg-transparent border-none p-0 text-xs font-black tracking-wider transition-all cursor-pointer underline decoration-dotted decoration-2 underline-offset-4"
                     >
-                      Skip & Pay Base Room Price
-                    </button>
+                      Skip
+                    </div>
                   </div>
                 </div>
               )}
@@ -301,9 +320,9 @@ const AddonsPage = () => {
 
           {/* RIGHT SIDE: Room Billing Breakdown */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+            <div className="bg-white p-4 sm:p-8 rounded-3xl border border-gray-200 shadow-sm space-y-6">
               <div>
-                <span className="text-[10px] uppercase font-black tracking-widest text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full">
+                <span className="text-[10px] uppercase font-black tracking-widest text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full">
                   Selected Stay
                 </span>
                 <h2 className="text-xl font-bold text-gray-900 mt-3">{room?.name}</h2>
@@ -350,18 +369,18 @@ const AddonsPage = () => {
               {selectedAddons.length > 0 && (
                 <div className="space-y-3 animate-in fade-in duration-300">
                   <h4 className="text-[10px] font-black uppercase tracking-wider text-gray-400">Selected Extras</h4>
-                  <div className="space-y-2 bg-primary-50/10 p-4 rounded-2xl border border-primary-100/30">
+                  <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     {selectedAddons.map((addon) => (
                       <div key={addon._id} className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600 font-bold flex items-center gap-1.5">
-                          <Check className="w-3.5 h-3.5 text-primary-500" />
+                        <span className="text-gray-650 font-bold flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-[#006749]" />
                           {addon.name}
                         </span>
                         <span className="font-bold text-gray-800">₹{addon.price.toLocaleString('en-IN')}</span>
                       </div>
                     ))}
-                    <div className="h-px bg-primary-100/20 my-2" />
-                    <div className="flex justify-between items-center text-xs font-bold text-primary-700">
+                    <div className="h-px bg-slate-200/60 my-2" />
+                    <div className="flex justify-between items-center text-xs font-bold text-slate-700">
                       <span>Add-ons Total</span>
                       <span>₹{addonsTotal.toLocaleString('en-IN')}</span>
                     </div>
@@ -372,8 +391,7 @@ const AddonsPage = () => {
               {/* Total Billing */}
               <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Amount</p>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">All Taxes Included</p>
+                  <p className="text-xs font-bold text-gray-400  tracking-widest">Total Amount</p>
                 </div>
                 <div className="text-right">
                   <span className="text-3xl font-black text-gray-900">
@@ -386,7 +404,7 @@ const AddonsPage = () => {
               <button
                 onClick={() => initiatePayment(false)}
                 disabled={bookingLoading}
-                className="w-full flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all shadow-xl shadow-primary-500/20 active:scale-[0.99] border-none cursor-pointer"
+                className="w-full hidden lg:flex items-center justify-center gap-2 bg-[#ffe135] hover:bg-[#ebd030] disabled:bg-yellow-100 text-slate-900 py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all shadow-xl shadow-yellow-400/10 active:scale-[0.99] border-none cursor-pointer"
               >
                 {bookingLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -407,6 +425,31 @@ const AddonsPage = () => {
 
         </div>
       </div>
+
+      {/* Sticky Bottom Bar for Mobile Screens */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/20 backdrop-blur-lg border-t border-white/30 p-4 flex items-center justify-between lg:hidden shadow-[0_-8px_24px_rgba(0,0,0,0.06)]">
+        <div>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Amount</p>
+          <p className="text-xl font-black text-gray-900 mt-0.5">
+            ₹{finalTotal.toLocaleString('en-IN')}
+          </p>
+        </div>
+        <button
+          onClick={() => initiatePayment(false)}
+          disabled={bookingLoading}
+          className="bg-[#ffe135] hover:bg-[#ebd030] disabled:bg-yellow-100 text-slate-900 font-bold text-xs uppercase tracking-widest px-6 py-3.5 rounded-xl flex items-center gap-1.5 transition-all active:scale-[0.98] border-none cursor-pointer"
+        >
+          {bookingLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <>
+              Pay
+              <ArrowRight className="w-3.5 h-3.5" />
+            </>
+          )}
+        </button>
+      </div>
+
     </div>
   );
 };

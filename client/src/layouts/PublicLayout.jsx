@@ -1,15 +1,20 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
-const PublicLayout = () => (
-  <div className="flex flex-col min-h-screen">
-    <Navbar />
-    <main className="flex-1">
-      <Outlet />
-    </main>
-    <Footer />
-  </div>
-);
+const PublicLayout = () => {
+  const location = useLocation();
+  const hideNavFooter = location.pathname === '/checkout/addons';
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      {!hideNavFooter && <Navbar />}
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      {!hideNavFooter && <Footer />}
+    </div>
+  );
+};
 
 export default PublicLayout;

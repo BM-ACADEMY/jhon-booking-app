@@ -55,6 +55,14 @@ const BookingManagement = () => {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Date Filter States
+  const [dateFilter, setDateFilter] = useState('All');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // Add-on Details Modal State
+  const [activeAddonsBooking, setActiveAddonsBooking] = useState(null);
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -77,10 +85,10 @@ const BookingManagement = () => {
     fetchBookings();
   }, []);
 
-  // Reset page to 1 when search, filter or items per page change
+  // Reset page to 1 when search, filter, date filter, or items per page change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter, itemsPerPage]);
+  }, [search, statusFilter, dateFilter, startDate, endDate, itemsPerPage]);
 
   // Update Booking Status Handler
   const handleUpdateStatus = async (id, status) => {
@@ -123,7 +131,45 @@ const BookingManagement = () => {
 
     const effectiveStatus = getEffectiveStatus(b);
     const matchStatus = statusFilter === 'All' || effectiveStatus === statusFilter;
-    return matchSearch && matchStatus;
+
+    // Date Filter Logic
+    let matchDate = true;
+    if (dateFilter !== 'All') {
+      const createdDate = new Date(b.createdAt);
+      createdDate.setHours(0, 0, 0, 0);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+
+      if (dateFilter === 'Today') {
+        matchDate = createdDate.getTime() === today.getTime();
+      } else if (dateFilter === 'Yesterday') {
+        matchDate = createdDate.getTime() === yesterday.getTime();
+      } else if (dateFilter === 'ThisMonth') {
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        matchDate = createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear;
+      } else if (dateFilter === 'LastMonth') {
+        const targetDate = new Date();
+        targetDate.setMonth(targetDate.getMonth() - 1);
+        const lastMonth = targetDate.getMonth();
+        const lastMonthYear = targetDate.getFullYear();
+        matchDate = createdDate.getMonth() === lastMonth && createdDate.getFullYear() === lastMonthYear;
+      } else if (dateFilter === 'Custom' && startDate && endDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        const createdTime = new Date(b.createdAt).getTime();
+        matchDate = createdTime >= start.getTime() && createdTime <= end.getTime();
+      }
+    }
+
+    return matchSearch && matchStatus && matchDate;
   });
 
   // Stats Calculations from full bookings list (uses effective status for accuracy)
@@ -132,6 +178,15 @@ const BookingManagement = () => {
   const confirmedCount = bookings.filter(b => getEffectiveStatus(b) === 'confirmed').length;
   const pendingCount = bookings.filter(b => getEffectiveStatus(b) === 'pending').length;
   const completedCount = bookings.filter(b => getEffectiveStatus(b) === 'completed').length;
+
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+  const todayBookingsCount = bookings.filter(b => {
+    if (!b.createdAt) return false;
+    const createdDate = new Date(b.createdAt);
+    createdDate.setHours(0, 0, 0, 0);
+    return createdDate.getTime() === todayDate.getTime();
+  }).length;
 
   // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -168,7 +223,7 @@ const BookingManagement = () => {
   return (
     <div className="space-y-6">
       {/* Dynamic Statistics Panel */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {/* Total Revenue Card */}
         <div
           className="text-left bg-gradient-to-br from-emerald-50 to-white border border-gray-200 rounded-2xl p-5 shadow-sm transition-all duration-300 group relative overflow-hidden w-full"
@@ -204,6 +259,23 @@ const BookingManagement = () => {
             </div>
           </div>
           <p className="mt-4 text-[10px] text-gray-400 font-medium">All records history</p>
+        </div>
+
+        {/* Today's Bookings Card */}
+        <div
+          className="text-left bg-gradient-to-br from-purple-50 to-white border border-gray-200 rounded-2xl p-5 shadow-sm transition-all duration-300 group relative overflow-hidden w-full"
+        >
+          <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full -mr-6 -mt-6 group-hover:scale-125 transition-transform duration-500" />
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-black uppercase text-purple-600 tracking-widest">Today's Bookings</p>
+              <h3 className="text-2xl font-black text-gray-900 mt-1">{todayBookingsCount}</h3>
+            </div>
+            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 group-hover:scale-110 transition-transform">
+              <Clock className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="mt-4 text-[10px] text-gray-400 font-medium">Placed today</p>
         </div>
 
         {/* Confirmed Card */}
@@ -271,8 +343,8 @@ const BookingManagement = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 flex-1 sm:max-w-xs shadow-sm">
+      <div className="flex flex-col sm:flex-row flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 flex-1 sm:max-w-xs shadow-sm w-full sm:w-auto">
           <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input
             type="text"
@@ -282,7 +354,7 @@ const BookingManagement = () => {
             className="text-sm text-gray-600 placeholder-gray-400 outline-none w-full bg-transparent"
           />
         </div>
-        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm">
+        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm w-full sm:w-auto">
           <Filter className="w-4 h-4 text-gray-400" />
           <select
             value={statusFilter}
@@ -296,6 +368,42 @@ const BookingManagement = () => {
             ))}
           </select>
         </div>
+
+        {/* Date Filter Dropdown */}
+        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm w-full sm:w-auto">
+          <Calendar className="w-4 h-4 text-gray-400" />
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="text-sm text-gray-600 outline-none bg-transparent cursor-pointer font-bold"
+          >
+            <option value="All">All Dates</option>
+            <option value="Today">Today</option>
+            <option value="Yesterday">Yesterday</option>
+            <option value="ThisMonth">This Month</option>
+            <option value="LastMonth">Last Month</option>
+            <option value="Custom">Custom Range</option>
+          </select>
+        </div>
+
+        {/* Custom Date Pickers */}
+        {dateFilter === 'Custom' && (
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 outline-none shadow-sm focus:border-violet-500 font-bold"
+            />
+            <span className="text-gray-450 text-xs font-bold">to</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 outline-none shadow-sm focus:border-violet-500 font-bold"
+            />
+          </div>
+        )}
       </div>
 
       {/* Bookings Table Container */}
@@ -310,7 +418,7 @@ const BookingManagement = () => {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  {['Booking ID', 'Guest details', 'Room type', 'Check In / Out', 'Guests', 'Amount', 'Payment status', 'Booking status', 'Actions'].map((h) => (
+                  {['Booking ID', 'Guest details', 'Room type', 'Add-ons', 'Check In / Out', 'Guests', 'Amount', 'Payment status', 'Booking status', 'Actions'].map((h) => (
                     <th key={h} className="text-left text-xs font-bold text-gray-500 uppercase tracking-wider px-5 py-4 whitespace-nowrap">
                       {h}
                     </th>
@@ -331,6 +439,24 @@ const BookingManagement = () => {
                     <td className="px-5 py-3.5">
                       <p className="text-sm font-semibold text-gray-700">{b.room?.name || 'Deleted Room'}</p>
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">{b.room?.category || 'N/A'}</p>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {b.addons && b.addons.length > 0 ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-50 text-violet-700 border border-violet-100">
+                            {b.addons.length} service{b.addons.length > 1 ? 's' : ''}
+                          </span>
+                          <button
+                            onClick={() => setActiveAddonsBooking(b)}
+                            className="p-1 rounded-lg hover:bg-violet-50 text-violet-650 transition-colors cursor-pointer"
+                            title="View Selected Add-ons"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">None</span>
+                      )}
                     </td>
                     <td className="px-5 py-3.5 text-xs text-gray-600 font-semibold">
                       <p>{b.checkIn ? new Date(b.checkIn).toLocaleDateString() : 'N/A'}</p>
@@ -478,12 +604,11 @@ const BookingManagement = () => {
       {selectedBooking && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col max-h-[90vh]">
-
             {/* Header */}
             <div className="px-6 py-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
               <div>
                 <h3 className="font-black text-gray-950 text-base flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-violet-600" />
+                  <CreditCard className="w-5 h-5 text-slate-500" />
                   Booking Transaction Details
                 </h3>
                 <p className="text-xs text-gray-400 font-mono mt-0.5">ID: {selectedBooking._id}</p>
@@ -501,10 +626,10 @@ const BookingManagement = () => {
 
               {/* Guest Details */}
               <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase text-violet-600 tracking-wider flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5" /> Guest Information
+                <h4 className="text-xs font-black uppercase text-slate-600 tracking-wider flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-slate-400" /> Guest Information
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 border border-gray-150 rounded-2xl p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 border border-gray-200 rounded-2xl p-4">
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Name</span>
                     <span className="text-sm font-bold text-gray-800">{selectedBooking.user?.name || 'Deleted User'}</span>
@@ -522,10 +647,10 @@ const BookingManagement = () => {
 
               {/* Room Details */}
               <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase text-violet-600 tracking-wider flex items-center gap-1.5">
-                  <Home className="w-3.5 h-3.5" /> Property & Room Details
+                <h4 className="text-xs font-black uppercase text-slate-600 tracking-wider flex items-center gap-1.5">
+                  <Home className="w-3.5 h-3.5 text-slate-400" /> Property & Room Details
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 border border-gray-150 rounded-2xl p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 border border-gray-200 rounded-2xl p-4">
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Room Type</span>
                     <span className="text-sm font-bold text-gray-800">{selectedBooking.room?.name || 'Deleted Room'}</span>
@@ -536,17 +661,17 @@ const BookingManagement = () => {
                   </div>
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Base Rate</span>
-                    <span className="text-sm font-semibold text-gray-800">${selectedBooking.room?.price || 0} / night</span>
+                    <span className="text-sm font-semibold text-gray-800">₹{selectedBooking.room?.price || 0} / night</span>
                   </div>
                 </div>
               </div>
 
               {/* Staying Details */}
               <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase text-violet-600 tracking-wider flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" /> Stay & Check Details
+                <h4 className="text-xs font-black uppercase text-slate-600 tracking-wider flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> Stay & Check Details
                 </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 border border-gray-150 rounded-2xl p-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 border border-gray-200 rounded-2xl p-4">
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Check In</span>
                     <span className="text-xs font-bold text-gray-800">{selectedBooking.checkIn ? new Date(selectedBooking.checkIn).toLocaleDateString() : 'N/A'}</span>
@@ -574,12 +699,29 @@ const BookingManagement = () => {
                 </div>
               </div>
 
+              {/* Selected Add-on Services */}
+              {selectedBooking.addons && selectedBooking.addons.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase text-slate-600 tracking-wider flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" /> Selected Add-on Services
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-gray-50 border border-gray-200 rounded-2xl p-4">
+                    {selectedBooking.addons.map((addon, aIdx) => (
+                      <div key={aIdx}>
+                        <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">{addon.name}</span>
+                        <span className="text-sm font-bold text-gray-800">₹{addon.price}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Razorpay Transaction details */}
               <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase text-violet-600 tracking-wider flex items-center gap-1.5">
-                  <CreditCard className="w-3.5 h-3.5" /> Razorpay Transaction Details
+                <h4 className="text-xs font-black uppercase text-slate-600 tracking-wider flex items-center gap-1.5">
+                  <CreditCard className="w-3.5 h-3.5 text-slate-400" /> Razorpay Transaction Details
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 border border-gray-150 rounded-2xl p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 border border-gray-200 rounded-2xl p-4">
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Razorpay Order ID</span>
                     <span className="text-xs font-mono font-bold text-gray-700">{selectedBooking.razorpayOrderId || 'N/A'}</span>
@@ -587,12 +729,6 @@ const BookingManagement = () => {
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Razorpay Payment ID</span>
                     <span className="text-xs font-mono font-bold text-gray-750">{selectedBooking.razorpayPaymentId || 'N/A'}</span>
-                  </div>
-                  <div className="md:col-span-2">
-                    <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Razorpay Signature</span>
-                    <span className="text-[10px] font-mono break-all text-gray-500 select-all block leading-tight border border-gray-200/60 p-2 rounded bg-white mt-1">
-                      {selectedBooking.razorpaySignature || 'N/A'}
-                    </span>
                   </div>
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Payment Status</span>
@@ -602,11 +738,10 @@ const BookingManagement = () => {
                   </div>
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Paid Amount</span>
-                    <span className="text-sm font-black text-gray-800">${selectedBooking.totalAmount}</span>
+                    <span className="text-sm font-black text-gray-800">₹{selectedBooking.totalAmount}</span>
                   </div>
                 </div>
               </div>
-
             </div>
 
             {/* Footer actions */}
@@ -645,6 +780,67 @@ const BookingManagement = () => {
               </div>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Add-on Services Modal */}
+      {activeAddonsBooking && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-100 flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+              <div>
+                <h3 className="font-black text-gray-950 text-base flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-violet-600" />
+                  Add-on Services
+                </h3>
+                <p className="text-xs text-gray-450 font-semibold uppercase tracking-wider mt-0.5">
+                  {activeAddonsBooking.room?.name || 'Selected Room'}
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveAddonsBooking(null)}
+                className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-150 rounded-xl transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
+                Services selected for booking ({activeAddonsBooking._id?.slice(-8).toUpperCase()})
+              </p>
+              <div className="border border-gray-100 rounded-2xl overflow-hidden divide-y divide-gray-100">
+                {activeAddonsBooking.addons.map((addon, idx) => (
+                  <div key={idx} className="flex justify-between items-center p-4 bg-gray-50/50">
+                    <div>
+                      <p className="text-sm font-bold text-gray-800">{addon.name}</p>
+                    </div>
+                    <span className="text-sm font-black text-violet-700">₹{addon.price}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Total Add-on Amount */}
+              <div className="flex justify-between items-center pt-2 px-1">
+                <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Total Add-on Cost</span>
+                <span className="text-base font-black text-gray-900">
+                  ₹{activeAddonsBooking.addons.reduce((sum, item) => sum + item.price, 0).toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+              <button
+                onClick={() => setActiveAddonsBooking(null)}
+                className="bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs uppercase tracking-widest px-6 py-3 rounded-xl transition-all cursor-pointer shadow-lg shadow-violet-500/10"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
