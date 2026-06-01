@@ -23,6 +23,8 @@ const DEFAULT_ROOM_FORM = {
   originalPrice: '',
   priceUnit: 'night',
   guests: 2,
+  maxAdults: 2,
+  maxChildren: 0,
   bedrooms: 1,
   beds: 1,
   bathrooms: 1,
@@ -35,8 +37,7 @@ const DEFAULT_ROOM_FORM = {
   highlights: [], // [{ icon, text, subtext }]
   images: [], // [{ url, label }]
   isAvailable: true,
-  datePrices: [],
-  addons: []
+  datePrices: []
 };
 
 const ICON_LIST = [
@@ -74,7 +75,6 @@ const RoomManagement = () => {
   const [rooms, setRooms] = useState([]);
   const [categories, setCategories] = useState([]);
   const [priceUnits, setPriceUnits] = useState([]);
-  const [globalAddons, setGlobalAddons] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [loadingCats, setLoadingCats] = useState(true);
 
@@ -111,16 +111,14 @@ const RoomManagement = () => {
     try {
       setLoadingRooms(true);
       setLoadingCats(true);
-      const [roomsRes, catsRes, unitsRes, addonsRes] = await Promise.all([
+      const [roomsRes, catsRes, unitsRes] = await Promise.all([
         api.get('/rooms/admin/all'),
         api.get('/categories'),
-        api.get('/price-units'),
-        api.get('/addons')
+        api.get('/price-units')
       ]);
       setRooms(roomsRes.data);
       setCategories(catsRes.data);
       setPriceUnits(unitsRes.data);
-      setGlobalAddons(addonsRes.data);
     } catch (err) {
       toast.error('Failed to load data');
     } finally {
@@ -259,6 +257,8 @@ const RoomManagement = () => {
       originalPrice: draft.originalPrice || '',
       priceUnit: draft.priceUnit || 'night',
       guests: draft.guests || 2,
+      maxAdults: draft.maxAdults || 2,
+      maxChildren: draft.maxChildren || 0,
       bedrooms: draft.bedrooms || 1,
       beds: draft.beds || 1,
       bathrooms: draft.bathrooms || 1,
@@ -271,8 +271,7 @@ const RoomManagement = () => {
       highlights: draft.highlights || [],
       images: draft.images || [],
       isAvailable: draft.isAvailable ?? true,
-      datePrices: draft.datePrices || [],
-      addons: draft.addons ? draft.addons.filter(Boolean).map(addon => typeof addon === 'object' ? (addon._id || addon) : addon) : []
+      datePrices: draft.datePrices || []
     });
     setRoomImages([]);
     setActiveTab('general');
@@ -284,7 +283,7 @@ const RoomManagement = () => {
   const discardDraftAndCreate = () => {
     setDraftPrompt(null);
     setDraftId(null);
-    setRoomForm({ ...DEFAULT_ROOM_FORM, category: categories[0]?.name || '', addons: [] });
+    setRoomForm({ ...DEFAULT_ROOM_FORM, category: categories[0]?.name || '' });
     setActiveTab('general');
     setSelectedPricingDate(null);
     setCustomPriceInput('');
@@ -303,6 +302,8 @@ const RoomManagement = () => {
       originalPrice: r.originalPrice || '',
       priceUnit: r.priceUnit || 'night',
       guests: r.guests || r.capacity || 2,
+      maxAdults: r.maxAdults || 2,
+      maxChildren: r.maxChildren || 0,
       bedrooms: r.bedrooms || 1,
       beds: r.beds || 1,
       bathrooms: r.bathrooms || 1,
@@ -315,8 +316,7 @@ const RoomManagement = () => {
       highlights: r.highlights || [],
       images: r.images || [],
       isAvailable: r.isAvailable,
-      datePrices: r.datePrices || [],
-      addons: r.addons ? r.addons.filter(Boolean).map(addon => typeof addon === 'object' ? (addon._id || addon) : addon) : []
+      datePrices: r.datePrices || []
     });
     setRoomImages([]);
     setActiveTab('general');
@@ -328,7 +328,7 @@ const RoomManagement = () => {
   const buildFormData = (status) => {
     const formData = new FormData();
     Object.keys(roomForm).forEach(key => {
-      if (['amenities', 'highlights', 'datePrices', 'addons'].includes(key)) {
+      if (['amenities', 'highlights', 'datePrices'].includes(key)) {
         formData.append(key, JSON.stringify(roomForm[key] || []));
       } else if (key === 'images') {
         formData.append('existingImages', JSON.stringify(roomForm[key] || []));
@@ -895,7 +895,6 @@ const cat = categories.find(c => c.name === catName);
                 { id: 'location', label: 'Location', icon: MapPin },
                 { id: 'photos', label: 'Photos', icon: ImageIcon },
                 { id: 'pricing', label: 'Calendar Pricing', icon: Calendar },
-                { id: 'addons', label: 'Add-ons', icon: Layers },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -969,9 +968,11 @@ const cat = categories.find(c => c.name === catName);
               {/* Specs Tab */}
               {activeTab === 'specs' && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
                     {[
                       { id: 'guests', label: 'Max Guests', icon: Users },
+                      { id: 'maxAdults', label: 'Max Adults', icon: Users },
+                      { id: 'maxChildren', label: 'Max Children', icon: Users },
                       { id: 'bedrooms', label: 'Bedrooms', icon: BedDouble },
                       { id: 'beds', label: 'Total Beds', icon: BedDouble },
                       { id: 'bathrooms', label: 'Bathrooms', icon: Sparkles },
@@ -1332,63 +1333,6 @@ const cat = categories.find(c => c.name === catName);
                   
                   <div>
                     {renderPricingCalendar()}
-                  </div>
-                </div>
-              )}
-
-              {/* Add-ons Tab */}
-              {activeTab === 'addons' && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div>
-                    <h3 className="font-bold text-gray-800 text-lg mb-1">Select Available Add-on Services</h3>
-                    <p className="text-xs text-gray-500 mb-4">Choose which add-ons can be selected by guests when booking this room.</p>
-                    
-                    {globalAddons.length === 0 ? (
-                      <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                        <Layers className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                        <p className="text-sm font-medium text-gray-500">No global add-on services found.</p>
-                        <p className="text-xs text-gray-400 mt-1">Please create add-on services under Add-ons Management first.</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {globalAddons.map(addon => {
-                          const isChecked = roomForm.addons?.includes(addon._id);
-                          return (
-                            <label
-                              key={addon._id}
-                              className={`flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer ${
-                                isChecked
-                                  ? 'border-primary-500 bg-primary-50/20'
-                                  : 'border-gray-200 bg-white hover:border-gray-300'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked || false}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setRoomForm(p => ({
-                                      ...p,
-                                      addons: [...(p.addons || []), addon._id]
-                                    }));
-                                  } else {
-                                    setRoomForm(p => ({
-                                      ...p,
-                                      addons: (p.addons || []).filter(id => id !== addon._id)
-                                    }));
-                                  }
-                                }}
-                                className="w-4 h-4 text-primary-500 focus:ring-primary-500 border-gray-300 rounded cursor-pointer"
-                              />
-                              <div className="flex-1">
-                                <p className="font-bold text-sm text-gray-800">{addon.name}</p>
-                                <p className="text-xs text-gray-500 mt-0.5">₹{addon.price.toLocaleString('en-IN')}</p>
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
                 </div>
               )}

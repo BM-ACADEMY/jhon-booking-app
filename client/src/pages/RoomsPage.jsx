@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Search, BedDouble, Star, Users, Bath, ArrowRight, Loader2,
-  MapPin, CalendarDays, Heart, ChevronLeft, ChevronRight,
+  MapPin, CalendarDays, Heart, ChevronLeft, ChevronRight, ChevronDown,
   Home, Trees, Tent, Warehouse, Compass, Building2, Waves,
   SlidersHorizontal, Check, X, Building, Hotel, Info, Maximize
 } from 'lucide-react';
@@ -121,26 +121,45 @@ const RoomsPage = () => {
   const navigate = useNavigate();
 
   // URL Query parameters states
-  const queryCheckIn = searchParams.get('checkIn') ;
-  const queryCheckOut = searchParams.get('checkOut') ;
-  const queryGuests = searchParams.get('guests') || '1';
+  const queryCheckIn = searchParams.get('checkIn');
+  const queryCheckOut = searchParams.get('checkOut');
+  const queryAdults = searchParams.get('adults') || '1';
+  const queryChildren = searchParams.get('children') || '0';
+  const queryRoomsCount = searchParams.get('roomsCount') || searchParams.get('rooms') || '1';
 
   // Search input states (local copy before clicking "Update Search")
   const [checkInInput, setCheckInInput] = useState(queryCheckIn ? parseLocalDate(queryCheckIn) : null);
   const [checkOutInput, setCheckOutInput] = useState(queryCheckOut ? parseLocalDate(queryCheckOut) : null);
-  const [guestsInput, setGuestsInput] = useState(queryGuests);
+  const [adultsInput, setAdultsInput] = useState(parseInt(queryAdults, 10));
+  const [childrenInput, setChildrenInput] = useState(parseInt(queryChildren, 10));
+  const [roomsCountInput, setRoomsCountInput] = useState(parseInt(queryRoomsCount, 10));
 
   // Sync inputs with URL parameters changes (e.g. searching from Home Page)
   useEffect(() => {
     setCheckInInput(queryCheckIn ? parseLocalDate(queryCheckIn) : null);
     setCheckOutInput(queryCheckOut ? parseLocalDate(queryCheckOut) : null);
-    setGuestsInput(queryGuests);
-  }, [queryCheckIn, queryCheckOut, queryGuests]);
+    setAdultsInput(parseInt(queryAdults, 10));
+    setChildrenInput(parseInt(queryChildren, 10));
+    setRoomsCountInput(parseInt(queryRoomsCount, 10));
+  }, [queryCheckIn, queryCheckOut, queryAdults, queryChildren, queryRoomsCount]);
 
   // Hero section data
   const [hero, setHero] = useState(null);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
+
+  const [isGuestDropdownOpen, setIsGuestDropdownOpen] = useState(false);
+  const guestDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (guestDropdownRef.current && !guestDropdownRef.current.contains(event.target)) {
+        setIsGuestDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Ticker animation for mobile pill
   useEffect(() => {
@@ -205,7 +224,9 @@ const RoomsPage = () => {
     const params = {};
     if (checkInInput) params.checkIn = formatDateLocal(checkInInput);
     if (checkOutInput) params.checkOut = formatDateLocal(checkOutInput);
-    if (guestsInput) params.guests = guestsInput;
+    params.adults = adultsInput.toString();
+    params.children = childrenInput.toString();
+    params.roomsCount = roomsCountInput.toString();
     setSearchParams(params);
   };
 
@@ -254,7 +275,7 @@ const RoomsPage = () => {
 
   const getRoomPriceForDates = (roomObj, checkInStr, checkOutStr) => {
     if (!roomObj) return 0;
-    
+
     const matchDate = (dbDate, targetDateStr) => {
       if (!dbDate) return false;
       let dbDateStr = '';
@@ -295,7 +316,7 @@ const RoomsPage = () => {
           const mm = String(curr.getMonth() + 1).padStart(2, '0');
           const dd = String(curr.getDate()).padStart(2, '0');
           const dateStr = `${yyyy}-${mm}-${dd}`;
-          
+
           let dayPrice = roomObj.price || 0;
           if (roomObj.datePrices && Array.isArray(roomObj.datePrices)) {
             const found = roomObj.datePrices.find(dp => matchDate(dp.date, dateStr));
@@ -323,7 +344,7 @@ const RoomsPage = () => {
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     const todayStr = `${yyyy}-${mm}-${dd}`;
-    
+
     let todayPrice = roomObj.price || 0;
     if (roomObj.datePrices && Array.isArray(roomObj.datePrices)) {
       const found = roomObj.datePrices.find(dp => matchDate(dp.date, todayStr));
@@ -337,7 +358,7 @@ const RoomsPage = () => {
     const start = parseLocalDate(checkInStr);
     const end = parseLocalDate(checkOutStr);
     if (!start || !end || start > end) return 0;
-    
+
     const matchDate = (dbDate, targetDateStr) => {
       if (!dbDate) return false;
       let dbDateStr = '';
@@ -373,7 +394,7 @@ const RoomsPage = () => {
       const mm = String(curr.getMonth() + 1).padStart(2, '0');
       const dd = String(curr.getDate()).padStart(2, '0');
       const dateStr = `${yyyy}-${mm}-${dd}`;
-      
+
       let dayPrice = roomObj.price || 0;
       if (roomObj.datePrices && Array.isArray(roomObj.datePrices)) {
         const found = roomObj.datePrices.find(dp => matchDate(dp.date, dateStr));
@@ -385,49 +406,113 @@ const RoomsPage = () => {
     return total;
   };
 
-  // Advanced Local Filtering
-  const filteredRooms = rooms.filter(room => {
-    // 1. Category Pill Filter
-    if (activeCategory !== 'All' && room.category !== activeCategory) return false;
-
-    // 2. Guests capacity
-    const searchGuestsCount = parseInt(queryGuests, 10) || 1;
-    if (room.guests < searchGuestsCount) return false;
-
-    // 3. Overlap with unavailable dates
-    if (queryCheckIn && queryCheckOut) {
-      const start = parseLocalDate(queryCheckIn);
-      const end = parseLocalDate(queryCheckOut);
-      if (room.unavailableDates && room.unavailableDates.length > 0) {
-        const hasOverlap = room.unavailableDates.some(dateStr => {
+  const getAvailableRoomCount = (roomObj, checkInStr, checkOutStr) => {
+    if (!roomObj) return 0;
+    if (checkInStr && checkOutStr) {
+      const start = parseLocalDate(checkInStr);
+      const end = parseLocalDate(checkOutStr);
+      if (roomObj.unavailableDates && roomObj.unavailableDates.length > 0) {
+        const hasOverlap = roomObj.unavailableDates.some(dateStr => {
           const unavailableDate = new Date(dateStr);
           return unavailableDate >= start && unavailableDate <= end;
         });
-        if (hasOverlap) return false;
+        if (hasOverlap) return 0;
       }
     }
+    return 1; // Each Room in database is a single villa/unit
+  };
 
-    // 4. Price range
+  // Advanced Local Filtering
+  // Helper to check if a combination of rooms can accommodate the guests
+  const canAccommodateCombination = (roomsList, adults, children) => {
+    const n = roomsList.length;
+    if (adults < n) return false;
+
+    const backtrack = (index, remainingAdults, remainingChildren) => {
+      if (index === n) {
+        return remainingAdults === 0 && remainingChildren === 0;
+      }
+
+      const room = roomsList[index];
+      const maxAd = (room.maxAdults !== undefined && room.maxAdults !== null) ? room.maxAdults : (room.guests || 2);
+      const maxCh = (room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 0;
+      const maxTotalGuests = (room.guests !== undefined && room.guests !== null) ? room.guests : (maxAd + maxCh);
+
+      const upperA = Math.min(maxAd, remainingAdults);
+      for (let a = 1; a <= upperA; a++) {
+        if (a > maxTotalGuests) continue;
+        const maxChForThisRoom = maxCh + (maxAd - a);
+        const upperC = Math.min(maxChForThisRoom, maxTotalGuests - a, remainingChildren);
+        for (let c = 0; c <= upperC; c++) {
+          if (backtrack(index + 1, remainingAdults - a, remainingChildren - c)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    return backtrack(0, adults, children);
+  };
+
+
+  const isRoomInValidCombination = (room, pool, roomsCount, adults, children) => {
+    // Instead of combining with *any* different room (which usually results in all rooms matching),
+    // we check if `roomsCount` copies of this specific room capacity can hold the guests.
+    // This gives much more accurate and intuitive filtering results.
+    const combination = Array(roomsCount).fill(room);
+    return canAccommodateCombination(combination, adults, children);
+  };
+
+  const basicFilteredPool = rooms.filter(room => {
+    // 1. Category Pill Filter
+    if (activeCategory !== 'All' && room.category !== activeCategory) return false;
+
+    // 2. Price range
     if (minPrice !== '' && room.price < parseFloat(minPrice)) return false;
     if (maxPrice !== '' && room.price > parseFloat(maxPrice)) return false;
 
-    // 5. Rooms & Beds count
+    // 3. Rooms & Beds count
     if (filterBedrooms !== 'Any') {
       const count = parseInt(filterBedrooms.replace('+', ''), 10);
-      if (room.bedrooms < count) return false;
+      if (filterBedrooms.includes('+')) {
+        if (room.bedrooms < count) return false;
+      } else {
+        if (room.bedrooms !== count) return false;
+      }
     }
     if (filterBeds !== 'Any') {
       const count = parseInt(filterBeds.replace('+', ''), 10);
-      if (room.beds < count) return false;
+      if (filterBeds.includes('+')) {
+        if (room.beds < count) return false;
+      } else {
+        if (room.beds !== count) return false;
+      }
     }
     if (filterBathrooms !== 'Any') {
       const count = parseInt(filterBathrooms.replace('+', ''), 10);
-      if (room.bathrooms < count) return false;
+      if (filterBathrooms.includes('+')) {
+        if (room.bathrooms < count) return false;
+      } else {
+        if (room.bathrooms !== count) return false;
+      }
     }
 
-
+    // 4. Date availability
+    if (queryCheckIn && queryCheckOut) {
+      const availableCount = getAvailableRoomCount(room, queryCheckIn, queryCheckOut);
+      if (availableCount < 1) return false;
+    }
 
     return true;
+  });
+
+  const searchAdults = parseInt(queryAdults, 10) || 1;
+  const searchChildren = parseInt(queryChildren, 10) || 0;
+  const requestedRoomsCount = parseInt(queryRoomsCount, 10) || 1;
+
+  const filteredRooms = basicFilteredPool.filter(room => {
+    return isRoomInValidCombination(room, basicFilteredPool, requestedRoomsCount, searchAdults, searchChildren);
   });
 
   // Sorting
@@ -443,7 +528,7 @@ const RoomsPage = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [
-    activeCategory, queryCheckIn, queryCheckOut, queryGuests,
+    activeCategory, queryCheckIn, queryCheckOut, queryAdults, queryChildren, queryRoomsCount,
     minPrice, maxPrice, filterBedrooms, filterBeds, filterBathrooms,
     sortBy, itemsPerPage
   ]);
@@ -466,7 +551,7 @@ const RoomsPage = () => {
   const dateText = checkInInput && checkOutInput
     ? `${checkInInput.getDate()} ${checkInInput.toLocaleString('default', { month: 'short' })} – ${checkOutInput.getDate()} ${checkOutInput.toLocaleString('default', { month: 'short' })}`
     : 'Add your dates';
-  const guestText = guestsInput ? `${guestsInput} Guest${guestsInput > 1 ? 's' : ''}` : 'Select guests';  const renderFilterContent = () => (
+  const guestText = `${adultsInput} Adult${adultsInput > 1 ? 's' : ''}${childrenInput > 0 ? `, ${childrenInput} Child${childrenInput > 1 ? 'ren' : ''}` : ''} · ${roomsCountInput} Room${roomsCountInput > 1 ? 's' : ''}`;  const renderFilterContent = () => (
     <>
       {/* Sort By Dropdown */}
       <div className="space-y-2 border-b border-gray-100 pb-5">
@@ -713,23 +798,90 @@ const RoomsPage = () => {
                 </div>
               </div>
 
-              {/* Guests */}
-              <div className="flex-1 flex items-center gap-3 px-4 py-2 group">
-                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              {/* Guests & Rooms */}
+              <div className="flex-[1.4] flex items-center gap-3 px-4 py-2 group relative" ref={guestDropdownRef}>
+                <div
+                  className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform cursor-pointer"
+                  onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
+                >
                   <Users className="w-5 h-5 text-gray-500" />
                 </div>
-                <div className="flex-1 text-left">
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guests</p>
-                  <select
-                    value={guestsInput}
-                    onChange={(e) => setGuestsInput(e.target.value)}
-                    className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer"
-                  >
-                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                      <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>
-                    ))}
-                  </select>
+                <div
+                  className="flex-1 text-left cursor-pointer"
+                  onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
+                >
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guests & Rooms</p>
+                  <div className="w-full text-sm font-bold text-gray-900 outline-none bg-transparent flex items-center justify-between">
+                    <span>{adultsInput + childrenInput} Guest{adultsInput + childrenInput > 1 ? 's' : ''}, {roomsCountInput} Room{roomsCountInput > 1 ? 's' : ''}</span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isGuestDropdownOpen ? 'rotate-180' : ''}`} />
+                  </div>
                 </div>
+
+                {isGuestDropdownOpen && (
+                  <div className="absolute top-full right-0 mt-4 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50">
+                    <div className="space-y-4">
+                      {/* Adults */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">Adults</span>
+                        <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                          <button
+                            onClick={() => setAdultsInput(Math.max(1, adultsInput - 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">−</span>
+                          </button>
+                          <span className="w-4 text-center text-sm font-semibold text-gray-900">{adultsInput}</span>
+                          <button
+                            onClick={() => setAdultsInput(Math.min(10, adultsInput + 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">+</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Children */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">Children</span>
+                        <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                          <button
+                            onClick={() => setChildrenInput(Math.max(0, childrenInput - 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">−</span>
+                          </button>
+                          <span className="w-4 text-center text-sm font-semibold text-gray-900">{childrenInput}</span>
+                          <button
+                            onClick={() => setChildrenInput(Math.min(10, childrenInput + 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">+</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Rooms */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">Rooms</span>
+                        <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                          <button
+                            onClick={() => setRoomsCountInput(Math.max(1, roomsCountInput - 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">−</span>
+                          </button>
+                          <span className="w-4 text-center text-sm font-semibold text-gray-900">{roomsCountInput}</span>
+                          <button
+                            onClick={() => setRoomsCountInput(Math.min(10, roomsCountInput + 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">+</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Search button */}
@@ -789,11 +941,47 @@ const RoomsPage = () => {
                 </div>
                 <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
                   <Users className="w-6 h-6 text-gray-400" />
-                  <div className="flex-1">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Guests</p>
-                    <select value={guestsInput} onChange={(e) => setGuestsInput(e.target.value)} className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer">
-                      {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>)}
-                    </select>
+                  <div className="flex-1 flex items-center justify-between">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Adults</p>
+                    <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+                      <button onClick={() => setAdultsInput(Math.max(1, adultsInput - 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
+                        <span className="text-2xl font-light leading-none">−</span>
+                      </button>
+                      <span className="w-4 text-center text-[15px] font-bold text-gray-900">{adultsInput}</span>
+                      <button onClick={() => setAdultsInput(Math.min(10, adultsInput + 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
+                        <span className="text-2xl font-light leading-none">+</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <Users className="w-6 h-6 text-gray-400" />
+                  <div className="flex-1 flex items-center justify-between">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Children</p>
+                    <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+                      <button onClick={() => setChildrenInput(Math.max(0, childrenInput - 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
+                        <span className="text-2xl font-light leading-none">−</span>
+                      </button>
+                      <span className="w-4 text-center text-[15px] font-bold text-gray-900">{childrenInput}</span>
+                      <button onClick={() => setChildrenInput(Math.min(10, childrenInput + 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
+                        <span className="text-2xl font-light leading-none">+</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <Home className="w-6 h-6 text-gray-400" />
+                  <div className="flex-1 flex items-center justify-between">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Rooms</p>
+                    <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+                      <button onClick={() => setRoomsCountInput(Math.max(1, roomsCountInput - 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
+                        <span className="text-2xl font-light leading-none">−</span>
+                      </button>
+                      <span className="w-4 text-center text-[15px] font-bold text-gray-900">{roomsCountInput}</span>
+                      <button onClick={() => setRoomsCountInput(Math.min(10, roomsCountInput + 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
+                        <span className="text-2xl font-light leading-none">+</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <button
@@ -874,7 +1062,7 @@ const RoomsPage = () => {
                     const roomTotal = getRoomTotalForDates(room, queryCheckIn, queryCheckOut);
 
                     // Create search-preserving state/query for Room Detail redirection
-                    const detailLink = `/rooms/${getRoomSlug(room.name)}?checkIn=${queryCheckIn}&checkOut=${queryCheckOut}&guests=${queryGuests}`;
+                    const detailLink = `/rooms/${getRoomSlug(room.name)}?checkIn=${queryCheckIn || ''}&checkOut=${queryCheckOut || ''}&adults=${queryAdults}&children=${queryChildren}&roomsCount=${queryRoomsCount}`;
 
                       return (
                       <Link
@@ -929,7 +1117,7 @@ const RoomsPage = () => {
                                     star <= Math.round(room.rating || 5)
                                       ? 'fill-amber-400 text-amber-400'
                                       : 'text-gray-200'
-                                  }`}
+                                    }`}
                                 />
                               ))}
                             </div>
@@ -948,7 +1136,16 @@ const RoomsPage = () => {
                           <div className="flex flex-wrap items-center gap-y-2 gap-x-4 border-t border-gray-100 pt-3.5 mt-auto text-xs text-gray-500 font-bold">
                             <div className="flex items-center gap-1.5">
                               <Users className="w-3.5 h-3.5 text-gray-400" />
-                              <span>{room.guests || 2} Guests</span>
+                              <span>
+                                Max: {(room.maxAdults !== undefined && room.maxAdults !== null)
+                                  ? room.maxAdults
+                                  : (room.guests || 2)} Adults
+                                {((room.maxChildren !== undefined && room.maxChildren !== null)
+                                  ? room.maxChildren
+                                  : 0) > 0
+                                  ? `   ${room.maxChildren} Children`
+                                  : ''}
+                              </span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <BedDouble className="w-3.5 h-3.5 text-gray-400" />
@@ -965,6 +1162,8 @@ const RoomsPage = () => {
                               </div>
                             )}
                           </div>
+
+
                         </div>
                       </Link>
                     );

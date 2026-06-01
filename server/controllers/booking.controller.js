@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import Review from '../models/Review.js';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import sendEmail from '../utils/email.js';
 
 let razorpayInstance = null;
 
@@ -30,26 +31,124 @@ const getDatesInRange = (startDate, endDate) => {
   return dates;
 };
 
+// Helper to check if a combination of rooms can accommodate the guests
+const canAccommodateCombination = (roomsList, adults, children) => {
+  const n = roomsList.length;
+  if (adults < n) return false;
+
+  function backtrack(index, remainingAdults, remainingChildren) {
+    if (index === n) {
+      return remainingAdults === 0 && remainingChildren === 0;
+    }
+
+    const room = roomsList[index];
+    const maxAd = (room.maxAdults !== undefined && room.maxAdults !== null) ? room.maxAdults : (room.guests || 2);
+    const maxCh = (room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 0;
+    const maxTotalGuests = (room.guests !== undefined && room.guests !== null) ? room.guests : (maxAd + maxCh);
+
+    const upperA = Math.min(maxAd, remainingAdults);
+    for (let a = 1; a <= upperA; a++) {
+      if (a > maxTotalGuests) continue;
+      const maxChForThisRoom = maxCh + (maxAd - a);
+      const upperC = Math.min(maxChForThisRoom, maxTotalGuests - a, remainingChildren);
+      for (let c = 0; c <= upperC; c++) {
+        if (backtrack(index + 1, remainingAdults - a, remainingChildren - c)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  return backtrack(0, adults, children);
+};
+
+
 // Helper to verify if room is available
-const checkRoomAvailability = async (roomId, checkIn, checkOut) => {
-  if (!roomId || !checkIn || !checkOut) return true; // skip validation if params missing
-  const room = await Room.findById(roomId);
-  if (!room) return false;
+const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children, roomsCount = 1) => {
+  if (!roomId) return { isAvailable: true };
+  const primaryRoom = await Room.findById(roomId);
+  if (!primaryRoom) return { isAvailable: false, message: 'Room not found.' };
 
-  if (!room.unavailableDates || room.unavailableDates.length === 0) return true;
+  // Check if primary room itself is date-available
+  if (checkIn && checkOut) {
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    const requestedDates = getDatesInRange(start, end);
 
-  const start = new Date(checkIn);
-  const end = new Date(checkOut);
-  const requestedDates = getDatesInRange(start, end);
-
-  const hasOverlap = requestedDates.some(reqDate => {
-    return room.unavailableDates.some(unDate => {
+    const hasOverlap = primaryRoom.unavailableDates && primaryRoom.unavailableDates.some(unDate => {
       const uDate = new Date(unDate);
-      return uDate.toDateString() === reqDate.toDateString();
+      return requestedDates.some(reqDate => uDate.toDateString() === reqDate.toDateString());
     });
-  });
 
-  return !hasOverlap;
+    if (hasOverlap) {
+      return { isAvailable: false, message: 'Primary room is already booked for the selected dates!' };
+    }
+  }
+
+  // If roomsCount is 1, check if primary room can accommodate the guests
+  if (roomsCount === 1) {
+    if (canAccommodateCombination([primaryRoom], adults !== undefined ? Number(adults) : 1, children !== undefined ? Number(children) : 0)) {
+      return { isAvailable: true, rooms: [primaryRoom._id] };
+    } else {
+      return { isAvailable: false, message: 'Room capacity exceeded for the selected guest combination.' };
+    }
+  }
+
+  // If roomsCount > 1, we need to find roomsCount - 1 other available rooms
+  // that, together with the primary room, can satisfy the guest count (adults and children).
+  // Fetch all other published rooms
+  const allRooms = await Room.find({ status: 'published', _id: { $ne: roomId } });
+
+  // Filter other rooms to only those that are available on the selected dates
+  const availableOtherRooms = [];
+  if (checkIn && checkOut) {
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    const requestedDates = getDatesInRange(start, end);
+
+    for (const r of allRooms) {
+      const hasOverlap = r.unavailableDates && r.unavailableDates.some(unDate => {
+        const uDate = new Date(unDate);
+        return requestedDates.some(reqDate => uDate.toDateString() === reqDate.toDateString());
+      });
+      if (!hasOverlap) {
+        availableOtherRooms.push(r);
+      }
+    }
+  } else {
+    availableOtherRooms.push(...allRooms);
+  }
+
+  // We need to find if there is a subset of size (roomsCount - 1) from availableOtherRooms
+  // that, together with primaryRoom, can accommodate adults and children.
+  const requiredOtherCount = roomsCount - 1;
+  let foundCombination = null;
+
+  function findCombination(startIndex, currentSubset) {
+    if (foundCombination) return;
+    if (currentSubset.length === requiredOtherCount) {
+      const combination = [primaryRoom, ...currentSubset];
+      if (canAccommodateCombination(combination, Number(adults), Number(children))) {
+        foundCombination = combination.map(r => r._id);
+      }
+      return;
+    }
+
+    for (let i = startIndex; i < availableOtherRooms.length; i++) {
+      currentSubset.push(availableOtherRooms[i]);
+      findCombination(i + 1, currentSubset);
+      currentSubset.pop();
+    }
+  }
+
+  findCombination(0, []);
+
+  if (!foundCombination) {
+    return { isAvailable: false, message: 'No valid combination of available rooms can accommodate your request.' };
+  }
+
+  return { isAvailable: true, rooms: foundCombination };
 };
 
 export const getAllBookings = async (req, res) => {
@@ -89,13 +188,13 @@ export const getMyBookings = async (req, res) => {
 
 export const createRazorpayOrder = async (req, res) => {
   try {
-    const { amount, currency = 'INR', roomId, checkIn, checkOut } = req.body;
+    const { amount, currency = 'INR', roomId, checkIn, checkOut, adults, children, roomsCount } = req.body;
 
     // Check room availability first
     if (roomId && checkIn && checkOut) {
-      const isAvailable = await checkRoomAvailability(roomId, checkIn, checkOut);
-      if (!isAvailable) {
-        return res.status(400).json({ message: 'Room is already booked for the selected dates!' });
+      const availability = await checkRoomAvailability(roomId, checkIn, checkOut, adults, children, roomsCount || 1);
+      if (!availability.isAvailable) {
+        return res.status(400).json({ message: availability.message });
       }
     }
 
@@ -135,15 +234,24 @@ export const verifyRazorpayPayment = async (req, res) => {
     }
 
     // Double check availability before creating booking
-    const isAvailable = await checkRoomAvailability(bookingData.room, bookingData.checkIn, bookingData.checkOut);
-    if (!isAvailable) {
-      return res.status(400).json({ message: 'Room was booked by someone else during checkout!' });
+    const availability = await checkRoomAvailability(
+      bookingData.room, 
+      bookingData.checkIn, 
+      bookingData.checkOut, 
+      bookingData.adults, 
+      bookingData.children,
+      bookingData.roomsCount || 1
+    );
+    if (!availability.isAvailable) {
+      return res.status(400).json({ message: availability.message });
     }
 
     // Payment is verified, create the booking
     const booking = await Booking.create({
       ...bookingData,
       user: req.user._id,
+      rooms: availability.rooms || [bookingData.room],
+      roomsCount: availability.rooms ? availability.rooms.length : 1,
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
       razorpaySignature: razorpay_signature,
@@ -151,11 +259,57 @@ export const verifyRazorpayPayment = async (req, res) => {
       status: 'confirmed'
     });
 
-    // Block the booked dates in the Room database
+    // Block the booked dates in the Room database for all rooms in combination
     const bookedDates = getDatesInRange(bookingData.checkIn, bookingData.checkOut);
-    await Room.findByIdAndUpdate(bookingData.room, {
-      $addToSet: { unavailableDates: { $each: bookedDates } }
-    });
+    const roomsToBlock = availability.rooms || [bookingData.room];
+    await Room.updateMany(
+      { _id: { $in: roomsToBlock } },
+      { $addToSet: { unavailableDates: { $each: bookedDates } } }
+    );
+
+    // Send confirmation emails
+    try {
+      const user = await User.findById(req.user._id);
+      const primaryRoomDetails = await Room.findById(bookingData.room);
+
+      const emailHtmlUser = `
+        <h2>Booking Confirmation</h2>
+        <p>Dear ${user.name},</p>
+        <p>Your booking for <strong>${primaryRoomDetails.name}</strong> has been successfully confirmed.</p>
+        <p><strong>Check-in:</strong> ${new Date(bookingData.checkIn).toLocaleDateString()}</p>
+        <p><strong>Check-out:</strong> ${new Date(bookingData.checkOut).toLocaleDateString()}</p>
+        <p><strong>Guests:</strong> ${bookingData.adults} Adults, ${bookingData.children || 0} Children</p>
+        <p><strong>Total Amount:</strong> ₹${bookingData.totalAmount}</p>
+        <p>Thank you for choosing us!</p>
+      `;
+
+      // Send to User
+      await sendEmail({
+        email: user.email,
+        subject: 'Booking Confirmation - The Balified Villa',
+        html: emailHtmlUser,
+      });
+
+      // Send to Admin
+      const adminEmail = 'thebalifiedvilla@gmail.com';
+      await sendEmail({
+        email: adminEmail,
+        subject: `New Booking Received - ${user.name}`,
+        html: `
+          <h2>New Booking Alert</h2>
+          <p><strong>Guest Name:</strong> ${user.name}</p>
+          <p><strong>Guest Email:</strong> ${user.email}</p>
+          <p><strong>Guest Phone:</strong> ${user.phone || 'N/A'}</p>
+          <p><strong>Room:</strong> ${primaryRoomDetails.name}</p>
+          <p><strong>Check-in:</strong> ${new Date(bookingData.checkIn).toLocaleDateString()}</p>
+          <p><strong>Check-out:</strong> ${new Date(bookingData.checkOut).toLocaleDateString()}</p>
+          <p><strong>Guests:</strong> ${bookingData.adults} Adults, ${bookingData.children || 0} Children</p>
+          <p><strong>Total Amount:</strong> ₹${bookingData.totalAmount}</p>
+        `,
+      });
+    } catch (emailErr) {
+      console.error('Failed to send confirmation emails:', emailErr);
+    }
 
     res.status(201).json({
       message: 'Payment verified and booking created successfully',
@@ -168,21 +322,28 @@ export const verifyRazorpayPayment = async (req, res) => {
 
 export const createBooking = async (req, res) => {
   try {
-    const { room, checkIn, checkOut } = req.body;
+    const { room, checkIn, checkOut, adults, children, roomsCount } = req.body;
 
     // Check availability
-    const isAvailable = await checkRoomAvailability(room, checkIn, checkOut);
-    if (!isAvailable) {
-      return res.status(400).json({ message: 'Room is not available for the selected dates!' });
+    const availability = await checkRoomAvailability(room, checkIn, checkOut, adults, children, roomsCount || 1);
+    if (!availability.isAvailable) {
+      return res.status(400).json({ message: availability.message });
     }
 
-    const booking = await Booking.create({ ...req.body, user: req.user._id });
-
-    // Block dates
-    const bookedDates = getDatesInRange(checkIn, checkOut);
-    await Room.findByIdAndUpdate(room, {
-      $addToSet: { unavailableDates: { $each: bookedDates } }
+    const booking = await Booking.create({
+      ...req.body,
+      user: req.user._id,
+      rooms: availability.rooms || [room],
+      roomsCount: availability.rooms ? availability.rooms.length : 1
     });
+
+    // Block dates for all rooms in combination
+    const bookedDates = getDatesInRange(checkIn, checkOut);
+    const roomsToBlock = availability.rooms || [room];
+    await Room.updateMany(
+      { _id: { $in: roomsToBlock } },
+      { $addToSet: { unavailableDates: { $each: bookedDates } } }
+    );
 
     res.status(201).json(booking);
   } catch (err) {
@@ -192,12 +353,33 @@ export const createBooking = async (req, res) => {
 
 export const updateBookingStatus = async (req, res) => {
   try {
-    const booking = await Booking.findByIdAndUpdate(
-      req.params.id,
-      { status: req.body.status },
-      { new: true }
-    );
+    const { status } = req.body;
+    const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    const oldStatus = booking.status;
+    booking.status = status;
+    await booking.save();
+
+    // If status changed to cancelled, release the blocked dates for all rooms in the booking
+    if (status === 'cancelled' && oldStatus !== 'cancelled') {
+      const bookedDates = getDatesInRange(booking.checkIn, booking.checkOut);
+      const roomsToUnblock = booking.rooms && booking.rooms.length > 0 ? booking.rooms : [booking.room];
+      await Room.updateMany(
+        { _id: { $in: roomsToUnblock } },
+        { $pull: { unavailableDates: { $in: bookedDates } } }
+      );
+    }
+    // If status changed from cancelled back to confirmed/completed, re-block dates
+    else if ((status === 'confirmed' || status === 'completed') && oldStatus === 'cancelled') {
+      const bookedDates = getDatesInRange(booking.checkIn, booking.checkOut);
+      const roomsToBlock = booking.rooms && booking.rooms.length > 0 ? booking.rooms : [booking.room];
+      await Room.updateMany(
+        { _id: { $in: roomsToBlock } },
+        { $addToSet: { unavailableDates: { $each: bookedDates } } }
+      );
+    }
+
     res.json(booking);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -216,10 +398,23 @@ export const getDashboardStats = async (req, res) => {
     const totalRevenue = revenueResult[0]?.total || 0;
 
     const totalRooms = await Room.countDocuments();
-    // Total guests from bookings (sum of guests field in non-cancelled bookings)
+    // Total guests from bookings (sum of adults + children or guests field in non-cancelled bookings)
     const guestsAgg = await Booking.aggregate([
       { $match: { status: { $ne: 'cancelled' } } },
-      { $group: { _id: null, total: { $sum: '$guests' } } }
+      {
+        $group: {
+          _id: null,
+          total: {
+            $sum: {
+              $cond: {
+                if: { $gt: ["$adults", null] },
+                then: { $add: ["$adults", { $ifNull: ["$children", 0] }] },
+                else: { $ifNull: ["$guests", 1] }
+              }
+            }
+          }
+        }
+      }
     ]);
     const totalGuests = guestsAgg[0]?.total || 0;
 

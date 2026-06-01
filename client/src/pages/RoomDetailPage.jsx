@@ -84,16 +84,32 @@ const RoomDetailPage = () => {
 
   const checkInQuery = getQueryParam('checkIn');
   const checkOutQuery = getQueryParam('checkOut');
-  const guestsQuery = parseInt(getQueryParam('guests') || '1', 10);
+  const adultsQuery = parseInt(getQueryParam('adults') || getQueryParam('guests') || '1', 10);
+  const childrenQuery = parseInt(getQueryParam('children') || '0', 10);
+  const roomsCountQuery = parseInt(getQueryParam('roomsCount') || getQueryParam('rooms') || '1', 10);
 
   const [checkIn, setCheckIn] = useState(checkInQuery);
   const [checkOut, setCheckOut] = useState(checkOutQuery);
-  const [guests, setGuests] = useState(guestsQuery);
+  const [adults, setAdults] = useState(adultsQuery);
+  const [children, setChildren] = useState(childrenQuery);
+  const [roomsCount, setRoomsCount] = useState(roomsCountQuery);
 
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [hoveredDate, setHoveredDate] = useState(null);
   const [activeSelectType, setActiveSelectType] = useState('checkIn'); // 'checkIn' or 'checkOut'
+
+  useEffect(() => {
+    if (!room) return;
+    const maxAdultsAllowed = ((room.maxAdults !== undefined && room.maxAdults !== null) ? room.maxAdults : (room.guests || 10)) * roomsCount;
+    if (adults > maxAdultsAllowed) {
+      setAdults(maxAdultsAllowed);
+    }
+    const maxChildrenAllowed = ((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 10) * roomsCount;
+    if (children > maxChildrenAllowed) {
+      setChildren(maxChildrenAllowed);
+    }
+  }, [roomsCount, room]);
 
   const getDatesInRangeList = (startDate, endDate) => {
     const start = new Date(startDate);
@@ -159,8 +175,16 @@ const RoomDetailPage = () => {
   useEffect(() => {
     if (checkInQuery) setCheckIn(checkInQuery);
     if (checkOutQuery) setCheckOut(checkOutQuery);
-    if (guestsQuery) setGuests(guestsQuery);
-  }, [checkInQuery, checkOutQuery, guestsQuery]);
+    if (getQueryParam('adults') || getQueryParam('guests')) {
+      setAdults(parseInt(getQueryParam('adults') || getQueryParam('guests') || '1', 10));
+    }
+    if (getQueryParam('children')) {
+      setChildren(parseInt(getQueryParam('children') || '0', 10));
+    }
+    if (getQueryParam('roomsCount')) {
+      setRoomsCount(parseInt(getQueryParam('roomsCount') || '1', 10));
+    }
+  }, [checkInQuery, checkOutQuery, searchParams]);
 
   useEffect(() => {
     const load = async () => {
@@ -353,7 +377,7 @@ const RoomDetailPage = () => {
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     const todayStr = `${yyyy}-${mm}-${dd}`;
-    
+
     let todayPrice = roomObj.price || 0;
     if (roomObj.datePrices && Array.isArray(roomObj.datePrices)) {
       const found = roomObj.datePrices.find(dp => matchDate(dp.date, todayStr));
@@ -573,17 +597,17 @@ const RoomDetailPage = () => {
     const start = parseLocalDate(checkInStr);
     const end = parseLocalDate(checkOutStr);
     if (!start || !end || start > end) return { total: 0, average: room?.price || 0, nights: 0, breakdown: [] };
-    
+
     let total = 0;
     const breakdown = [];
     const curr = new Date(start.getTime());
-    
+
     while (curr <= end) {
       const yyyy = curr.getFullYear();
       const mm = String(curr.getMonth() + 1).padStart(2, '0');
       const dd = String(curr.getDate()).padStart(2, '0');
       const dateStr = `${yyyy}-${mm}-${dd}`;
-      
+
       let dayPrice = room.price || 0;
       if (room.datePrices && Array.isArray(room.datePrices)) {
         const found = room.datePrices.find(dp => matchDate(dp.date, dateStr));
@@ -591,13 +615,13 @@ const RoomDetailPage = () => {
           dayPrice = found.price;
         }
       }
-      
+
       total += dayPrice;
       breakdown.push({ dateStr, price: dayPrice });
-      
+
       curr.setDate(curr.getDate() + 1);
     }
-    
+
     return {
       total,
       average: breakdown.length > 0 ? Math.round(total / breakdown.length) : room.price || 0,
@@ -628,7 +652,9 @@ const RoomDetailPage = () => {
         roomId: room._id,
         checkIn,
         checkOut,
-        guests,
+        adults,
+        children,
+        roomsCount,
         total,
         nights,
         breakdown
@@ -816,7 +842,7 @@ const RoomDetailPage = () => {
                   <div className="flex flex-wrap items-center gap-2 lg:gap-3">
                     {[
                       room.size && { icon: Maximize, label: room.size },
-                      room.guests && { icon: Users, label: `${room.guests} guests` },
+                      (room.maxAdults || room.maxChildren) && { icon: Users, label: `Max: ${room.maxAdults || 2} Adults${(room.maxChildren || 0) > 0 ? ` · ${room.maxChildren} Children` : ''}` },
                       room.bathrooms && { icon: Bath, label: `${room.bathrooms} bath` },
                       room.beds && { icon: BedDouble, label: `${room.beds} beds` }
                     ].filter(Boolean).map(({ icon: Icon, label }, idx) => (
@@ -999,16 +1025,28 @@ const RoomDetailPage = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="p-3 flex items-center justify-between">
+                  <div className={`p-3 flex items-center justify-between ${((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 0) > 0 ? 'border-b border-gray-300' : ''}`}>
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Guests</label>
-                      <span className="text-sm text-gray-700">{guests} guest{guests > 1 ? 's' : ''}</span>
+                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Adults</label>
+                      <span className="text-sm text-gray-700">{adults} Adult{adults > 1 ? 's' : ''}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button onClick={() => setGuests(g => Math.max(1, g - 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">−</button>
-                      <button onClick={() => setGuests(g => Math.min(room.guests || 10, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
+                      <button onClick={() => setAdults(g => Math.max(1, g - 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">−</button>
+                      <button onClick={() => setAdults(g => Math.min(((room.maxAdults !== undefined && room.maxAdults !== null) ? room.maxAdults : (room.guests || 10)) * roomsCount, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
                     </div>
                   </div>
+                  {((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 0) > 0 && (
+                    <div className="p-3 flex items-center justify-between">
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Children</label>
+                        <span className="text-sm text-gray-700">{children} Child{children !== 1 ? 'ren' : ''}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => setChildren(g => Math.max(0, g - 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">−</button>
+                        <button onClick={() => setChildren(g => Math.min(((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 10) * roomsCount, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {nights > 0 && (
@@ -1017,7 +1055,7 @@ const RoomDetailPage = () => {
                       <span className="underline decoration-gray-300">₹{average.toLocaleString('en-IN')} avg. × {nights} night{nights !== 1 ? 's' : ''}</span>
                       <span>₹{total.toLocaleString('en-IN')}</span>
                     </div>
-                    
+
                     {/* Collapsible night breakdown */}
                     <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 max-h-32 overflow-y-auto space-y-1.5 scrollbar-thin">
                       {breakdown.map((item, idx) => (
@@ -1119,23 +1157,43 @@ const RoomDetailPage = () => {
                 </div>
               </div>
 
-              {/* Guests Card */}
+              {/* Adults Card */}
               <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80">
                 <Users className="w-6 h-6 text-gray-400" />
                 <div className="flex flex-col flex-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Guests</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Adults</label>
                   <select
-                    value={guests}
-                    onChange={e => setGuests(parseInt(e.target.value))}
+                    value={adults}
+                    onChange={e => setAdults(parseInt(e.target.value, 10))}
                     className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none"
                   >
-                    {[...Array(room.guests || 10)].map((_, i) => (
-                      <option key={i+1} value={i+1}>{i+1} {i === 0 ? 'guest' : 'guests'}</option>
+                    {[...Array(((room.maxAdults !== undefined && room.maxAdults !== null ? room.maxAdults : (room.guests || 10)) * roomsCount))].map((_, i) => (
+                      <option key={i+1} value={i+1}>{i+1} Adult{i+1 > 1 ? 's' : ''}</option>
                     ))}
                   </select>
                 </div>
                 <ChevronDown className="w-5 h-5 text-gray-900 mr-1" />
               </div>
+
+              {/* Children Card */}
+              {((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 0) > 0 && (
+                <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80">
+                  <Users className="w-6 h-6 text-gray-400" />
+                  <div className="flex flex-col flex-1">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Children</label>
+                    <select
+                      value={children}
+                      onChange={e => setChildren(parseInt(e.target.value, 10))}
+                      className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none"
+                    >
+                      {[...Array((((room.maxChildren !== undefined && room.maxChildren !== null ? room.maxChildren : 10) * roomsCount)) + 1)].map((_, i) => (
+                        <option key={i} value={i}>{i} Child{i !== 1 ? 'ren' : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <ChevronDown className="w-5 h-5 text-gray-900 mr-1" />
+                </div>
+              )}
             </div>
 
             {/* Total Mobile Summary */}
@@ -1145,7 +1203,7 @@ const RoomDetailPage = () => {
                   <span className="underline">₹{average.toLocaleString('en-IN')} × {nights} night{nights !== 1 ? 's' : ''}</span>
                   <span>₹{total.toLocaleString('en-IN')}</span>
                 </div>
-                
+
                 {/* Night-by-night list */}
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 max-h-24 overflow-y-auto space-y-1.5 scrollbar-thin">
                   {breakdown.map((item, idx) => (

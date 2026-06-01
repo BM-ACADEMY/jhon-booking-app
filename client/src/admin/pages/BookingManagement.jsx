@@ -462,7 +462,10 @@ const BookingManagement = () => {
                       <p>{b.checkIn ? new Date(b.checkIn).toLocaleDateString() : 'N/A'}</p>
                       <p className="text-gray-400 font-medium">to {b.checkOut ? new Date(b.checkOut).toLocaleDateString() : 'N/A'}</p>
                     </td>
-                    <td className="px-5 py-3.5 text-sm font-bold text-center text-gray-600">{b.guests}</td>
+                    <td className="px-5 py-3.5 text-sm font-bold text-center text-gray-600">
+                      <div>{b.adults || b.guests || 1}A {b.children > 0 ? `· ${b.children}C` : ''}</div>
+                      <div className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">{b.roomsCount || 1} Room{(b.roomsCount || 1) !== 1 ? 's' : ''}</div>
+                    </td>
                     <td className="px-5 py-3.5 text-sm font-black text-gray-800">₹{b.totalAmount}</td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${paymentConfig[b.paymentStatus || 'unpaid']}`}>
@@ -688,7 +691,15 @@ const BookingManagement = () => {
                   </div>
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Guests</span>
-                    <span className="text-xs font-bold text-gray-800">{selectedBooking.guests} Person(s)</span>
+                    <span className="text-xs font-bold text-gray-800">
+                      {selectedBooking.adults || selectedBooking.guests || 1}A{selectedBooking.children > 0 ? ` + ${selectedBooking.children}C` : ''}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Rooms Booked</span>
+                    <span className="text-xs font-bold text-gray-800">
+                      {selectedBooking.roomsCount || 1} Room(s)
+                    </span>
                   </div>
                   {selectedBooking.specialRequests && (
                     <div className="col-span-2 md:col-span-4 border-t border-gray-200/50 pt-2.5 mt-1">

@@ -35,7 +35,7 @@ const AddonsPage = () => {
     }
   }, [state, navigate]);
 
-  const { roomId, checkIn, checkOut, guests, total: staySubtotal, nights, breakdown } = state || {};
+  const { roomId, checkIn, checkOut, adults = 1, children = 0, roomsCount = 1, guests, total: staySubtotal, nights, breakdown } = state || {};
 
   useEffect(() => {
     const fetchRoomDetailsAndAddons = async () => {
@@ -100,7 +100,10 @@ const AddonsPage = () => {
         currency: 'INR',
         roomId: room._id,
         checkIn,
-        checkOut
+        checkOut,
+        adults,
+        children,
+        roomsCount
       });
       const order = orderRes.data;
 
@@ -121,7 +124,10 @@ const AddonsPage = () => {
                 room: room._id,
                 checkIn,
                 checkOut,
-                guests,
+                adults,
+                children,
+                roomsCount,
+                guests: adults + children,
                 totalAmount: finalAmount,
                 addons: addonsPayload
               }
@@ -330,19 +336,28 @@ const AddonsPage = () => {
               </div>
 
               {/* Dates and Guests summary */}
-              <div className="grid grid-cols-2 gap-4 py-4 px-5 bg-gray-50 rounded-2xl border border-gray-100/50">
+              <div className="grid grid-cols-3 gap-4 py-4 px-5 bg-gray-50 rounded-2xl border border-gray-100/50">
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
                   <div>
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Nights</p>
-                    <p className="text-sm font-bold text-gray-700">{nights} night(s)</p>
+                    <p className="text-sm font-bold text-gray-700">{nights} Night(s)</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Users className="w-5 h-5 text-gray-400 flex-shrink-0" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Guests</p>
-                    <p className="text-sm font-bold text-gray-700">{guests} Guest(s)</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Occupancy</p>
+                    <p className="text-sm font-bold text-gray-700">
+                      {adults} Ad{children > 0 ? `·${children}Ch` : ''}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Layers className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Rooms</p>
+                    <p className="text-sm font-bold text-gray-700">{roomsCount} Room(s)</p>
                   </div>
                 </div>
               </div>

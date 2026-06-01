@@ -13,6 +13,8 @@ const roomSchema = new mongoose.Schema({
 
   // Capacity details
   guests: { type: Number, required: true, default: 2 },
+  maxAdults: { type: Number, required: true, default: 2 },
+  maxChildren: { type: Number, required: true, default: 0 },
   bedrooms: { type: Number, default: 1 },
   beds: { type: Number, default: 1 },
   bathrooms: { type: Number, default: 1 },
@@ -52,8 +54,6 @@ const roomSchema = new mongoose.Schema({
     price: { type: Number, required: true }
   }],
 
-  addons: [{ type: mongoose.Schema.Types.ObjectId, ref: 'AddonService' }],
-
   status: { type: String, enum: ['draft', 'published'], default: 'draft' },
   isAvailable: { type: Boolean, default: true },
   isFeatured: { type: Boolean, default: false },
@@ -62,3 +62,4 @@ const roomSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 export default mongoose.model('Room', roomSchema);
+// Trigger reload again

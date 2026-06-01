@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CalendarDays, Users, Search, Navigation, ChevronDown, Bell, X, AlertTriangle } from 'lucide-react';
 import DatePicker from 'react-datepicker';
@@ -14,12 +14,29 @@ const HeroSection = () => {
   const [location, setLocation] = useState('');
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
-  const [guests, setGuests] = useState('');
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [roomsCount, setRoomsCount] = useState(1);
   const [showError, setShowError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Mobile Search Modal & Animation State
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
+
+  // Desktop Guest Popover State
+  const [isGuestDropdownOpen, setIsGuestDropdownOpen] = useState(false);
+  const guestDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (guestDropdownRef.current && !guestDropdownRef.current.contains(event.target)) {
+        setIsGuestDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Text Change Animation Timer (changes every 2.5 seconds)
   useEffect(() => {
@@ -38,19 +55,36 @@ const HeroSection = () => {
   };
 
   const handleSearch = () => {
-    if (!startDate || !endDate || !guests) {
+    if (!startDate || !endDate) {
+      setErrorMsg("Please select check-in and check-out dates!");
       setShowError(true);
-      // Auto-hide the validation error banner after exactly 3 seconds
-      const timer = setTimeout(() => {
-        setShowError(false);
-      }, 3000);
+      const timer = setTimeout(() => setShowError(false), 3000);
       return () => clearTimeout(timer);
     }
+    if (endDate <= startDate) {
+      setErrorMsg("Check-out date must be after check-in date!");
+      setShowError(true);
+      const timer = setTimeout(() => setShowError(false), 3000);
+      return () => clearTimeout(timer);
+    }
+    if (adults < 1) {
+      setErrorMsg("Adults must be at least 1!");
+      setShowError(true);
+      const timer = setTimeout(() => setShowError(false), 3000);
+      return () => clearTimeout(timer);
+    }
+    if (roomsCount < 1) {
+      setErrorMsg("Rooms must be at least 1!");
+      setShowError(true);
+      const timer = setTimeout(() => setShowError(false), 3000);
+      return () => clearTimeout(timer);
+    }
+
     setShowError(false);
     const checkInStr = formatDateLocal(startDate);
     const checkOutStr = formatDateLocal(endDate);
     setIsMobileSearchOpen(false);
-    navigate(`/rooms?location=${location}&checkIn=${checkInStr}&checkOut=${checkOutStr}&guests=${guests}`);
+    navigate(`/rooms?location=${location}&checkIn=${checkInStr}&checkOut=${checkOutStr}&adults=${adults}&children=${children}&rooms=${roomsCount}`);
   };
 
   useEffect(() => {
@@ -82,9 +116,7 @@ const HeroSection = () => {
     ? `${startDate.getDate()} ${startDate.toLocaleString('default', { month: 'short' })} - ${endDate.getDate()} ${endDate.toLocaleString('default', { month: 'short' })}` 
     : 'Date range';
     
-  const guestText = guests 
-    ? `${guests} Guest${guests > 1 ? 's' : ''}` 
-    : 'Number of guests';
+  const guestText = `${adults} Adult${adults > 1 ? 's' : ''}${children > 0 ? `, ${children} Child${children > 1 ? 'ren' : ''}` : ''} · ${roomsCount} Room${roomsCount > 1 ? 's' : ''}`;
 
   return (
     <>
@@ -201,13 +233,15 @@ const HeroSection = () => {
           {/* ========================================= */}
           {/* DESKTOP BOOKING BAR (Visible lg+)         */}
           {/* ========================================= */}
-          <div className="hidden lg:flex bg-white rounded-[2.5rem] p-2 max-w-4xl w-full shadow-2xl flex-col md:flex-row items-center gap-2 divide-y md:divide-y-0 md:divide-x divide-gray-100 animate-reveal [animation-delay:600ms] opacity-0 relative z-40">
+          <div className="hidden lg:flex bg-white rounded-[2.5rem] p-2 max-w-5xl w-full shadow-2xl flex-row items-center gap-2 divide-x divide-gray-100 animate-reveal [animation-delay:600ms] opacity-0 relative z-40">
             
-            <div className="flex-1 flex items-center gap-3 px-4 py-2 w-full group">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                <CalendarDays className="w-5 h-5 text-gray-500" />
+            {/* Check-In */}
+            <div className="flex-[1.2] flex items-center gap-2 px-3 py-2 w-full group">
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                <CalendarDays className="w-4 h-4 text-gray-500" />
               </div>
               <div className="flex-1 text-left">
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Check‑In</p>
                 <DatePicker
                   selected={startDate}
                   onChange={(date) => setDateRange([date, endDate])}
@@ -216,7 +250,7 @@ const HeroSection = () => {
                   endDate={endDate}
                   minDate={new Date()}
                   dateFormat="dd MMM yyyy"
-                  placeholderText="Check‑In"
+                  placeholderText="Select date"
                   className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400"
                   popperProps={{ strategy: "fixed" }}
                   popperClassName="z-50"
@@ -224,11 +258,13 @@ const HeroSection = () => {
               </div>
             </div>
 
-            <div className="flex-1 flex items-center gap-3 px-4 py-2 w-full group">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                <CalendarDays className="w-5 h-5 text-gray-500" />
+            {/* Check-Out */}
+            <div className="flex-[1.2] flex items-center gap-2 px-3 py-2 w-full group">
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                <CalendarDays className="w-4 h-4 text-gray-500" />
               </div>
               <div className="flex-1 text-left">
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Check‑Out</p>
                 <DatePicker
                   selected={endDate}
                   onChange={(date) => setDateRange([startDate, date])}
@@ -237,7 +273,7 @@ const HeroSection = () => {
                   endDate={endDate}
                   minDate={startDate || new Date()}
                   dateFormat="dd MMM yyyy"
-                  placeholderText="Check‑Out"
+                  placeholderText="Select date"
                   className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400"
                   popperProps={{ strategy: "fixed" }}
                   popperClassName="z-50"
@@ -245,28 +281,97 @@ const HeroSection = () => {
               </div>
             </div>
 
-            <div className="flex-1 flex items-center gap-3 px-4 py-2 w-full group">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                <Users className="w-5 h-5 text-gray-500" />
+            {/* Guests & Rooms */}
+            <div className="flex-[1.4] flex items-center gap-2 px-3 py-2 w-full group relative" ref={guestDropdownRef}>
+              <div 
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform cursor-pointer"
+                onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
+              >
+                <Users className="w-4 h-4 text-gray-500" />
               </div>
-              <div className="flex-1 text-left">
-                <select
-                  value={guests}
-                  onChange={(e) => setGuests(e.target.value)}
-                  className="w-full text-xs font-semibold text-gray-400 outline-none bg-transparent cursor-pointer text-ellipsis truncate"
-                >
-                  <option value="" disabled hidden>Select Guests</option>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                    <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>
-                  ))}
-                </select>
+              <div 
+                className="flex-1 text-left cursor-pointer"
+                onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
+              >
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Guests & Rooms</p>
+                <div className="w-full text-xs font-bold text-gray-900 outline-none bg-transparent flex items-center justify-between">
+                  <span>{adults + children} Guest{adults + children > 1 ? 's' : ''}, {roomsCount} Room{roomsCount > 1 ? 's' : ''}</span>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isGuestDropdownOpen ? 'rotate-180' : ''}`} />
+                </div>
               </div>
+
+              {isGuestDropdownOpen && (
+                <div className="absolute top-full right-0 mt-4 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50">
+                  <div className="space-y-4">
+                    {/* Adults */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-800">Adults</span>
+                      <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                        <button 
+                          onClick={() => setAdults(Math.max(1, adults - 1))}
+                          className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                        >
+                          <span className="text-xl font-light leading-none">−</span>
+                        </button>
+                        <span className="w-4 text-center text-sm font-semibold text-gray-900">{adults}</span>
+                        <button 
+                          onClick={() => setAdults(Math.min(10, adults + 1))}
+                          className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                        >
+                          <span className="text-xl font-light leading-none">+</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Children */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-800">Children</span>
+                      <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                        <button 
+                          onClick={() => setChildren(Math.max(0, children - 1))}
+                          className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                        >
+                          <span className="text-xl font-light leading-none">−</span>
+                        </button>
+                        <span className="w-4 text-center text-sm font-semibold text-gray-900">{children}</span>
+                        <button 
+                          onClick={() => setChildren(Math.min(10, children + 1))}
+                          className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                        >
+                          <span className="text-xl font-light leading-none">+</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Rooms */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-800">Rooms</span>
+                      <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                        <button 
+                          onClick={() => setRoomsCount(Math.max(1, roomsCount - 1))}
+                          className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                        >
+                          <span className="text-xl font-light leading-none">−</span>
+                        </button>
+                        <span className="w-4 text-center text-sm font-semibold text-gray-900">{roomsCount}</span>
+                        <button 
+                          onClick={() => setRoomsCount(Math.min(10, roomsCount + 1))}
+                          className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                        >
+                          <span className="text-xl font-light leading-none">+</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
+            {/* Search Button */}
             <div className="px-2 w-full md:w-auto mt-2 md:mt-0 flex self-stretch py-1">
               <button
                 onClick={handleSearch}
-                className="w-full md:w-auto bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-sm rounded-full px-8 py-4 flex items-center justify-center gap-2 transition-all hover:shadow-lg active:scale-95 group"
+                className="w-full md:w-auto bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-xs rounded-full px-6 py-3 flex items-center justify-center gap-2 transition-all hover:shadow-lg active:scale-95 group"
               >
                 <Search className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
                 <span>SEARCH</span>
@@ -282,7 +387,7 @@ const HeroSection = () => {
                 <div className="absolute -top-[4.5px] left-6 w-2 h-2 bg-[#FFFBEB] border-t border-l border-[#FDE68A] rotate-45"></div>
                 
                 <AlertTriangle className="w-3.5 h-3.5 text-[#D97706] shrink-0 relative z-10" strokeWidth={2.5} />
-                <span className="font-semibold text-[11px] tracking-wide relative z-10">Please select check-in, check-out dates and guest count!</span>
+                <span className="font-semibold text-[11px] tracking-wide relative z-10">{errorMsg}</span>
               </div>
             </div>
           )}
@@ -349,27 +454,82 @@ const HeroSection = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
-                <Users className="w-6 h-6 text-gray-400" />
-                <div className="flex-1">
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Guests</p>
-                  <select
-                    value={guests}
-                    onChange={(e) => setGuests(e.target.value)}
-                    className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer"
-                  >
-                    <option value="" disabled hidden>Select Guests</option>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                      <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>
-                    ))}
-                  </select>
+              {/* Guests & Rooms in Mobile */}
+              <div className="flex flex-col gap-3">
+                {/* Adults */}
+                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm font-semibold text-gray-800">Adults</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => setAdults(Math.max(1, adults - 1))}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 text-gray-500 hover:text-blue-500 active:scale-95 transition-all"
+                    >
+                      <span className="text-xl font-light leading-none">−</span>
+                    </button>
+                    <span className="w-4 text-center text-sm font-bold text-gray-900">{adults}</span>
+                    <button 
+                      onClick={() => setAdults(Math.min(10, adults + 1))}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 text-gray-500 hover:text-blue-500 active:scale-95 transition-all"
+                    >
+                      <span className="text-xl font-light leading-none">+</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Children */}
+                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm font-semibold text-gray-800">Children</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => setChildren(Math.max(0, children - 1))}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 text-gray-500 hover:text-blue-500 active:scale-95 transition-all"
+                    >
+                      <span className="text-xl font-light leading-none">−</span>
+                    </button>
+                    <span className="w-4 text-center text-sm font-bold text-gray-900">{children}</span>
+                    <button 
+                      onClick={() => setChildren(Math.min(10, children + 1))}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 text-gray-500 hover:text-blue-500 active:scale-95 transition-all"
+                    >
+                      <span className="text-xl font-light leading-none">+</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Rooms */}
+                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm font-semibold text-gray-800">Rooms</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => setRoomsCount(Math.max(1, roomsCount - 1))}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 text-gray-500 hover:text-blue-500 active:scale-95 transition-all"
+                    >
+                      <span className="text-xl font-light leading-none">−</span>
+                    </button>
+                    <span className="w-4 text-center text-sm font-bold text-gray-900">{roomsCount}</span>
+                    <button 
+                      onClick={() => setRoomsCount(Math.min(10, roomsCount + 1))}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 text-gray-500 hover:text-blue-500 active:scale-95 transition-all"
+                    >
+                      <span className="text-xl font-light leading-none">+</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {showError && (
                 <div className="flex items-center gap-3 bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] px-4 py-3.5 rounded-2xl shadow-md animate-in fade-in duration-200">
                   <AlertTriangle className="w-5 h-5 text-[#D97706] shrink-0" strokeWidth={2} />
-                  <span className="font-semibold text-xs">Please select check-in, check-out dates and guest count!</span>
+                  <span className="font-semibold text-xs">{errorMsg}</span>
                 </div>
               )}
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, CreditCard, ChevronLeft, ChevronRight, Loader2, BedDouble, Star, X } from 'lucide-react';
+import { Calendar, MapPin, Clock, CreditCard, ChevronLeft, ChevronRight, Loader2, BedDouble, Star, X, Users } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../api';
 
@@ -169,7 +169,7 @@ const MyBookings = () => {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-6 py-4 border-y border-gray-50">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 py-4 border-y border-gray-50">
                           <div>
                             <div className="flex items-center gap-2 text-gray-400 mb-1">
                               <Calendar className="w-3.5 h-3.5" />
@@ -183,6 +183,23 @@ const MyBookings = () => {
                               <span className="text-[10px] font-black uppercase tracking-widest">Check-Out</span>
                             </div>
                             <p className="text-sm font-bold text-gray-800">{new Date(booking.checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 text-gray-400 mb-1">
+                              <Users className="w-3.5 h-3.5" />
+                              <span className="text-[10px] font-black uppercase tracking-widest">Guests</span>
+                            </div>
+                            <p className="text-sm font-bold text-gray-800">
+                              {booking.adults || booking.guests || 1} Adult{ (booking.adults || booking.guests || 1) > 1 ? 's' : '' }
+                              {booking.children ? `, ${booking.children} Child${booking.children > 1 ? 'ren' : ''}` : ''}
+                            </p>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 text-gray-400 mb-1">
+                              <BedDouble className="w-3.5 h-3.5" />
+                              <span className="text-[10px] font-black uppercase tracking-widest">Rooms</span>
+                            </div>
+                            <p className="text-sm font-bold text-gray-800">{booking.roomsCount || 1} Room{(booking.roomsCount || 1) > 1 ? 's' : ''}</p>
                           </div>
                         </div>
 
