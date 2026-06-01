@@ -16,6 +16,7 @@ import priceUnitRoutes from './routes/priceUnit.routes.js';
 import settingRoutes from './routes/setting.routes.js';
 import reviewRoutes from './routes/review.routes.js';
 import messageRoutes from './routes/message.routes.js';
+import addonRoutes from './routes/addon.routes.js';
 
 
 const app = express();
@@ -63,6 +64,7 @@ app.use('/api/price-units', priceUnitRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/addons', addonRoutes);
 
 // Health Check API
 app.get('/api/health', (req, res) => {

@@ -12,7 +12,11 @@ const bookingSchema = new mongoose.Schema({
   paymentId: { type: String }, // Legacy field
   razorpayOrderId: { type: String },
   razorpayPaymentId: { type: String },
-  razorpaySignature: { type: String },
+  addons: [{
+    name: { type: String },
+    price: { type: Number },
+    iconType: { type: String }
+  }],
   specialRequests: { type: String },
 }, { timestamps: true });
 

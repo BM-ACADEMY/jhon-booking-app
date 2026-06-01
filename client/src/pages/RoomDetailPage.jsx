@@ -318,6 +318,50 @@ const RoomDetailPage = () => {
     </div>
   );
 
+  const matchDate = (dbDate, targetDateStr) => {
+    if (!dbDate) return false;
+    let dbDateStr = '';
+    if (typeof dbDate === 'string') {
+      if (dbDate.includes('T')) {
+        const d = new Date(dbDate);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        dbDateStr = `${yyyy}-${mm}-${dd}`;
+      } else {
+        dbDateStr = dbDate.substring(0, 10);
+      }
+    } else if (dbDate instanceof Date) {
+      const yyyy = dbDate.getFullYear();
+      const mm = String(dbDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(dbDate.getDate()).padStart(2, '0');
+      dbDateStr = `${yyyy}-${mm}-${dd}`;
+    } else {
+      const d = new Date(dbDate);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      dbDateStr = `${yyyy}-${mm}-${dd}`;
+    }
+    return dbDateStr === targetDateStr;
+  };
+
+  const getTodayPrice = (roomObj) => {
+    if (!roomObj) return 0;
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    
+    let todayPrice = roomObj.price || 0;
+    if (roomObj.datePrices && Array.isArray(roomObj.datePrices)) {
+      const found = roomObj.datePrices.find(dp => matchDate(dp.date, todayStr));
+      if (found) todayPrice = found.price;
+    }
+    return todayPrice;
+  };
+
   const calculateDynamicStats = () => {
     const stats = {
       communication: 0,
@@ -379,7 +423,7 @@ const RoomDetailPage = () => {
 
     // Empty cells for first day padding
     for (let i = 0; i < firstDay; i++) {
-      dayCells.push(<div key={`pad-${i}`} className="w-10 h-10" />);
+      dayCells.push(<div key={`pad-${i}`} className="w-12 h-12" />);
     }
 
     // Days numbers
@@ -404,8 +448,15 @@ const RoomDetailPage = () => {
       // Check if day is hovered
       const isHovered = hoveredDate === dateStr;
 
+      // Find date price
+      let dayPrice = room.price || 0;
+      if (room.datePrices && Array.isArray(room.datePrices)) {
+        const found = room.datePrices.find(dp => matchDate(dp.date, dateStr));
+        if (found) dayPrice = found.price;
+      }
+
       // Class names for styling
-      let dayBtnClass = "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all relative ";
+      let dayBtnClass = "w-12 h-12 rounded-2xl flex flex-col items-center justify-center text-xs transition-all relative border border-transparent ";
 
       if (isDisabled) {
         dayBtnClass += "text-gray-300 cursor-not-allowed ";
@@ -413,20 +464,20 @@ const RoomDetailPage = () => {
           dayBtnClass += "line-through grayscale ";
         }
       } else if (isCheckIn || isCheckOut) {
-        dayBtnClass += "bg-[#708090] text-white shadow-md z-10 scale-105 ";
+        dayBtnClass += "bg-[#708090] text-white shadow-md z-10 scale-105 border-[#708090] ";
       } else if (inRange) {
-        dayBtnClass += "bg-[#708090]/15 text-gray-900 font-bold ";
+        dayBtnClass += "bg-[#708090]/15 text-gray-900 font-bold border-[#708090]/10 ";
         if (isHovered) {
           dayBtnClass += "bg-[#708090]/30 ";
         }
       } else {
-        dayBtnClass += "text-gray-800 hover:bg-gray-100 hover:scale-105 cursor-pointer ";
+        dayBtnClass += "text-gray-800 hover:bg-gray-100 hover:scale-105 hover:border-gray-200 cursor-pointer ";
       }
 
       dayCells.push(
         <div
           key={`day-${day}`}
-          className="relative w-10 h-10 flex items-center justify-center"
+          className="relative w-12 h-12 flex items-center justify-center"
           onMouseEnter={() => !isDisabled && checkIn && !checkOut && setHoveredDate(dateStr)}
           onMouseLeave={() => setHoveredDate(null)}
           onClick={() => !isDisabled && handleDateClick(thisDate)}
@@ -434,9 +485,14 @@ const RoomDetailPage = () => {
           <button
             type="button"
             disabled={isDisabled}
-            className={dayBtnClass}
+            className={`${dayBtnClass} py-0.5`}
           >
-            {day}
+            <span className="font-bold leading-none">{day}</span>
+            {!isDisabled && (
+              <span className={`text-[8px] font-black mt-0.5 leading-none ${isCheckIn || isCheckOut ? 'text-white/80' : 'text-[#708090]'}`}>
+                ₹{dayPrice}
+              </span>
+            )}
           </button>
         </div>
       );
@@ -512,10 +568,45 @@ const RoomDetailPage = () => {
     );
   };
 
-  const nights = checkIn && checkOut
-    ? Math.max(1, Math.round((parseLocalDate(checkOut) - parseLocalDate(checkIn)) / 86400000))
-    : 0;
-  const total = nights * (room.price || 0);
+  const getBookingPriceBreakdown = (room, checkInStr, checkOutStr) => {
+    if (!room || !checkInStr || !checkOutStr) return { total: 0, average: room?.price || 0, nights: 0, breakdown: [] };
+    const start = parseLocalDate(checkInStr);
+    const end = parseLocalDate(checkOutStr);
+    if (!start || !end || start > end) return { total: 0, average: room?.price || 0, nights: 0, breakdown: [] };
+    
+    let total = 0;
+    const breakdown = [];
+    const curr = new Date(start.getTime());
+    
+    while (curr <= end) {
+      const yyyy = curr.getFullYear();
+      const mm = String(curr.getMonth() + 1).padStart(2, '0');
+      const dd = String(curr.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      
+      let dayPrice = room.price || 0;
+      if (room.datePrices && Array.isArray(room.datePrices)) {
+        const found = room.datePrices.find(dp => matchDate(dp.date, dateStr));
+        if (found) {
+          dayPrice = found.price;
+        }
+      }
+      
+      total += dayPrice;
+      breakdown.push({ dateStr, price: dayPrice });
+      
+      curr.setDate(curr.getDate() + 1);
+    }
+    
+    return {
+      total,
+      average: breakdown.length > 0 ? Math.round(total / breakdown.length) : room.price || 0,
+      nights: breakdown.length,
+      breakdown
+    };
+  };
+
+  const { total, average, nights, breakdown } = getBookingPriceBreakdown(room, checkIn, checkOut);
 
   const handleBooking = async () => {
     if (!user) {
@@ -527,59 +618,22 @@ const RoomDetailPage = () => {
       toast.error('Please select check-in and check-out dates');
       return;
     }
-    if (nights < 0) {
+    if (nights <= 0) {
       toast.error('Invalid date range');
       return;
     }
 
-    try {
-      setBookingLoading(true);
-      const orderRes = await api.post('/bookings/razorpay-order', {
-        amount: total,
-        currency: 'INR',
+    navigate('/checkout/addons', {
+      state: {
         roomId: room._id,
         checkIn,
-        checkOut
-      });
-      const order = orderRes.data;
-
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_HERE',
-        amount: order.amount,
-        currency: order.currency,
-        name: 'Premium Stays',
-        description: `Booking for ${room.name}`,
-        order_id: order.id,
-        handler: async (response) => {
-          try {
-            const verifyRes = await api.post('/bookings/verify-payment', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              bookingData: {
-                room: room._id, checkIn, checkOut, guests, totalAmount: total
-              }
-            });
-            if (verifyRes.data.booking) {
-              toast.success('Booking confirmed!');
-              setShowMobileBooking(false);
-              navigate('/bookings/my');
-            }
-          } catch (err) {
-            toast.error(err.response?.data?.message || 'Payment verification failed');
-          }
-        },
-        prefill: { name: user.name, email: user.email, contact: user.phone || '' },
-        theme: { color: '#FCE83A' }
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to initiate booking');
-    } finally {
-      setBookingLoading(false);
-    }
+        checkOut,
+        guests,
+        total,
+        nights,
+        breakdown
+      }
+    });
   };
 
   const handleShare = async () => {
@@ -719,15 +773,23 @@ const RoomDetailPage = () => {
 
                   {/* Desktop Price View */}
                   <div className="hidden lg:flex flex-col justify-start text-right">
-                    <div className="text-[26px] leading-none font-bold text-gray-900">₹{room.price ? room.price.toLocaleString('en-IN') : '450'}</div>
-                    <div className="text-[13px] text-gray-500 font-medium mt-1">/night</div>
+                    <div className="text-[26px] leading-none font-bold text-gray-900">
+                      ₹{nights > 0 ? average.toLocaleString('en-IN') : getTodayPrice(room).toLocaleString('en-IN')}
+                    </div>
+                    <div className="text-[13px] text-gray-500 font-medium mt-1">
+                      {nights > 0 ? '/night avg' : '/night'}
+                    </div>
                   </div>
                 </div>
 
                 {/* Mobile Price View */}
                 <div className="lg:hidden flex items-end gap-1 mb-6">
-                  <span className="text-[28px] leading-none font-bold text-gray-900">₹{room.price ? room.price.toLocaleString('en-IN') : '450'}</span>
-                  <span className="text-sm text-gray-500 font-medium mb-0.5">/night</span>
+                  <span className="text-[28px] leading-none font-bold text-gray-900">
+                    ₹{nights > 0 ? average.toLocaleString('en-IN') : getTodayPrice(room).toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-sm text-gray-500 font-medium mb-0.5">
+                    {nights > 0 ? '/night avg' : '/night'}
+                  </span>
                 </div>
 
                 {/* Mobile Image Preview Slider */}
@@ -902,8 +964,12 @@ const RoomDetailPage = () => {
             <div className="hidden lg:block lg:col-span-1">
               <div className="sticky top-[160px] bg-white rounded-3xl border border-gray-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-8">
                 <div className="flex items-end gap-2 mb-6">
-                  <span className="text-4xl font-bold text-gray-900">₹{room.price ? room.price.toLocaleString('en-IN') : '450'}</span>
-                  <span className="text-gray-500 font-medium mb-1">/night</span>
+                  <span className="text-4xl font-bold text-gray-900">
+                    ₹{nights > 0 ? average.toLocaleString('en-IN') : getTodayPrice(room).toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-gray-500 font-medium mb-1">
+                    {nights > 0 ? '/night avg' : '/night'}
+                  </span>
                 </div>
 
                 <div className="bg-white border border-gray-300 rounded-2xl overflow-hidden mb-6">
@@ -947,10 +1013,21 @@ const RoomDetailPage = () => {
 
                 {nights > 0 && (
                   <div className="space-y-3 mb-6 text-base text-gray-600">
-                    <div className="flex justify-between">
-                      <span className="underline decoration-gray-300">₹{room.price?.toLocaleString('en-IN')} × {nights} night{nights !== 1 ? 's' : ''}</span>
-                      <span>₹{(room.price * nights).toLocaleString('en-IN')}</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="underline decoration-gray-300">₹{average.toLocaleString('en-IN')} avg. × {nights} night{nights !== 1 ? 's' : ''}</span>
+                      <span>₹{total.toLocaleString('en-IN')}</span>
                     </div>
+                    
+                    {/* Collapsible night breakdown */}
+                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 max-h-32 overflow-y-auto space-y-1.5 scrollbar-thin">
+                      {breakdown.map((item, idx) => (
+                        <div key={idx} className="flex justify-between text-[11px] font-bold text-gray-500 uppercase">
+                          <span>{formatDisplayDate(item.dateStr, 'en-IN', { day: 'numeric', month: 'short' })}</span>
+                          <span>₹{item.price.toLocaleString('en-IN')}</span>
+                        </div>
+                      ))}
+                    </div>
+
                     <hr className="border-gray-200 my-4" />
                     <div className="flex justify-between font-bold text-gray-900 text-lg">
                       <span>Total</span>
@@ -996,7 +1073,10 @@ const RoomDetailPage = () => {
             {/* Header / Handle */}
             <div className="flex justify-between items-center mb-2">
               <div className="flex flex-col">
-                <span className="text-2xl font-bold text-gray-900">₹{room.price?.toLocaleString('en-IN')} <span className="text-sm text-gray-500 font-medium">/night</span></span>
+                <span className="text-2xl font-bold text-gray-900">
+                  ₹{nights > 0 ? average.toLocaleString('en-IN') : getTodayPrice(room).toLocaleString('en-IN')}{' '}
+                  <span className="text-sm text-gray-500 font-medium">{nights > 0 ? '/night avg' : '/night'}</span>
+                </span>
               </div>
               <button onClick={() => setShowMobileBooking(false)} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 active:scale-95">
                 <X className="w-5 h-5" />
@@ -1060,9 +1140,26 @@ const RoomDetailPage = () => {
 
             {/* Total Mobile Summary */}
             {nights > 0 && (
-              <div className="flex justify-between items-center py-2 text-gray-900 font-bold text-lg border-t border-gray-100 pt-4">
-                <span>Total</span>
-                <span>₹{(total + 50).toLocaleString('en-IN')}</span>
+              <div className="space-y-2 border-t border-gray-100 pt-4">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span className="underline">₹{average.toLocaleString('en-IN')} × {nights} night{nights !== 1 ? 's' : ''}</span>
+                  <span>₹{total.toLocaleString('en-IN')}</span>
+                </div>
+                
+                {/* Night-by-night list */}
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 max-h-24 overflow-y-auto space-y-1.5 scrollbar-thin">
+                  {breakdown.map((item, idx) => (
+                    <div key={idx} className="flex justify-between text-[10px] font-bold text-gray-500 uppercase">
+                      <span>{formatDisplayDate(item.dateStr, 'en-IN', { day: 'numeric', month: 'short' })}</span>
+                      <span>₹{item.price.toLocaleString('en-IN')}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-between items-center pt-2 text-gray-900 font-bold text-lg border-t border-gray-100">
+                  <span>Total</span>
+                  <span>₹{total.toLocaleString('en-IN')}</span>
+                </div>
               </div>
             )}
 
@@ -1179,6 +1276,13 @@ const RoomDetailPage = () => {
                     : 'Add your travel dates for exact pricing'
                   }
                 </p>
+                {nights > 0 && (
+                  <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-black uppercase rounded-lg border border-emerald-200">
+                    <span>₹{total.toLocaleString('en-IN')} total</span>
+                    <span className="text-emerald-400">•</span>
+                    <span>₹{average.toLocaleString('en-IN')}/night avg</span>
+                  </div>
+                )}
               </div>
 
               {/* Top Inputs: CHECK-IN & CHECKOUT */}

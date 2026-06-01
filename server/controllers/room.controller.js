@@ -8,7 +8,7 @@ export const getRooms = async (req, res) => {
     const filter = { status: 'published' };
     if (category) filter.category = category;
     if (available) filter.isAvailable = available === 'true';
-    const rooms = await Room.find(filter).sort({ createdAt: -1 });
+    const rooms = await Room.find(filter).populate('addons').sort({ createdAt: -1 });
     res.json(rooms);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -22,7 +22,7 @@ export const getAllRoomsAdmin = async (req, res) => {
     const filter = {};
     if (category) filter.category = category;
     if (available) filter.isAvailable = available === 'true';
-    const rooms = await Room.find(filter).sort({ createdAt: -1 });
+    const rooms = await Room.find(filter).populate('addons').sort({ createdAt: -1 });
     res.json(rooms);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -34,7 +34,7 @@ export const getRoomById = async (req, res) => {
     let room;
     // Check if the id is a valid Mongo ObjectId
     if (mongoose.isValidObjectId(req.params.id)) {
-      room = await Room.findById(req.params.id);
+      room = await Room.findById(req.params.id).populate('addons');
     }
     
     // If not found by ID, query by name-slug
@@ -46,7 +46,7 @@ export const getRoomById = async (req, res) => {
         '\\W*$', 
         'i'
       );
-      room = await Room.findOne({ name: { $regex: slugRegex } });
+      room = await Room.findOne({ name: { $regex: slugRegex } }).populate('addons');
     }
     
     if (!room) return res.status(404).json({ message: 'Room not found' });
@@ -59,7 +59,7 @@ export const getRoomById = async (req, res) => {
 // Admin: get the most recent draft (for resuming)
 export const getLatestDraft = async (req, res) => {
   try {
-    const draft = await Room.findOne({ status: 'draft' }).sort({ updatedAt: -1 });
+    const draft = await Room.findOne({ status: 'draft' }).populate('addons').sort({ updatedAt: -1 });
     if (!draft) return res.status(404).json({ message: 'No draft found' });
     res.json(draft);
   } catch (err) {
@@ -76,7 +76,7 @@ const parseRoomData = (roomData, req) => {
   });
 
   // Parse JSON fields
-  ['amenities', 'highlights'].forEach(field => {
+  ['amenities', 'highlights', 'datePrices', 'addons'].forEach(field => {
     if (typeof roomData[field] === 'string') {
       try { roomData[field] = JSON.parse(roomData[field]); }
       catch (e) { console.error(`Error parsing ${field}`, e); }

@@ -33,6 +33,51 @@ const RoomsSection = () => {
 
   const SERVER_URL = import.meta.env.VITE_BASE_URL;
 
+  const getTodayPrice = (roomObj) => {
+    if (!roomObj) return 0;
+    
+    const matchDate = (dbDate, targetDateStr) => {
+      if (!dbDate) return false;
+      let dbDateStr = '';
+      if (typeof dbDate === 'string') {
+        if (dbDate.includes('T')) {
+          const d = new Date(dbDate);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          dbDateStr = `${yyyy}-${mm}-${dd}`;
+        } else {
+          dbDateStr = dbDate.substring(0, 10);
+        }
+      } else if (dbDate instanceof Date) {
+        const yyyy = dbDate.getFullYear();
+        const mm = String(dbDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(dbDate.getDate()).padStart(2, '0');
+        dbDateStr = `${yyyy}-${mm}-${dd}`;
+      } else {
+        const d = new Date(dbDate);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        dbDateStr = `${yyyy}-${mm}-${dd}`;
+      }
+      return dbDateStr === targetDateStr;
+    };
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    
+    let todayPrice = roomObj.price || 0;
+    if (roomObj.datePrices && Array.isArray(roomObj.datePrices)) {
+      const found = roomObj.datePrices.find(dp => matchDate(dp.date, todayStr));
+      if (found) todayPrice = found.price;
+    }
+    return todayPrice;
+  };
+
   // Group rooms by category; also collect rooms with no matching category under their own label
   const grouped = categories.reduce((acc, cat) => {
     const catRooms = rooms.filter(r => r.category === cat);
@@ -81,7 +126,7 @@ const RoomsSection = () => {
 
           {/* Premium Price Tag Badge on Bottom-Right */}
           <div className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full tracking-wide flex items-center gap-1.5 shadow-sm">
-            <span className="font-bold mr-1">₹{room.price?.toLocaleString('en-IN')}</span>
+            <span className="font-bold mr-1">₹{getTodayPrice(room).toLocaleString('en-IN')}</span>
             <span className="text-[9px] font-medium text-white/80">/ {room.priceUnit || 'night'}</span>
           </div>
         </div>

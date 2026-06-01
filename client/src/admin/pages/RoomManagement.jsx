@@ -3,7 +3,7 @@ import {
   Plus, Search, Edit2, Trash2, BedDouble, Star, ChevronLeft, ChevronRight,
   Loader2, Folder, Tag, X, MapPin, Users, Home, Info, Image as ImageIcon,
   Calendar, Check, Shield, Wifi, Car, Utensils, Coffee, Tv, Wind, Waves,
-  Sparkles, Key, Zap, Heart
+  Sparkles, Key, Zap, Heart, Layers
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
@@ -34,7 +34,9 @@ const DEFAULT_ROOM_FORM = {
   amenities: [], // [{ name, icon }]
   highlights: [], // [{ icon, text, subtext }]
   images: [], // [{ url, label }]
-  isAvailable: true
+  isAvailable: true,
+  datePrices: [],
+  addons: []
 };
 
 const ICON_LIST = [
@@ -72,6 +74,7 @@ const RoomManagement = () => {
   const [rooms, setRooms] = useState([]);
   const [categories, setCategories] = useState([]);
   const [priceUnits, setPriceUnits] = useState([]);
+  const [globalAddons, setGlobalAddons] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [loadingCats, setLoadingCats] = useState(true);
 
@@ -99,20 +102,25 @@ const RoomManagement = () => {
   const [submittingCat, setSubmittingCat] = useState(false);
   const [deleteCatTarget, setDeleteCatTarget] = useState(null);
   const [activeTab, setActiveTab] = useState('general'); // general, specs, features, location, photos
+  const [pricingMonth, setPricingMonth] = useState(new Date());
+  const [selectedPricingDate, setSelectedPricingDate] = useState(null);
+  const [customPriceInput, setCustomPriceInput] = useState('');
   const [activeMainTab, setActiveMainTab] = useState('rooms'); // rooms, settings
 
   const fetchData = async () => {
     try {
       setLoadingRooms(true);
       setLoadingCats(true);
-      const [roomsRes, catsRes, unitsRes] = await Promise.all([
+      const [roomsRes, catsRes, unitsRes, addonsRes] = await Promise.all([
         api.get('/rooms/admin/all'),
         api.get('/categories'),
-        api.get('/price-units')
+        api.get('/price-units'),
+        api.get('/addons')
       ]);
       setRooms(roomsRes.data);
       setCategories(catsRes.data);
       setPriceUnits(unitsRes.data);
+      setGlobalAddons(addonsRes.data);
     } catch (err) {
       toast.error('Failed to load data');
     } finally {
@@ -263,17 +271,23 @@ const RoomManagement = () => {
       highlights: draft.highlights || [],
       images: draft.images || [],
       isAvailable: draft.isAvailable ?? true,
+      datePrices: draft.datePrices || [],
+      addons: draft.addons ? draft.addons.filter(Boolean).map(addon => typeof addon === 'object' ? (addon._id || addon) : addon) : []
     });
     setRoomImages([]);
     setActiveTab('general');
+    setSelectedPricingDate(null);
+    setCustomPriceInput('');
     setShowRoomModal(true);
   };
 
   const discardDraftAndCreate = () => {
     setDraftPrompt(null);
     setDraftId(null);
-    setRoomForm({ ...DEFAULT_ROOM_FORM, category: categories[0]?.name || '' });
+    setRoomForm({ ...DEFAULT_ROOM_FORM, category: categories[0]?.name || '', addons: [] });
     setActiveTab('general');
+    setSelectedPricingDate(null);
+    setCustomPriceInput('');
     setShowRoomModal(true);
   };
 
@@ -300,20 +314,24 @@ const RoomManagement = () => {
       amenities: r.amenities || [],
       highlights: r.highlights || [],
       images: r.images || [],
-      isAvailable: r.isAvailable
+      isAvailable: r.isAvailable,
+      datePrices: r.datePrices || [],
+      addons: r.addons ? r.addons.filter(Boolean).map(addon => typeof addon === 'object' ? (addon._id || addon) : addon) : []
     });
     setRoomImages([]);
     setActiveTab('general');
+    setSelectedPricingDate(null);
+    setCustomPriceInput('');
     setShowRoomModal(true);
   };
 
   const buildFormData = (status) => {
     const formData = new FormData();
     Object.keys(roomForm).forEach(key => {
-      if (['amenities', 'highlights'].includes(key)) {
-        formData.append(key, JSON.stringify(roomForm[key]));
+      if (['amenities', 'highlights', 'datePrices', 'addons'].includes(key)) {
+        formData.append(key, JSON.stringify(roomForm[key] || []));
       } else if (key === 'images') {
-        formData.append('existingImages', JSON.stringify(roomForm[key]));
+        formData.append('existingImages', JSON.stringify(roomForm[key] || []));
       } else {
         formData.append(key, roomForm[key]);
       }
@@ -323,6 +341,145 @@ const RoomManagement = () => {
     formData.append('newImageLabels', JSON.stringify(newLabels));
     roomImages.forEach(img => formData.append('images', img.file));
     return formData;
+  };
+
+  const matchDate = (dbDate, targetDateStr) => {
+    if (!dbDate) return false;
+    let dbDateStr = '';
+    if (typeof dbDate === 'string') {
+      if (dbDate.includes('T')) {
+        const d = new Date(dbDate);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        dbDateStr = `${yyyy}-${mm}-${dd}`;
+      } else {
+        dbDateStr = dbDate.substring(0, 10);
+      }
+    } else if (dbDate instanceof Date) {
+      const yyyy = dbDate.getFullYear();
+      const mm = String(dbDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(dbDate.getDate()).padStart(2, '0');
+      dbDateStr = `${yyyy}-${mm}-${dd}`;
+    } else {
+      const d = new Date(dbDate);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      dbDateStr = `${yyyy}-${mm}-${dd}`;
+    }
+    return dbDateStr === targetDateStr;
+  };
+
+  const getDatePrice = (dateStr) => {
+    const found = roomForm.datePrices?.find(dp => matchDate(dp.date, dateStr));
+    return found ? found.price : roomForm.price || 0;
+  };
+
+  const handleSelectPricingDay = (dateStr) => {
+    setSelectedPricingDate(dateStr);
+    const found = roomForm.datePrices?.find(dp => matchDate(dp.date, dateStr));
+    setCustomPriceInput(found ? found.price.toString() : (roomForm.price || ''));
+  };
+
+  const handleSaveCustomPrice = () => {
+    if (!selectedPricingDate) return;
+    if (customPriceInput === '' || isNaN(Number(customPriceInput))) {
+      toast.error('Please enter a valid price');
+      return;
+    }
+    const priceNum = Number(customPriceInput);
+    const existing = [...(roomForm.datePrices || [])];
+    const idx = existing.findIndex(dp => matchDate(dp.date, selectedPricingDate));
+    if (idx >= 0) {
+      existing[idx].price = priceNum;
+    } else {
+      existing.push({ date: selectedPricingDate, price: priceNum });
+    }
+    setRoomForm(p => ({ ...p, datePrices: existing }));
+    toast.success(`Price set to ₹${priceNum} for ${selectedPricingDate}`);
+  };
+
+  const handleResetCustomPrice = () => {
+    if (!selectedPricingDate) return;
+    const existing = [...(roomForm.datePrices || [])];
+    const filtered = existing.filter(dp => !matchDate(dp.date, selectedPricingDate));
+    setRoomForm(p => ({ ...p, datePrices: filtered }));
+    setCustomPriceInput(roomForm.price || '');
+    toast.success(`Reset to base price for ${selectedPricingDate}`);
+  };
+
+  const renderPricingCalendar = () => {
+    const year = pricingMonth.getFullYear();
+    const month = pricingMonth.getMonth();
+    const monthName = pricingMonth.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    
+    const firstDay = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    const dayCells = [];
+    for (let i = 0; i < firstDay; i++) {
+      dayCells.push(<div key={`pad-${i}`} className="w-12 h-12" />);
+    }
+    
+    for (let day = 1; day <= totalDays; day++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isSelected = selectedPricingDate === dateStr;
+      
+      const hasCustomPrice = roomForm.datePrices?.some(dp => matchDate(dp.date, dateStr));
+      const dayPrice = getDatePrice(dateStr);
+      
+      dayCells.push(
+        <button
+          key={`day-${day}`}
+          type="button"
+          onClick={() => handleSelectPricingDay(dateStr)}
+          className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center transition-all p-1 relative border ${
+            isSelected 
+              ? 'bg-primary-600 text-white border-primary-600 shadow-md shadow-primary-500/20 scale-105' 
+              : hasCustomPrice 
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
+                : 'bg-gray-50 text-gray-800 border-gray-100 hover:bg-gray-100 hover:scale-105'
+          }`}
+        >
+          <span className="text-[11px] font-bold leading-none">{day}</span>
+          <span className={`text-[8px] font-black mt-1 leading-none ${isSelected ? 'text-white/90' : hasCustomPrice ? 'text-emerald-600' : 'text-gray-500'}`}>
+            ₹{dayPrice}
+          </span>
+        </button>
+      );
+    }
+    
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-4 max-w-sm mx-auto">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setPricingMonth(new Date(year, month - 1, 1))}
+            className="cursor-pointer p-1.5 hover:bg-gray-50 border border-gray-100 rounded-lg text-gray-600"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="font-black text-gray-900 text-sm">{monthName}</span>
+          <button
+            type="button"
+            onClick={() => setPricingMonth(new Date(year, month + 1, 1))}
+            className="cursor-pointer p-1.5 hover:bg-gray-50 border border-gray-100 rounded-lg text-gray-600"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-7 text-center font-bold text-[10px] text-gray-400 gap-1">
+          {weekdays.map(d => <div key={d}>{d}</div>)}
+        </div>
+        
+        <div className="grid grid-cols-7 gap-1.5 text-center">
+          {dayCells}
+        </div>
+      </div>
+    );
   };
 
   const handleSaveDraft = async () => {
@@ -603,8 +760,8 @@ const cat = categories.find(c => c.name === catName);
                     <div>
                       <span className="text-xs text-gray-400 font-medium">Starting from</span>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-xl font-black text-gray-900">${room.price}</span>
-                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">/night</span>
+                        <span className="text-xl font-black text-gray-900">₹{room.price}</span>
+                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">/ {room.priceUnit || 'night'}</span>
                       </div>
                     </div>
                     <div className="text-right">
@@ -737,6 +894,8 @@ const cat = categories.find(c => c.name === catName);
                 { id: 'features', label: 'Features', icon: Sparkles },
                 { id: 'location', label: 'Location', icon: MapPin },
                 { id: 'photos', label: 'Photos', icon: ImageIcon },
+                { id: 'pricing', label: 'Calendar Pricing', icon: Calendar },
+                { id: 'addons', label: 'Add-ons', icon: Layers },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -768,36 +927,9 @@ const cat = categories.find(c => c.name === catName);
                     </select>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Price (₹) *</label>
-                      <input type="number" value={roomForm.price} onChange={(e) => setRoomForm(p => ({ ...p, price: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-gray-50 focus:bg-white" placeholder="e.g. 200" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Size (optional)</label>
-                      <input type="text" value={roomForm.size} onChange={(e)=> setRoomForm(p=>({ ...p, size: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-gray-50 focus:bg-white" placeholder="e.g. 35 m²" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Price Unit</label>
-                      {!showPriceUnitInput ? (
-                        <select value={roomForm.priceUnit} onChange={(e) => {
-                          if (e.target.value === 'ADD_NEW') setShowPriceUnitInput(true);
-                          else setRoomForm(p => ({ ...p, priceUnit: e.target.value }));
-                        }} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-gray-50 focus:bg-white cursor-pointer">
-                          {priceUnits.map(u => <option key={u._id} value={u.name}>{u.label}</option>)}
-                          <option value="ADD_NEW">+ Add New Unit...</option>
-                        </select>
-                      ) : (
-                        <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-right-2">
-                           <div className="flex gap-2">
-                              <input type="text" value={newPriceUnit.label} onChange={(e) => setNewPriceUnit(p => ({ ...p, label: e.target.value, name: e.target.value.toLowerCase().replace(/\s+/g, '-') }))} className="flex-1 border border-primary-300 rounded-xl px-4 py-2 text-xs outline-none" placeholder="Label (e.g. Per Week)" />
-                              <button onClick={handleAddPriceUnit} className="bg-primary-600 text-white p-2 rounded-lg hover:bg-primary-700"><Check className="w-4 h-4"/></button>
-                              <button onClick={() => setShowPriceUnitInput(false)} className="bg-gray-100 text-gray-500 p-2 rounded-lg hover:bg-gray-200"><X className="w-4 h-4"/></button>
-                           </div>
-                           <p className="text-[9px] text-gray-400 font-bold px-1 italic">Identifier: {newPriceUnit.name}</p>
-                        </div>
-                      )}
-                    </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Size (optional)</label>
+                    <input type="text" value={roomForm.size} onChange={(e)=> setRoomForm(p=>({ ...p, size: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-gray-50 focus:bg-white" placeholder="e.g. 35 m²" />
                   </div>
 
                   <div>
@@ -1089,6 +1221,177 @@ const cat = categories.find(c => c.name === catName);
                   <p className="text-[10px] text-gray-400 font-bold text-center uppercase tracking-widest">Assign labels like "Master Bedroom" or "Dining Area" to help guests orient themselves.</p>
                 </div>
               )}
+
+              {/* Calendar Pricing Tab */}
+              {activeTab === 'pricing' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="space-y-6">
+                    {/* General Base Pricing Section */}
+                    <div className="bg-gray-50/50 p-5 rounded-2xl border border-gray-100/80 space-y-4">
+                      <h4 className="text-gray-900 text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-primary-500" /> Base Pricing Setup
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Base Price (₹) *</label>
+                          <input 
+                            type="number" 
+                            value={roomForm.price} 
+                            onChange={(e) => setRoomForm(p => ({ ...p, price: e.target.value }))} 
+                            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-white" 
+                            placeholder="e.g. 500" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Price Unit</label>
+                          {!showPriceUnitInput ? (
+                            <select 
+                              value={roomForm.priceUnit} 
+                              onChange={(e) => {
+                                if (e.target.value === 'ADD_NEW') setShowPriceUnitInput(true);
+                                else setRoomForm(p => ({ ...p, priceUnit: e.target.value }));
+                              }} 
+                              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-white cursor-pointer"
+                            >
+                              {priceUnits.map(u => <option key={u._id} value={u.name}>{u.label}</option>)}
+                              <option value="ADD_NEW">+ Add New Unit...</option>
+                            </select>
+                          ) : (
+                            <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-right-2">
+                               <div className="flex gap-2">
+                                  <input 
+                                    type="text" 
+                                    value={newPriceUnit.label} 
+                                    onChange={(e) => setNewPriceUnit(p => ({ ...p, label: e.target.value, name: e.target.value.toLowerCase().replace(/\s+/g, '-') }))} 
+                                    className="flex-1 border border-primary-300 rounded-xl px-4 py-2 text-xs outline-none bg-white" 
+                                    placeholder="Label (e.g. Per Week)" 
+                                  />
+                                  <button onClick={handleAddPriceUnit} className="bg-primary-600 text-white p-2 rounded-lg hover:bg-primary-700"><Check className="w-4 h-4"/></button>
+                                  <button onClick={() => setShowPriceUnitInput(false)} className="bg-gray-100 text-gray-500 p-2 rounded-lg hover:bg-gray-200"><X className="w-4 h-4"/></button>
+                               </div>
+                               <p className="text-[9px] text-gray-400 font-bold px-1 italic">Identifier: {newPriceUnit.name}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-gray-900 text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-primary-500" /> Dynamic Daily Pricing
+                      </h4>
+                      <p className="text-[11px] text-gray-500 font-bold leading-normal uppercase">
+                        Select a date on the calendar to set a custom price for that day. Dates with custom prices will be highlighted in green. If no custom price is set, the room's base price (₹{roomForm.price || 0}) will apply.
+                      </p>
+                    
+                    {selectedPricingDate ? (
+                      <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black text-gray-700 uppercase">Selected Date</span>
+                          <span className="text-sm font-bold text-gray-900 bg-white border border-gray-100 px-3 py-1 rounded-lg shadow-sm">{selectedPricingDate}</span>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Price for this day (₹)</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="number"
+                              value={customPriceInput}
+                              onChange={(e) => setCustomPriceInput(e.target.value)}
+                              className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-white"
+                              placeholder={`e.g. ${roomForm.price || '500'}`}
+                            />
+                            <button
+                              type="button"
+                              onClick={handleSaveCustomPrice}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-md active:scale-95"
+                            >
+                              Set Price
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="pt-2 border-t border-gray-200 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={handleResetCustomPrice}
+                            className="text-[10px] font-black uppercase text-red-500 hover:text-red-700 underline"
+                          >
+                            Reset to Base Price
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-center py-12 text-gray-400">
+                        <Calendar className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                        <p className="text-xs font-bold">Select a date on the calendar to configure pricing</p>
+                      </div>
+                    )}
+                  </div>
+                  </div>
+                  
+                  <div>
+                    {renderPricingCalendar()}
+                  </div>
+                </div>
+              )}
+
+              {/* Add-ons Tab */}
+              {activeTab === 'addons' && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div>
+                    <h3 className="font-bold text-gray-800 text-lg mb-1">Select Available Add-on Services</h3>
+                    <p className="text-xs text-gray-500 mb-4">Choose which add-ons can be selected by guests when booking this room.</p>
+                    
+                    {globalAddons.length === 0 ? (
+                      <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                        <Layers className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                        <p className="text-sm font-medium text-gray-500">No global add-on services found.</p>
+                        <p className="text-xs text-gray-400 mt-1">Please create add-on services under Add-ons Management first.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {globalAddons.map(addon => {
+                          const isChecked = roomForm.addons?.includes(addon._id);
+                          return (
+                            <label
+                              key={addon._id}
+                              className={`flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer ${
+                                isChecked
+                                  ? 'border-primary-500 bg-primary-50/20'
+                                  : 'border-gray-200 bg-white hover:border-gray-300'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked || false}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setRoomForm(p => ({
+                                      ...p,
+                                      addons: [...(p.addons || []), addon._id]
+                                    }));
+                                  } else {
+                                    setRoomForm(p => ({
+                                      ...p,
+                                      addons: (p.addons || []).filter(id => id !== addon._id)
+                                    }));
+                                  }
+                                }}
+                                className="w-4 h-4 text-primary-500 focus:ring-primary-500 border-gray-300 rounded cursor-pointer"
+                              />
+                              <div className="flex-1">
+                                <p className="font-bold text-sm text-gray-800">{addon.name}</p>
+                                <p className="text-xs text-gray-500 mt-0.5">₹{addon.price.toLocaleString('en-IN')}</p>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-100">
@@ -1343,9 +1646,9 @@ const cat = categories.find(c => c.name === catName);
                   <div className="bg-gray-900 rounded-3xl p-6 text-white shadow-xl shadow-gray-900/20">
                     <p className="text-[10px] font-black text-primary-400 uppercase tracking-widest mb-1">Live Pricing</p>
                     <div className="flex items-baseline gap-2">
-                      <h3 className="text-3xl font-black">${viewRoomTarget.price}</h3>
+                      <h3 className="text-3xl font-black">₹{viewRoomTarget.price}</h3>
                       {viewRoomTarget.originalPrice && (
-                        <span className="text-gray-500 text-sm line-through">${viewRoomTarget.originalPrice}</span>
+                        <span className="text-gray-500 text-sm line-through">₹{viewRoomTarget.originalPrice}</span>
                       )}
                     </div>
                     <p className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">per {viewRoomTarget.priceUnit || 'night'}</p>

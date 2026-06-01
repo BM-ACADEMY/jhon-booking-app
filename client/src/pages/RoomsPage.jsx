@@ -243,14 +243,147 @@ const RoomsPage = () => {
     if (queryCheckIn && queryCheckOut) {
       const start = parseLocalDate(queryCheckIn);
       const end = parseLocalDate(queryCheckOut);
-      const diff = end - start;
-      if (diff > 0) {
-        return Math.round(diff / (1000 * 60 * 60 * 24));
+      if (start && end && start <= end) {
+        const diff = end - start;
+        return Math.round(diff / (1000 * 60 * 60 * 24)) + 1;
       }
     }
     return 0;
   };
   const totalNights = calculateNights();
+
+  const getRoomPriceForDates = (roomObj, checkInStr, checkOutStr) => {
+    if (!roomObj) return 0;
+    
+    const matchDate = (dbDate, targetDateStr) => {
+      if (!dbDate) return false;
+      let dbDateStr = '';
+      if (typeof dbDate === 'string') {
+        if (dbDate.includes('T')) {
+          const d = new Date(dbDate);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          dbDateStr = `${yyyy}-${mm}-${dd}`;
+        } else {
+          dbDateStr = dbDate.substring(0, 10);
+        }
+      } else if (dbDate instanceof Date) {
+        const yyyy = dbDate.getFullYear();
+        const mm = String(dbDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(dbDate.getDate()).padStart(2, '0');
+        dbDateStr = `${yyyy}-${mm}-${dd}`;
+      } else {
+        const d = new Date(dbDate);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        dbDateStr = `${yyyy}-${mm}-${dd}`;
+      }
+      return dbDateStr === targetDateStr;
+    };
+
+    if (checkInStr && checkOutStr) {
+      const start = parseLocalDate(checkInStr);
+      const end = parseLocalDate(checkOutStr);
+      if (start && end && start <= end) {
+        let total = 0;
+        let nightsCount = 0;
+        const curr = new Date(start.getTime());
+        while (curr <= end) {
+          const yyyy = curr.getFullYear();
+          const mm = String(curr.getMonth() + 1).padStart(2, '0');
+          const dd = String(curr.getDate()).padStart(2, '0');
+          const dateStr = `${yyyy}-${mm}-${dd}`;
+          
+          let dayPrice = roomObj.price || 0;
+          if (roomObj.datePrices && Array.isArray(roomObj.datePrices)) {
+            const found = roomObj.datePrices.find(dp => matchDate(dp.date, dateStr));
+            if (found) dayPrice = found.price;
+          }
+          total += dayPrice;
+          nightsCount++;
+          curr.setDate(curr.getDate() + 1);
+        }
+        return nightsCount > 0 ? Math.round(total / nightsCount) : roomObj.price || 0;
+      }
+    }
+
+    if (checkInStr) {
+      let dayPrice = roomObj.price || 0;
+      if (roomObj.datePrices && Array.isArray(roomObj.datePrices)) {
+        const found = roomObj.datePrices.find(dp => matchDate(dp.date, checkInStr));
+        if (found) dayPrice = found.price;
+      }
+      return dayPrice;
+    }
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    
+    let todayPrice = roomObj.price || 0;
+    if (roomObj.datePrices && Array.isArray(roomObj.datePrices)) {
+      const found = roomObj.datePrices.find(dp => matchDate(dp.date, todayStr));
+      if (found) todayPrice = found.price;
+    }
+    return todayPrice;
+  };
+
+  const getRoomTotalForDates = (roomObj, checkInStr, checkOutStr) => {
+    if (!roomObj || !checkInStr || !checkOutStr) return 0;
+    const start = parseLocalDate(checkInStr);
+    const end = parseLocalDate(checkOutStr);
+    if (!start || !end || start > end) return 0;
+    
+    const matchDate = (dbDate, targetDateStr) => {
+      if (!dbDate) return false;
+      let dbDateStr = '';
+      if (typeof dbDate === 'string') {
+        if (dbDate.includes('T')) {
+          const d = new Date(dbDate);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          dbDateStr = `${yyyy}-${mm}-${dd}`;
+        } else {
+          dbDateStr = dbDate.substring(0, 10);
+        }
+      } else if (dbDate instanceof Date) {
+        const yyyy = dbDate.getFullYear();
+        const mm = String(dbDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(dbDate.getDate()).padStart(2, '0');
+        dbDateStr = `${yyyy}-${mm}-${dd}`;
+      } else {
+        const d = new Date(dbDate);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        dbDateStr = `${yyyy}-${mm}-${dd}`;
+      }
+      return dbDateStr === targetDateStr;
+    };
+
+    let total = 0;
+    const curr = new Date(start.getTime());
+    while (curr <= end) {
+      const yyyy = curr.getFullYear();
+      const mm = String(curr.getMonth() + 1).padStart(2, '0');
+      const dd = String(curr.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      
+      let dayPrice = roomObj.price || 0;
+      if (roomObj.datePrices && Array.isArray(roomObj.datePrices)) {
+        const found = roomObj.datePrices.find(dp => matchDate(dp.date, dateStr));
+        if (found) dayPrice = found.price;
+      }
+      total += dayPrice;
+      curr.setDate(curr.getDate() + 1);
+    }
+    return total;
+  };
 
   // Advanced Local Filtering
   const filteredRooms = rooms.filter(room => {
@@ -738,7 +871,7 @@ const RoomsPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {paginatedRooms.map(room => {
                     const isWishlisted = wishlist.includes(room._id);
-                    const roomTotal = totalNights > 0 ? room.price * totalNights : 0;
+                    const roomTotal = getRoomTotalForDates(room, queryCheckIn, queryCheckOut);
 
                     // Create search-preserving state/query for Room Detail redirection
                     const detailLink = `/rooms/${getRoomSlug(room.name)}?checkIn=${queryCheckIn}&checkOut=${queryCheckOut}&guests=${queryGuests}`;
@@ -767,8 +900,8 @@ const RoomsPage = () => {
 
                           {/* Premium Price Tag Badge Floating Bottom-Right */}
                           <div className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full tracking-wide flex items-center gap-1.5 shadow-sm">
-                            <span className="font-bold mr-1">₹{room.price?.toLocaleString('en-IN')}</span>
-                            <span className="text-[9px] font-medium text-white/80">/ {room.priceUnit || 'night'}</span>
+                            <span className="font-bold mr-1">₹{getRoomPriceForDates(room, queryCheckIn, queryCheckOut).toLocaleString('en-IN')}</span>
+                            <span className="text-[9px] font-medium text-white/80">/ {totalNights > 0 ? 'night avg' : (room.priceUnit || 'night')}</span>
                           </div>
                         </div>
 

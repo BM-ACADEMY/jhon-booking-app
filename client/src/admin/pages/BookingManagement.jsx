@@ -29,6 +29,18 @@ const statusConfig = {
   cancelled: { label: 'Cancelled', class: 'bg-red-100 text-red-700 border border-red-200' },
 };
 
+// Auto-complete: if confirmed and checkout date has passed → treat as completed
+const getEffectiveStatus = (booking) => {
+  if (booking.status === 'confirmed' && booking.checkOut) {
+    const checkOut = new Date(booking.checkOut);
+    checkOut.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (checkOut < today) return 'completed';
+  }
+  return booking.status;
+};
+
 const paymentConfig = {
   paid: 'bg-green-100 text-green-700 border border-green-200',
   unpaid: 'bg-orange-100 text-orange-700 border border-orange-200',
@@ -90,7 +102,7 @@ const BookingManagement = () => {
     }
   };
 
-  const statuses = ['All', 'pending', 'confirmed', 'completed'];
+  const statuses = ['All', 'pending', 'confirmed', 'completed', 'cancelled'];
 
   // Filtering Logic with safe fallbacks
   const filtered = bookings.filter((b) => {
@@ -109,16 +121,17 @@ const BookingManagement = () => {
       mongoId.toLowerCase().includes(search.toLowerCase()) ||
       razorpayPayId.toLowerCase().includes(search.toLowerCase());
 
-    const matchStatus = statusFilter === 'All' || b.status === statusFilter;
+    const effectiveStatus = getEffectiveStatus(b);
+    const matchStatus = statusFilter === 'All' || effectiveStatus === statusFilter;
     return matchSearch && matchStatus;
   });
 
-  // Stats Calculations from full bookings list
-  const totalRevenue = bookings.reduce((sum, b) => b.status !== 'cancelled' ? sum + b.totalAmount : sum, 0);
+  // Stats Calculations from full bookings list (uses effective status for accuracy)
+  const totalRevenue = bookings.reduce((sum, b) => getEffectiveStatus(b) !== 'cancelled' ? sum + b.totalAmount : sum, 0);
   const totalBookingsCount = bookings.length;
-  const confirmedCount = bookings.filter(b => b.status === 'confirmed').length;
-  const pendingCount = bookings.filter(b => b.status === 'pending').length;
-  const completedCount = bookings.filter(b => b.status === 'completed').length;
+  const confirmedCount = bookings.filter(b => getEffectiveStatus(b) === 'confirmed').length;
+  const pendingCount = bookings.filter(b => getEffectiveStatus(b) === 'pending').length;
+  const completedCount = bookings.filter(b => getEffectiveStatus(b) === 'completed').length;
 
   // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -331,8 +344,8 @@ const BookingManagement = () => {
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${statusConfig[b.status || 'pending'].class}`}>
-                        {statusConfig[b.status || 'pending'].label}
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${statusConfig[getEffectiveStatus(b) || 'pending'].class}`}>
+                        {statusConfig[getEffectiveStatus(b) || 'pending'].label}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
@@ -363,16 +376,6 @@ const BookingManagement = () => {
                               <XCircle className="w-4.5 h-4.5" />
                             </button>
                           </>
-                        )}
-                        {b.status === 'confirmed' && (
-                          <button
-                            disabled={actionLoading}
-                            onClick={() => handleUpdateStatus(b._id, 'completed')}
-                            className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors disabled:opacity-40 cursor-pointer"
-                            title="Complete Booking"
-                          >
-                            <CheckCircle className="w-4.5 h-4.5" />
-                          </button>
                         )}
                       </div>
                     </td>
@@ -610,8 +613,8 @@ const BookingManagement = () => {
             <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
               <div>
                 <span className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">Current Booking Status</span>
-                <span className={`inline-block px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${statusConfig[selectedBooking.status || 'pending'].class} mt-0.5`}>
-                  {statusConfig[selectedBooking.status || 'pending'].label}
+                <span className={`inline-block px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${statusConfig[getEffectiveStatus(selectedBooking) || 'pending'].class} mt-0.5`}>
+                  {statusConfig[getEffectiveStatus(selectedBooking) || 'pending'].label}
                 </span>
               </div>
               <div className="flex gap-2">
@@ -632,15 +635,6 @@ const BookingManagement = () => {
                       Cancel Booking
                     </button>
                   </>
-                )}
-                {selectedBooking.status === 'confirmed' && (
-                  <button
-                    disabled={actionLoading}
-                    onClick={() => handleUpdateStatus(selectedBooking._id, 'completed')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-xl disabled:opacity-40 transition-all cursor-pointer shadow shadow-blue-500/10"
-                  >
-                    Mark as Completed
-                  </button>
                 )}
                 <button
                   onClick={() => setSelectedBooking(null)}

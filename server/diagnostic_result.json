@@ -1,0 +1,734 @@
+{
+  "rooms": [
+    {
+      "addons": [],
+      "_id": "6a04700fa18d70d38e4c1175",
+      "name": "Elegant 4BHK Retreat | Peaceful • Spacious",
+      "category": "Delux",
+      "propertyType": "VILA",
+      "description": "<p>A bright, spacious first-floor 4BHK with a calm, green setting 🌿—perfect for families, group stays and peaceful work trips. Enjoy cozy bedrooms, balcony coffee moments, foosball/board games, a fully equipped kitchen, fast Wi-Fi, 65” Smart TV + Netflix, parking and a sunny green-view balcony. Thoughtfully set up for a clean, comfortable and restful stay. ⚠️ No parties or loud music. Quiet hours after 10 PM. ⚠️ Only confirmed guests may stay overnight. 🐾 Pets only with prior approval.</p>",
+      "price": 3000,
+      "originalPrice": 1500,
+      "priceUnit": "per-day",
+      "guests": 2,
+      "bedrooms": 1,
+      "beds": 1,
+      "bathrooms": 1,
+      "highlights": [
+        {
+          "icon": "Star",
+          "text": "Designed for staying cool",
+          "subtext": "Beat the heat with the A/C and ceiling fan.",
+          "_id": "6a047010a18d70d38e4c1176"
+        },
+        {
+          "icon": "Star",
+          "text": "Self check-in",
+          "subtext": "You can check in with the building staff.",
+          "_id": "6a047010a18d70d38e4c1177"
+        },
+        {
+          "icon": "Star",
+          "text": "Extra spacious",
+          "subtext": "Guests love this home’s spaciousness for a comfortable stay.",
+          "_id": "6a047010a18d70d38e4c1178"
+        }
+      ],
+      "amenities": [
+        {
+          "name": "Pets allowed",
+          "icon": "Check",
+          "_id": "6a047010a18d70d38e4c1179"
+        },
+        {
+          "name": "Dedicated workspace",
+          "icon": "Check",
+          "_id": "6a047010a18d70d38e4c117a"
+        },
+        {
+          "name": "Kitchen",
+          "icon": "Check",
+          "_id": "6a047010a18d70d38e4c117b"
+        },
+        {
+          "name": "Free parking on premises",
+          "icon": "Check",
+          "_id": "6a047010a18d70d38e4c117c"
+        },
+        {
+          "name": "Wifi",
+          "icon": "Check",
+          "_id": "6a047010a18d70d38e4c117d"
+        }
+      ],
+      "images": [
+        {
+          "url": "/uploads/images-1779790123371-791065844.jpeg",
+          "label": "rooms",
+          "_id": "6a15712b19cfc691fdab84c6"
+        }
+      ],
+      "address": "12 Beach Road",
+      "city": "puducherry",
+      "state": "",
+      "country": "India",
+      "unavailableDates": [
+        "2026-05-25T00:00:00.000Z",
+        "2026-05-26T00:00:00.000Z",
+        "2026-05-27T00:00:00.000Z",
+        "2026-05-28T00:00:00.000Z"
+      ],
+      "isAvailable": true,
+      "isFeatured": false,
+      "rating": 2.9,
+      "reviewCount": 7,
+      "createdAt": "2026-05-13T12:35:28.149Z",
+      "updatedAt": "2026-05-30T09:58:47.124Z",
+      "__v": 0,
+      "status": "published",
+      "datePrices": []
+    },
+    {
+      "addons": [],
+      "_id": "6a1575b41852a952ba75ac75",
+      "name": "Harmony Suites",
+      "category": "Delux",
+      "propertyType": "Hotel",
+      "description": "<p>A luxury city suite in the heart of South Jakarta with sweeping skyline views, modern kitchen, and state-of-the-art entertainment system.</p>",
+      "price": 3500,
+      "originalPrice": 4200,
+      "priceUnit": "night",
+      "guests": 2,
+      "bedrooms": 1,
+      "beds": 1,
+      "bathrooms": 1,
+      "size": "45 sq m",
+      "highlights": [
+        {
+          "icon": "Sparkles",
+          "text": "Premium Location",
+          "subtext": "In the center of South Jakarta",
+          "_id": "6a1575b41852a952ba75ac76"
+        },
+        {
+          "icon": "Shield",
+          "text": "Secure Access",
+          "subtext": "24/7 lobby security",
+          "_id": "6a1575b41852a952ba75ac77"
+        }
+      ],
+      "amenities": [
+        {
+          "name": "Wifi",
+          "icon": "Wifi",
+          "_id": "6a1575b41852a952ba75ac78"
+        },
+        {
+          "name": "Air Conditioning",
+          "icon": "Wind",
+          "_id": "6a1575b41852a952ba75ac79"
+        },
+        {
+          "name": "TV",
+          "icon": "Tv",
+          "_id": "6a1575b41852a952ba75ac7a"
+        },
+        {
+          "name": "Kitchen",
+          "icon": "Coffee",
+          "_id": "6a1575b41852a952ba75ac7b"
+        }
+      ],
+      "images": [
+        {
+          "url": "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=80",
+          "label": "Bedroom",
+          "_id": "6a1575b41852a952ba75ac7c"
+        }
+      ],
+      "address": "Blissful Street, South Jakarta",
+      "city": "South Jakarta",
+      "country": "Indonesia",
+      "unavailableDates": [],
+      "status": "published",
+      "isAvailable": true,
+      "isFeatured": true,
+      "rating": 4.8,
+      "reviewCount": 101,
+      "__v": 0,
+      "createdAt": "2026-05-26T10:28:04.181Z",
+      "updatedAt": "2026-05-28T13:12:58.172Z",
+      "state": "",
+      "datePrices": []
+    },
+    {
+      "addons": [],
+      "_id": "6a1575b41852a952ba75ac7d",
+      "name": "Radiant Residences",
+      "category": "gold",
+      "propertyType": "Apartment",
+      "description": "<p>Spacious luxury apartment featuring elegant wooden desks, modern office corner, double bed, and premium amenities.</p>",
+      "price": 4200,
+      "originalPrice": 5000,
+      "priceUnit": "night",
+      "guests": 4,
+      "bedrooms": 2,
+      "beds": 2,
+      "bathrooms": 2,
+      "size": "85 sq m",
+      "highlights": [
+        {
+          "icon": "Briefcase",
+          "text": "Workstation",
+          "subtext": "Dedicated desk with high-speed internet",
+          "_id": "6a1575b41852a952ba75ac7e"
+        },
+        {
+          "icon": "Coffee",
+          "text": "Espresso Bar",
+          "subtext": "Complementary premium coffee pods",
+          "_id": "6a1575b41852a952ba75ac7f"
+        }
+      ],
+      "amenities": [
+        {
+          "name": "Wifi",
+          "icon": "Wifi",
+          "_id": "6a1575b41852a952ba75ac80"
+        },
+        {
+          "name": "Workspace",
+          "icon": "Laptop",
+          "_id": "6a1575b41852a952ba75ac81"
+        },
+        {
+          "name": "Parking",
+          "icon": "Car",
+          "_id": "6a1575b41852a952ba75ac82"
+        },
+        {
+          "name": "Washing Machine",
+          "icon": "Dribbble",
+          "_id": "6a1575b41852a952ba75ac83"
+        }
+      ],
+      "images": [
+        {
+          "url": "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
+          "label": "Living Room",
+          "_id": "6a1575b41852a952ba75ac84"
+        }
+      ],
+      "address": "Serene Avenue, West Jakarta",
+      "city": "West Jakarta",
+      "country": "Indonesia",
+      "unavailableDates": [],
+      "status": "published",
+      "isAvailable": true,
+      "isFeatured": true,
+      "rating": 4.9,
+      "reviewCount": 742,
+      "__v": 0,
+      "createdAt": "2026-05-26T10:28:04.182Z",
+      "updatedAt": "2026-05-28T13:11:58.569Z",
+      "state": "",
+      "datePrices": []
+    },
+    {
+      "addons": [],
+      "_id": "6a1575b41852a952ba75ac85",
+      "name": "Tranquil Haven Hotel",
+      "category": "Delux",
+      "propertyType": "Hotel",
+      "description": "<p>Enjoy premium hospitality with an open-space dining hall, luxury kitchen counters, and beautiful hanging lights.</p>",
+      "price": 3000,
+      "originalPrice": 3800,
+      "priceUnit": "night",
+      "guests": 2,
+      "bedrooms": 1,
+      "beds": 1,
+      "bathrooms": 1,
+      "size": "40 sq m",
+      "highlights": [
+        {
+          "icon": "Utensils",
+          "text": "Dining Hall",
+          "subtext": "Open-concept space with gourmet options",
+          "_id": "6a1575b41852a952ba75ac86"
+        }
+      ],
+      "amenities": [
+        {
+          "name": "Wifi",
+          "icon": "Wifi",
+          "_id": "6a1575b41852a952ba75ac87"
+        },
+        {
+          "name": "Breakfast Included",
+          "icon": "Egg",
+          "_id": "6a1575b41852a952ba75ac88"
+        },
+        {
+          "name": "Gym",
+          "icon": "Dumbbell",
+          "_id": "6a1575b41852a952ba75ac89"
+        }
+      ],
+      "images": [
+        {
+          "url": "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80",
+          "label": "Main Hall",
+          "_id": "6a1575b41852a952ba75ac8a"
+        }
+      ],
+      "address": "Peaceful Lane, North Jakarta",
+      "city": "North Jakarta",
+      "country": "Indonesia",
+      "unavailableDates": [],
+      "status": "published",
+      "isAvailable": true,
+      "isFeatured": true,
+      "rating": 4.7,
+      "reviewCount": 35,
+      "__v": 0,
+      "createdAt": "2026-05-26T10:28:04.182Z",
+      "updatedAt": "2026-05-28T13:12:11.869Z",
+      "state": "",
+      "datePrices": []
+    },
+    {
+      "addons": [],
+      "_id": "6a1575b41852a952ba75ac8b",
+      "name": "Whispering Pines Cabin",
+      "category": "gold",
+      "propertyType": "Cabin",
+      "description": "<p>A cozy traditional log cabin surrounded by gorgeous pine forests. Features a warm fireplace and outdoor hot tub.</p>",
+      "price": 5500,
+      "originalPrice": 6500,
+      "priceUnit": "night",
+      "guests": 4,
+      "bedrooms": 2,
+      "beds": 2,
+      "bathrooms": 2,
+      "size": "110 sq m",
+      "highlights": [
+        {
+          "icon": "Flame",
+          "text": "Wood Fireplace",
+          "subtext": "Cozy and warm mountain vibe",
+          "_id": "6a1575b41852a952ba75ac8c"
+        },
+        {
+          "icon": "Smile",
+          "text": "Outdoor Hot Tub",
+          "subtext": "Perfect for starry nights",
+          "_id": "6a1575b41852a952ba75ac8d"
+        }
+      ],
+      "amenities": [
+        {
+          "name": "Wifi",
+          "icon": "Wifi",
+          "_id": "6a1575b41852a952ba75ac8e"
+        },
+        {
+          "name": "Fireplace",
+          "icon": "Flame",
+          "_id": "6a1575b41852a952ba75ac8f"
+        },
+        {
+          "name": "Hot Tub",
+          "icon": "Bath",
+          "_id": "6a1575b41852a952ba75ac90"
+        },
+        {
+          "name": "Kitchen",
+          "icon": "Coffee",
+          "_id": "6a1575b41852a952ba75ac91"
+        }
+      ],
+      "images": [
+        {
+          "url": "https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=800&q=80",
+          "label": "Exterior",
+          "_id": "6a1575b41852a952ba75ac92"
+        }
+      ],
+      "address": "Mountain View Path, Manali",
+      "city": "Manali",
+      "country": "India",
+      "unavailableDates": [
+        "2026-06-03T00:00:00.000Z",
+        "2026-06-04T00:00:00.000Z",
+        "2026-06-05T00:00:00.000Z",
+        "2026-06-06T00:00:00.000Z",
+        "2026-06-07T00:00:00.000Z",
+        "2026-06-08T00:00:00.000Z",
+        "2026-06-09T00:00:00.000Z",
+        "2026-06-10T00:00:00.000Z"
+      ],
+      "status": "published",
+      "isAvailable": true,
+      "isFeatured": false,
+      "rating": 4.95,
+      "reviewCount": 120,
+      "__v": 0,
+      "createdAt": "2026-05-26T10:28:04.182Z",
+      "updatedAt": "2026-05-30T06:47:57.616Z",
+      "state": "",
+      "datePrices": []
+    },
+    {
+      "addons": [],
+      "_id": "6a1575b41852a952ba75ac93",
+      "name": "Lakeside Vista Villa",
+      "category": "gold",
+      "propertyType": "House",
+      "description": "<p>Stunning lakefront luxury villa with direct private dock access, floor-to-ceiling windows, and panoramic lake views.</p>",
+      "price": 8500,
+      "originalPrice": 10000,
+      "priceUnit": "night",
+      "guests": 6,
+      "bedrooms": 3,
+      "beds": 4,
+      "bathrooms": 3,
+      "size": "220 sq m",
+      "highlights": [
+        {
+          "icon": "Waves",
+          "text": "Private Dock",
+          "subtext": "Direct access to the pristine lake",
+          "_id": "6a1575b41852a952ba75ac94"
+        },
+        {
+          "icon": "Sun",
+          "text": "Sun deck",
+          "subtext": "Vibrant outdoor lounge spaces",
+          "_id": "6a1575b41852a952ba75ac95"
+        }
+      ],
+      "amenities": [
+        {
+          "name": "Wifi",
+          "icon": "Wifi",
+          "_id": "6a1575b41852a952ba75ac96"
+        },
+        {
+          "name": "Private Dock",
+          "icon": "Anchor",
+          "_id": "6a1575b41852a952ba75ac97"
+        },
+        {
+          "name": "Swimming Pool",
+          "icon": "Waves",
+          "_id": "6a1575b41852a952ba75ac98"
+        },
+        {
+          "name": "Air Conditioning",
+          "icon": "Wind",
+          "_id": "6a1575b41852a952ba75ac99"
+        }
+      ],
+      "images": [
+        {
+          "url": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+          "label": "Villa View",
+          "_id": "6a1575b41852a952ba75ac9a"
+        }
+      ],
+      "address": "Lakefront Road, Udaipur",
+      "city": "Udaipur",
+      "country": "India",
+      "unavailableDates": [],
+      "status": "published",
+      "isAvailable": true,
+      "isFeatured": true,
+      "rating": 4.88,
+      "reviewCount": 92,
+      "__v": 0,
+      "createdAt": "2026-05-26T10:28:04.182Z",
+      "updatedAt": "2026-05-28T13:12:48.126Z",
+      "state": "",
+      "datePrices": []
+    },
+    {
+      "addons": [],
+      "_id": "6a1575b41852a952ba75ac9b",
+      "name": "The Meadow Farmhouse",
+      "category": "gold",
+      "propertyType": "Guesthouse",
+      "description": "<p>Here is the completely revamped code. I've taken the structural logic from your original file and transformed the UI into a premium, ultra-modern desktop layout that mirrors the exact aesthetic of the mobile design you provided.</p><p>I incorporated the pill-style quick specs, the detailed ratings breakdown with progress bars, and that signature bright yellow accent, while wrapping the sticky booking card and navigation in the clean, glassmorphic styling you usually prefer for your luxury builds.</p>",
+      "price": 500,
+      "originalPrice": 7500,
+      "priceUnit": "night",
+      "guests": 8,
+      "bedrooms": 4,
+      "beds": 6,
+      "bathrooms": 4,
+      "size": "500 sq m",
+      "highlights": [
+        {
+          "icon": "Tv",
+          "text": "Organic Garden",
+          "subtext": "Pick your own vegetables Pick your own vegetables Pick your own vegetables",
+          "_id": "6a1575b41852a952ba75ac9c"
+        },
+        {
+          "icon": "Heart",
+          "text": "Pet Friendly",
+          "subtext": "Bring your pets along",
+          "_id": "6a1575b41852a952ba75ac9d"
+        }
+      ],
+      "amenities": [
+        {
+          "name": "Wifi",
+          "icon": "Wifi",
+          "_id": "6a1575b41852a952ba75ac9e"
+        },
+        {
+          "name": "Kitchen",
+          "icon": "Coffee",
+          "_id": "6a1575b41852a952ba75ac9f"
+        },
+        {
+          "name": "Barbecue Grill",
+          "icon": "Flame",
+          "_id": "6a1575b41852a952ba75aca0"
+        },
+        {
+          "name": "Parking",
+          "icon": "Car",
+          "_id": "6a1575b41852a952ba75aca1"
+        },
+        {
+          "name": "Wifi",
+          "icon": "Key",
+          "_id": "6a1937089a52fc999da7be05"
+        }
+      ],
+      "images": [
+        {
+          "url": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=800&q=80",
+          "label": "Farm Garden",
+          "_id": "6a1575b41852a952ba75aca2"
+        },
+        {
+          "url": "/uploads/images-1780036822586-736810508.jpeg",
+          "label": "room",
+          "_id": "6a1934d69a52fc999da7b6f8"
+        },
+        {
+          "url": "/uploads/images-1780036822588-699891646.avif",
+          "label": "ad",
+          "_id": "6a1934d69a52fc999da7b6f9"
+        },
+        {
+          "url": "/uploads/images-1780036822591-918965089.jpeg",
+          "label": "ads",
+          "_id": "6a1934d69a52fc999da7b6fa"
+        },
+        {
+          "url": "/uploads/images-1780036822592-7937235.avif",
+          "label": "abd",
+          "_id": "6a1934d69a52fc999da7b6fb"
+        },
+        {
+          "url": "/uploads/images-1780036865307-786742821.jpeg",
+          "label": "adf",
+          "_id": "6a1935019a52fc999da7b774"
+        },
+        {
+          "url": "/uploads/images-1780036865309-160197006.avif",
+          "label": "da",
+          "_id": "6a1935019a52fc999da7b775"
+        }
+      ],
+      "address": "Green Meadows Lane, Coorg",
+      "city": "Coorg",
+      "country": "India",
+      "unavailableDates": [
+        "2026-05-31T00:00:00.000Z",
+        "2026-06-01T00:00:00.000Z"
+      ],
+      "status": "published",
+      "isAvailable": true,
+      "isFeatured": false,
+      "rating": 4.82,
+      "reviewCount": 54,
+      "__v": 0,
+      "createdAt": "2026-05-26T10:28:04.183Z",
+      "updatedAt": "2026-06-06T06:23:22.544Z",
+      "state": "",
+      "datePrices": [
+        {
+          "date": "2026-06-01",
+          "price": 11,
+          "_id": "6a1d17b2733c86403ba5e7f0"
+        },
+        {
+          "date": "2026-06-02",
+          "price": 12,
+          "_id": "6a1d17b2733c86403ba5e7f1"
+        },
+        {
+          "date": "2026-06-03",
+          "price": 13,
+          "_id": "6a1d1893733c86403ba5e9f8"
+        },
+        {
+          "date": "2026-06-06",
+          "price": 900,
+          "_id": "6a23bcb86fefea4546e1ced7"
+        },
+        {
+          "date": "2026-06-08",
+          "price": 1000,
+          "_id": "6a23bcda6fefea4546e1d09c"
+        }
+      ]
+    },
+    {
+      "addons": [],
+      "_id": "6a1575b41852a952ba75aca3",
+      "name": "Sleek Tiny Retreat",
+      "category": "Delux",
+      "propertyType": "House",
+      "description": "<p>An architecturally designed micro-home utilizing smart space planning. Offers high-end finishes and peaceful countryside surroundings.</p>",
+      "price": 2800,
+      "originalPrice": 3500,
+      "priceUnit": "night",
+      "guests": 2,
+      "bedrooms": 1,
+      "beds": 1,
+      "bathrooms": 1,
+      "size": "28 sq m",
+      "highlights": [
+        {
+          "icon": "Compass",
+          "text": "Eco-Friendly",
+          "subtext": "100% solar powered retreat",
+          "_id": "6a1575b41852a952ba75aca4"
+        }
+      ],
+      "amenities": [
+        {
+          "name": "Wifi",
+          "icon": "Wifi",
+          "_id": "6a1575b41852a952ba75aca5"
+        },
+        {
+          "name": "Air Conditioning",
+          "icon": "Wind",
+          "_id": "6a1575b41852a952ba75aca6"
+        },
+        {
+          "name": "Compact Kitchen",
+          "icon": "Coffee",
+          "_id": "6a1575b41852a952ba75aca7"
+        }
+      ],
+      "images": [
+        {
+          "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80",
+          "label": "Interior",
+          "_id": "6a1575b41852a952ba75aca8"
+        }
+      ],
+      "address": "Hills Edge Road, Panchgani",
+      "city": "Panchgani",
+      "country": "India",
+      "unavailableDates": [
+        "2026-05-29T00:00:00.000Z",
+        "2026-05-30T00:00:00.000Z",
+        "2026-05-31T00:00:00.000Z"
+      ],
+      "status": "published",
+      "isAvailable": true,
+      "isFeatured": false,
+      "rating": 4.9,
+      "reviewCount": 215,
+      "__v": 0,
+      "createdAt": "2026-05-26T10:28:04.183Z",
+      "updatedAt": "2026-05-30T06:29:45.069Z",
+      "state": "",
+      "datePrices": []
+    },
+    {
+      "addons": [],
+      "_id": "6a1575b41852a952ba75aca9",
+      "name": "Glamping Dome Haven",
+      "category": "gold",
+      "propertyType": "Guesthouse",
+      "description": "<p>Luxury glamping in a geodesic dome with star-gazing roof, premium double bed, climate control, and private deck.</p>",
+      "price": 4000,
+      "originalPrice": 4800,
+      "priceUnit": "night",
+      "guests": 2,
+      "bedrooms": 1,
+      "beds": 1,
+      "bathrooms": 1,
+      "size": "35 sq m",
+      "highlights": [
+        {
+          "icon": "Star",
+          "text": "Stargazing Roof",
+          "subtext": "Clear transparent roof panels",
+          "_id": "6a1575b41852a952ba75acaa"
+        }
+      ],
+      "amenities": [
+        {
+          "name": "Wifi",
+          "icon": "Wifi",
+          "_id": "6a1575b41852a952ba75acab"
+        },
+        {
+          "name": "Air Conditioning",
+          "icon": "Wind",
+          "_id": "6a1575b41852a952ba75acac"
+        },
+        {
+          "name": "Private Deck",
+          "icon": "Trees",
+          "_id": "6a1575b41852a952ba75acad"
+        }
+      ],
+      "images": [
+        {
+          "url": "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=800&q=80",
+          "label": "Dome Interior",
+          "_id": "6a1575b41852a952ba75acae"
+        }
+      ],
+      "address": "Desert Dunes Camp, Jaisalmer",
+      "city": "Jaisalmer",
+      "country": "India",
+      "unavailableDates": [
+        "2026-05-30T00:00:00.000Z",
+        "2026-05-31T00:00:00.000Z"
+      ],
+      "status": "published",
+      "isAvailable": true,
+      "isFeatured": false,
+      "rating": 4.75,
+      "reviewCount": 88,
+      "__v": 0,
+      "createdAt": "2026-05-26T10:28:04.183Z",
+      "updatedAt": "2026-05-30T06:24:39.756Z",
+      "state": "",
+      "datePrices": []
+    }
+  ],
+  "addons": [
+    {
+      "_id": "6a23c5b3fc18993e1c479239",
+      "name": "Breakfast",
+      "price": 500,
+      "iconType": "food",
+      "createdAt": "2026-06-06T07:01:07.681Z",
+      "updatedAt": "2026-06-01T07:18:46.466Z",
+      "__v": 0
+    }
+  ]
+}

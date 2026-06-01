@@ -185,6 +185,19 @@ const MyBookings = () => {
                             <p className="text-sm font-bold text-gray-800">{new Date(booking.checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                           </div>
                         </div>
+
+                        {booking.addons && booking.addons.length > 0 && (
+                          <div className="mt-3">
+                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Selected Add-ons</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {booking.addons.map((addon, aIdx) => (
+                                <span key={aIdx} className="inline-flex items-center gap-1 bg-primary-50 text-primary-700 px-2 py-0.5 rounded-md text-[10px] font-bold border border-primary-100">
+                                  {addon.name} (₹{addon.price})
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between border-t border-gray-50 pt-4 gap-4">

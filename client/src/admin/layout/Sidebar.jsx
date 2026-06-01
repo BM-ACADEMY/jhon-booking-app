@@ -25,6 +25,7 @@ const navItems = [
   { label: 'Users', icon: Users, path: '/admin/users' },
   { label: 'Rooms Review', icon: Star, path: '/admin/reviews' },
   { label: 'Testimonials', icon: Star, path: '/admin/testimonials' },
+  { label: 'Add-on Services', icon: Layers, path: '/admin/addons' },
   { label: 'Messages', icon: MessageSquare, path: '/admin/messages' },
   // { label: 'Dynamic Sections', icon: Layers, path: '/admin/sections' },
   { label: 'Settings', icon: Settings, path: '/admin/settings' },

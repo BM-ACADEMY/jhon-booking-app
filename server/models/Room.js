@@ -46,6 +46,14 @@ const roomSchema = new mongoose.Schema({
 
   unavailableDates: [{ type: Date }],
 
+  // Dynamic daily pricing calendar
+  datePrices: [{
+    date: { type: String, required: true },
+    price: { type: Number, required: true }
+  }],
+
+  addons: [{ type: mongoose.Schema.Types.ObjectId, ref: 'AddonService' }],
+
   status: { type: String, enum: ['draft', 'published'], default: 'draft' },
   isAvailable: { type: Boolean, default: true },
   isFeatured: { type: Boolean, default: false },

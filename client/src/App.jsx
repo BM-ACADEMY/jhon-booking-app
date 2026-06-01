@@ -28,6 +28,8 @@ import DynamicSections from './admin/pages/DynamicSections';
 import Settings from './admin/pages/Settings';
 import AdminProfile from './admin/pages/AdminProfile';
 import RoomsReview from './admin/pages/RoomsReview';
+import AddonsManagement from './admin/pages/AddonsManagement';
+import AddonsPage from './pages/AddonsPage';
 
 const ProtectedRoute = ({ children }) => {
   const { user, isAdmin } = useAuth();
@@ -48,6 +50,7 @@ const AppRoutes = () => (
       <Route path="/" element={<HomePage />} />
       <Route path="/rooms" element={<RoomsPage />} />
       <Route path="/rooms/:id" element={<RoomDetailPage />} />
+      <Route path="/checkout/addons" element={<AddonsPage />} />
       <Route path="/mybookings" element={<MyBookings />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} />
@@ -72,6 +75,7 @@ const AppRoutes = () => (
       <Route path="users" element={<UserManagement />} />
       <Route path="reviews" element={<RoomsReview />} />
       <Route path="testimonials" element={<TestimonialsManagement />} />
+      <Route path="addons" element={<AddonsManagement />} />
       <Route path="messages" element={<MessagesManagement />} />
       <Route path="sections" element={<DynamicSections />} />
       <Route path="settings" element={<Settings />} />
