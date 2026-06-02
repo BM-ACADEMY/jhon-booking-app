@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Heart, Loader2, BedDouble, ArrowRight, Star, MapPin, Users, Bath, Maximize, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api, { getRoomSlug } from '../api';
+import WishlistCardSkeleton from '../components/WishlistCardSkeleton';
 
 const SERVER_URL = import.meta.env.VITE_BASE_URL ;
 
@@ -66,10 +67,19 @@ const WishlistPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Loading your wishlist...</p>
+      <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-24 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Header Skeleton */}
+          <div className="mb-10 animate-pulse">
+            <div className="h-8 w-52 bg-gray-200 rounded-lg mb-3"></div>
+            <div className="h-4 w-80 bg-gray-200 rounded-lg"></div>
+          </div>
+          {/* Grid Skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <WishlistCardSkeleton key={i} />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -92,20 +102,41 @@ const WishlistPage = () => {
 
         {wishlistRooms.length === 0 ? (
           /* Empty State */
-          <div className="bg-white rounded-3xl p-16 text-center border border-gray-150 shadow-sm max-w-xl mx-auto">
-            <div className="w-20 h-20 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner animate-pulse">
-              <Heart className="w-10 h-10 text-rose-500 fill-rose-100" />
+          <div className="bg-white rounded-3xl p-16 text-center shadow-sm max-w-xl mx-auto">
+            {/* Empty illustration */}
+            <div className="mx-auto mb-8 w-40 h-40">
+              <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Soft background circle */}
+                <circle cx="100" cy="100" r="90" fill="#F5F3FF" />
+                {/* Open box bottom */}
+                <rect x="50" y="100" width="100" height="55" rx="8" fill="#E0D6FA" stroke="#C4B5FD" strokeWidth="2" />
+                {/* Box flaps */}
+                <path d="M50 100 L65 75 H135 L150 100" fill="#EDE9FE" stroke="#C4B5FD" strokeWidth="2" strokeLinejoin="round" />
+                {/* Dashed line inside box */}
+                <line x1="70" y1="125" x2="130" y2="125" stroke="#C4B5FD" strokeWidth="2" strokeDasharray="6 4" />
+                <line x1="80" y1="138" x2="120" y2="138" stroke="#C4B5FD" strokeWidth="2" strokeDasharray="6 4" />
+                {/* Heart floating above */}
+                <g transform="translate(100,55)">
+                  <path d="M0 12 C0 12 -16 -2 -16 -8 C-16 -14 -8 -18 0 -10 C8 -18 16 -14 16 -8 C16 -2 0 12 0 12Z" fill="#F87171" opacity="0.85">
+                    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -4; 0 0" dur="2.5s" repeatCount="indefinite" />
+                  </path>
+                </g>
+                {/* Sparkle dots */}
+                <circle cx="145" cy="55" r="3" fill="#A78BFA" opacity="0.6">
+                  <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="55" cy="65" r="2.5" fill="#C4B5FD" opacity="0.5">
+                  <animate attributeName="opacity" values="0.5;0.15;0.5" dur="2.5s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="160" cy="80" r="2" fill="#DDD6FE" opacity="0.7">
+                  <animate attributeName="opacity" values="0.7;0.2;0.7" dur="1.8s" repeatCount="indefinite" />
+                </circle>
+              </svg>
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">Your wishlist is empty</h3>
-            <p className="text-gray-500 mb-8 max-w-sm mx-auto text-sm leading-relaxed">
+            <p className="text-gray-500 max-w-sm mx-auto text-sm leading-relaxed">
               Explore our luxury suites and tap the heart icon on any stay to save it here for later.
             </p>
-            <Link 
-              to="/rooms" 
-              className="inline-flex items-center gap-2 bg-violet-600 text-white px-8 py-3.5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-violet-500/25 hover:bg-violet-700 transition-all hover:scale-105 active:scale-95"
-            >
-              Find Stays
-            </Link>
           </div>
         ) : (
           <>

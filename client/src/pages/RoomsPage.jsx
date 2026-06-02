@@ -11,6 +11,7 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import api, { getRoomSlug } from '../api';
 
+import RoomCardSkeleton from '../components/RoomCardSkeleton';
 const SERVER_URL = import.meta.env.VITE_BASE_URL ;
 
 const getImageUrl = (img) => {
@@ -128,20 +129,104 @@ const RoomsPage = () => {
   const queryRoomsCount = searchParams.get('roomsCount') || searchParams.get('rooms') || '1';
 
   // Search input states (local copy before clicking "Update Search")
-  const [checkInInput, setCheckInInput] = useState(queryCheckIn ? parseLocalDate(queryCheckIn) : null);
-  const [checkOutInput, setCheckOutInput] = useState(queryCheckOut ? parseLocalDate(queryCheckOut) : null);
-  const [adultsInput, setAdultsInput] = useState(parseInt(queryAdults, 10));
-  const [childrenInput, setChildrenInput] = useState(parseInt(queryChildren, 10));
-  const [roomsCountInput, setRoomsCountInput] = useState(parseInt(queryRoomsCount, 10));
+  const [checkInInput, setCheckInInput] = useState(() => {
+    const query = searchParams.get('checkIn');
+    if (query) return parseLocalDate(query);
+    const session = sessionStorage.getItem('booking_start_date');
+    return session ? new Date(session) : null;
+  });
+  const [checkOutInput, setCheckOutInput] = useState(() => {
+    const query = searchParams.get('checkOut');
+    if (query) return parseLocalDate(query);
+    const session = sessionStorage.getItem('booking_end_date');
+    return session ? new Date(session) : null;
+  });
+  const [adultsInput, setAdultsInput] = useState(() => {
+    const query = searchParams.get('adults');
+    if (query) return parseInt(query, 10);
+    const session = sessionStorage.getItem('booking_adults');
+    return session ? parseInt(session, 10) : 1;
+  });
+  const [childrenInput, setChildrenInput] = useState(() => {
+    const query = searchParams.get('children');
+    if (query) return parseInt(query, 10);
+    const session = sessionStorage.getItem('booking_children');
+    return session ? parseInt(session, 10) : 0;
+  });
+  const [roomsCountInput, setRoomsCountInput] = useState(() => {
+    const query = searchParams.get('roomsCount') || searchParams.get('rooms');
+    if (query) return parseInt(query, 10);
+    const session = sessionStorage.getItem('booking_rooms');
+    return session ? parseInt(session, 10) : 1;
+  });
+
+  // Track scrolling to hide the hero booking bar when header search bar appears
+  const [scrolledPastThreshold, setScrolledPastThreshold] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolledPastThreshold(window.scrollY > 250);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Sync inputs with URL parameters changes (e.g. searching from Home Page)
   useEffect(() => {
-    setCheckInInput(queryCheckIn ? parseLocalDate(queryCheckIn) : null);
-    setCheckOutInput(queryCheckOut ? parseLocalDate(queryCheckOut) : null);
-    setAdultsInput(parseInt(queryAdults, 10));
-    setChildrenInput(parseInt(queryChildren, 10));
-    setRoomsCountInput(parseInt(queryRoomsCount, 10));
+    const qIn = queryCheckIn ? parseLocalDate(queryCheckIn) : null;
+    const qOut = queryCheckOut ? parseLocalDate(queryCheckOut) : null;
+    const startStr = sessionStorage.getItem('booking_start_date');
+    const endStr = sessionStorage.getItem('booking_end_date');
+
+    setCheckInInput(qIn || (startStr ? new Date(startStr) : null));
+    setCheckOutInput(qOut || (endStr ? new Date(endStr) : null));
+
+    const adVal = parseInt(queryAdults, 10) || parseInt(sessionStorage.getItem('booking_adults')) || 1;
+    setAdultsInput(adVal);
+
+    const chVal = parseInt(queryChildren, 10) || parseInt(sessionStorage.getItem('booking_children')) || 0;
+    setChildrenInput(chVal);
+
+    const rmVal = parseInt(queryRoomsCount, 10) || parseInt(sessionStorage.getItem('booking_rooms')) || 1;
+    setRoomsCountInput(rmVal);
   }, [queryCheckIn, queryCheckOut, queryAdults, queryChildren, queryRoomsCount]);
+
+  // Sync state changes with sessionStorage and broadcast to other components (like Navbar)
+  useEffect(() => {
+    sessionStorage.setItem('booking_start_date', checkInInput ? checkInInput.toISOString() : '');
+    sessionStorage.setItem('booking_end_date', checkOutInput ? checkOutInput.toISOString() : '');
+    sessionStorage.setItem('booking_adults', adultsInput.toString());
+    sessionStorage.setItem('booking_children', childrenInput.toString());
+    sessionStorage.setItem('booking_rooms', roomsCountInput.toString());
+    window.dispatchEvent(new Event('booking-search-sync'));
+  }, [checkInInput, checkOutInput, adultsInput, childrenInput, roomsCountInput]);
+
+  // Listen to state changes from other components (like Navbar)
+  useEffect(() => {
+    const handleSync = () => {
+      const startStr = sessionStorage.getItem('booking_start_date');
+      const endStr = sessionStorage.getItem('booking_end_date');
+      const ad = parseInt(sessionStorage.getItem('booking_adults')) || 1;
+      const ch = parseInt(sessionStorage.getItem('booking_children')) || 0;
+      const rm = parseInt(sessionStorage.getItem('booking_rooms')) || 1;
+
+      const newStart = startStr ? new Date(startStr) : null;
+      const newEnd = endStr ? new Date(endStr) : null;
+      if (newStart?.getTime() !== checkInInput?.getTime()) {
+        setCheckInInput(newStart);
+      }
+      if (newEnd?.getTime() !== checkOutInput?.getTime()) {
+        setCheckOutInput(newEnd);
+      }
+      if (ad !== adultsInput) setAdultsInput(ad);
+      if (ch !== childrenInput) setChildrenInput(ch);
+      if (rm !== roomsCountInput) setRoomsCountInput(rm);
+    };
+
+    window.addEventListener('booking-search-sync', handleSync);
+    return () => window.removeEventListener('booking-search-sync', handleSync);
+  }, [checkInInput, checkOutInput, adultsInput, childrenInput, roomsCountInput]);
 
   // Hero section data
   const [hero, setHero] = useState(null);
@@ -150,6 +235,8 @@ const RoomsPage = () => {
 
   const [isGuestDropdownOpen, setIsGuestDropdownOpen] = useState(false);
   const guestDropdownRef = useRef(null);
+  const checkoutPickerRef = useRef(null);
+  const mobileCheckoutPickerRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -702,7 +789,7 @@ const RoomsPage = () => {
            HERO SECTION  (mirrors HomePage HeroSection)
          ══════════════════════════════════════════ */}
       <>
-        <section className="relative h-[220px] md:h-[260px] lg:h-[300px] font-sans flex flex-col bg-gray-900 rounded-b-[2.5rem] lg:rounded-b-none shadow-xl">
+        <section className="relative h-[220px] md:h-[260px] lg:h-[300px] font-sans flex flex-col bg-gray-900 rounded-b-[2.5rem] lg:rounded-b-none lg:overflow-visible shadow-xl">
           <style>{`
             @keyframes rooms-reveal {
               from { opacity: 0; transform: translateY(22px); filter: blur(8px); }
@@ -748,7 +835,8 @@ const RoomsPage = () => {
             </div>
 
             {/* ── Desktop booking bar ── */}
-            <div className="hidden lg:flex bg-white rounded-[2.5rem] p-2 max-w-4xl w-full shadow-2xl flex-row items-center gap-2 divide-x divide-gray-100 rooms-reveal-d3 relative z-40">
+            <div className={`hidden lg:block lg:absolute lg:bottom-0 lg:left-1/2 lg:-translate-x-1/2 lg:translate-y-1/2 lg:z-40 w-full max-w-4xl px-4 lg:px-0 transition-all duration-300 ${scrolledPastThreshold ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
+              <div className="bg-white rounded-[2.5rem] p-2 w-full shadow-2xl flex flex-row items-center gap-2 divide-x divide-gray-100 rooms-reveal-d3 relative z-40">
 
               {/* Check-In */}
               <div className="flex-1 flex items-center gap-3 px-4 py-2 group">
@@ -759,7 +847,19 @@ const RoomsPage = () => {
                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check In</p>
                   <DatePicker
                     selected={checkInInput}
-                    onChange={(date) => setCheckInInput(date)}
+                    onChange={(date) => {
+                      const newStart = date;
+                      const newEnd = (checkOutInput && date && checkOutInput > date) ? checkOutInput : null;
+                      setCheckInInput(newStart);
+                      setCheckOutInput(newEnd);
+                      if (!newEnd) {
+                        setTimeout(() => {
+                          if (checkoutPickerRef.current) {
+                            checkoutPickerRef.current.setOpen(true);
+                          }
+                        }, 100);
+                      }
+                    }}
                     selectsStart
                     startDate={checkInInput}
                     endDate={checkOutInput}
@@ -782,6 +882,7 @@ const RoomsPage = () => {
                 <div className="flex-1 text-left">
                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check Out</p>
                   <DatePicker
+                    ref={checkoutPickerRef}
                     selected={checkOutInput}
                     onChange={(date) => setCheckOutInput(date)}
                     selectsEnd
@@ -812,8 +913,8 @@ const RoomsPage = () => {
                 >
                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guests & Rooms</p>
                   <div className="w-full text-sm font-bold text-gray-900 outline-none bg-transparent flex items-center justify-between">
-                    <span>{adultsInput + childrenInput} Guest{adultsInput + childrenInput > 1 ? 's' : ''}, {roomsCountInput} Room{roomsCountInput > 1 ? 's' : ''}</span>
-                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isGuestDropdownOpen ? 'rotate-180' : ''}`} />
+                     <span>{adultsInput} Adult{adultsInput > 1 ? 's' : ''}{childrenInput > 0 ? `, ${childrenInput} Child${childrenInput > 1 ? 'ren' : ''}` : ''}, {roomsCountInput} Room{roomsCountInput > 1 ? 's' : ''}</span>
+                     <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isGuestDropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
 
@@ -895,6 +996,7 @@ const RoomsPage = () => {
                 </button>
               </div>
             </div>
+          </div>
 
           </div>
         </section>
@@ -917,7 +1019,19 @@ const RoomsPage = () => {
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Check-In</p>
                     <DatePicker
                       selected={checkInInput}
-                      onChange={(date) => setCheckInInput(date)}
+                      onChange={(date) => {
+                        const newStart = date;
+                        const newEnd = (checkOutInput && date && checkOutInput > date) ? checkOutInput : null;
+                        setCheckInInput(newStart);
+                        setCheckOutInput(newEnd);
+                        if (!newEnd) {
+                          setTimeout(() => {
+                            if (mobileCheckoutPickerRef.current) {
+                              mobileCheckoutPickerRef.current.setOpen(true);
+                            }
+                          }, 100);
+                        }
+                      }}
                       selectsStart startDate={checkInInput} endDate={checkOutInput}
                       minDate={new Date()} dateFormat="dd MMM yyyy" placeholderText="Select date"
                       className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer"
@@ -930,6 +1044,7 @@ const RoomsPage = () => {
                   <div className="flex-1">
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Check-Out</p>
                     <DatePicker
+                      ref={mobileCheckoutPickerRef}
                       selected={checkOutInput}
                       onChange={(date) => setCheckOutInput(date)}
                       selectsEnd startDate={checkInInput} endDate={checkOutInput}
@@ -998,7 +1113,7 @@ const RoomsPage = () => {
       </>
 
       {/* Main Container Layout */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 lg:mt-20">
 
         {/* Results summary and toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200/60 pb-5 mb-8 gap-4">
@@ -1038,9 +1153,10 @@ const RoomsPage = () => {
           {/* LEFT side: Rooms Grid */}
           <div className="lg:col-span-8 space-y-10">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-32 gap-3">
-                <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Searching stays...</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <RoomCardSkeleton key={i} />
+                ))}
               </div>
             ) : paginatedRooms.length === 0 ? (
               <div className="text-center bg-white rounded-xl border border-gray-200 p-16">

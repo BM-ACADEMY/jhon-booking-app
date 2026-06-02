@@ -371,6 +371,13 @@ const RoomManagement = () => {
     return dbDateStr === targetDateStr;
   };
 
+  const formatCompactPrice = (price) => {
+    if (price >= 10000000) return `${(price / 10000000).toFixed(price % 10000000 === 0 ? 0 : 1)}Cr`;
+    if (price >= 100000) return `${(price / 100000).toFixed(price % 100000 === 0 ? 0 : 1)}L`;
+    if (price >= 1000) return `${(price / 1000).toFixed(price % 1000 === 0 ? 0 : 1)}K`;
+    return price.toString();
+  };
+
   const getDatePrice = (dateStr) => {
     const found = roomForm.datePrices?.find(dp => matchDate(dp.date, dateStr));
     return found ? found.price : roomForm.price || 0;
@@ -445,7 +452,7 @@ const RoomManagement = () => {
         >
           <span className="text-[11px] font-bold leading-none">{day}</span>
           <span className={`text-[8px] font-black mt-1 leading-none ${isSelected ? 'text-white/90' : hasCustomPrice ? 'text-emerald-600' : 'text-gray-500'}`}>
-            ₹{dayPrice}
+            ₹{formatCompactPrice(dayPrice)}
           </span>
         </button>
       );

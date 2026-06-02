@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import api from "../api"; // Custom Axios instance connected to your API backend
+import TestimonialsCardSkeleton from '../components/TestimonialsCardSkeleton';
 
 // Inline Star Icon component for easy rendering
 const StarIcon = ({ filled }) => (
@@ -175,13 +176,13 @@ const TestimonialsSection = () => {
           </p>
         </div>
 
-        {/* Dynamic Matrix Stream Display */}
+
+        {/* Loading Skeleton */}
         {loading ? (
-          <div className="flex flex-col justify-center gap-4 h-[400px] items-center">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-500 font-medium text-xs tracking-wide uppercase">
-              Assembling layout pipeline...
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-8">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <TestimonialsCardSkeleton key={i} />
+            ))}
           </div>
         ) : testimonials.length === 0 ? (
           <div className="text-center py-16 text-slate-400 text-sm italic">

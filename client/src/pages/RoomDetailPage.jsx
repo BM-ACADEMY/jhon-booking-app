@@ -370,6 +370,13 @@ const RoomDetailPage = () => {
     return dbDateStr === targetDateStr;
   };
 
+  const formatCompactPrice = (price) => {
+    if (price >= 10000000) return `${(price / 10000000).toFixed(price % 10000000 === 0 ? 0 : 1)}Cr`;
+    if (price >= 100000) return `${(price / 100000).toFixed(price % 100000 === 0 ? 0 : 1)}L`;
+    if (price >= 1000) return `${(price / 1000).toFixed(price % 1000 === 0 ? 0 : 1)}K`;
+    return price.toString();
+  };
+
   const getTodayPrice = (roomObj) => {
     if (!roomObj) return 0;
     const today = new Date();
@@ -514,7 +521,7 @@ const RoomDetailPage = () => {
             <span className="font-bold leading-none">{day}</span>
             {!isDisabled && (
               <span className={`text-[8px] font-black mt-0.5 leading-none ${isCheckIn || isCheckOut ? 'text-white/80' : 'text-[#708090]'}`}>
-                ₹{dayPrice}
+                ₹{formatCompactPrice(dayPrice)}
               </span>
             )}
           </button>

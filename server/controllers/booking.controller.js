@@ -5,6 +5,7 @@ import Review from '../models/Review.js';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import sendEmail from '../utils/email.js';
+import { getGuestBookingEmailTemplate, getAdminBookingEmailTemplate } from '../templates/bookingConfirmation.js';
 
 let razorpayInstance = null;
 
@@ -267,49 +268,32 @@ export const verifyRazorpayPayment = async (req, res) => {
       { $addToSet: { unavailableDates: { $each: bookedDates } } }
     );
 
-    // Send confirmation emails
-    try {
-      const user = await User.findById(req.user._id);
-      const primaryRoomDetails = await Room.findById(bookingData.room);
+    // Send confirmation emails in the background
+    User.findById(req.user._id)
+      .then(user => {
+        return Room.findById(bookingData.room).then(primaryRoomDetails => {
+          const emailHtmlUser = getGuestBookingEmailTemplate(user, booking, primaryRoomDetails);
 
-      const emailHtmlUser = `
-        <h2>Booking Confirmation</h2>
-        <p>Dear ${user.name},</p>
-        <p>Your booking for <strong>${primaryRoomDetails.name}</strong> has been successfully confirmed.</p>
-        <p><strong>Check-in:</strong> ${new Date(bookingData.checkIn).toLocaleDateString()}</p>
-        <p><strong>Check-out:</strong> ${new Date(bookingData.checkOut).toLocaleDateString()}</p>
-        <p><strong>Guests:</strong> ${bookingData.adults} Adults, ${bookingData.children || 0} Children</p>
-        <p><strong>Total Amount:</strong> ₹${bookingData.totalAmount}</p>
-        <p>Thank you for choosing us!</p>
-      `;
+          // Send to User
+          sendEmail({
+            email: user.email,
+            subject: 'Booking Confirmation - The Balified Villa',
+            html: emailHtmlUser,
+          }).catch(err => console.error('Error sending guest email:', err));
 
-      // Send to User
-      await sendEmail({
-        email: user.email,
-        subject: 'Booking Confirmation - The Balified Villa',
-        html: emailHtmlUser,
+          // Send to Admin
+          const adminEmail = 'thebalifiedvilla@gmail.com';
+          const emailHtmlAdmin = getAdminBookingEmailTemplate(user, booking, primaryRoomDetails);
+          sendEmail({
+            email: adminEmail,
+            subject: `New Booking Received - ${user.name}`,
+            html: emailHtmlAdmin,
+          }).catch(err => console.error('Error sending admin email:', err));
+        });
+      })
+      .catch(emailErr => {
+        console.error('Failed to send confirmation emails in background:', emailErr);
       });
-
-      // Send to Admin
-      const adminEmail = 'thebalifiedvilla@gmail.com';
-      await sendEmail({
-        email: adminEmail,
-        subject: `New Booking Received - ${user.name}`,
-        html: `
-          <h2>New Booking Alert</h2>
-          <p><strong>Guest Name:</strong> ${user.name}</p>
-          <p><strong>Guest Email:</strong> ${user.email}</p>
-          <p><strong>Guest Phone:</strong> ${user.phone || 'N/A'}</p>
-          <p><strong>Room:</strong> ${primaryRoomDetails.name}</p>
-          <p><strong>Check-in:</strong> ${new Date(bookingData.checkIn).toLocaleDateString()}</p>
-          <p><strong>Check-out:</strong> ${new Date(bookingData.checkOut).toLocaleDateString()}</p>
-          <p><strong>Guests:</strong> ${bookingData.adults} Adults, ${bookingData.children || 0} Children</p>
-          <p><strong>Total Amount:</strong> ₹${bookingData.totalAmount}</p>
-        `,
-      });
-    } catch (emailErr) {
-      console.error('Failed to send confirmation emails:', emailErr);
-    }
 
     res.status(201).json({
       message: 'Payment verified and booking created successfully',

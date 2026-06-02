@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
 import toast from 'react-hot-toast';
+import Lottie from 'lottie-react';
+import tickAnimation from '../assets/tick.json';
 import {
   Utensils, Bell, Car, Sparkles, Heart, Layers, ArrowRight,
   ShieldCheck, Loader2, Calendar, Users, Info, ChevronRight, Check, ArrowLeft
@@ -26,6 +28,7 @@ const AddonsPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedAddons, setSelectedAddons] = useState([]);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [paymentState, setPaymentState] = useState('idle'); // 'idle' | 'verifying' | 'success' | 'error'
 
   // If redirect direct without state
   useEffect(() => {
@@ -116,6 +119,7 @@ const AddonsPage = () => {
         order_id: order.id,
         handler: async (response) => {
           try {
+            setPaymentState('verifying');
             const verifyRes = await api.post('/bookings/verify-payment', {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -133,10 +137,16 @@ const AddonsPage = () => {
               }
             });
             if (verifyRes.data.booking) {
-              toast.success('Your premium booking is confirmed!');
-              navigate('/mybookings');
+              setPaymentState('success');
+              setTimeout(() => {
+                setPaymentState('idle');
+                navigate('/mybookings');
+              }, 2500);
+            } else {
+              setPaymentState('error');
             }
           } catch (err) {
+            setPaymentState('error');
             toast.error(err.response?.data?.message || 'Payment verification failed');
           }
         },
@@ -464,6 +474,82 @@ const AddonsPage = () => {
           )}
         </button>
       </div>
+
+      {/* Payment State Overlay Modals */}
+      {paymentState !== 'idle' && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes draw-circle {
+              0% { stroke-dashoffset: 166; }
+              100% { stroke-dashoffset: 0; }
+            }
+            @keyframes draw-check {
+              0% { stroke-dashoffset: 48; }
+              100% { stroke-dashoffset: 0; }
+            }
+            @keyframes scale-up {
+              0%, 100% { transform: none; }
+              50% { transform: scale3d(1.1, 1.1, 1); }
+            }
+          `}} />
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl text-center space-y-6 border border-gray-150 animate-in zoom-in-95 duration-300">
+            {paymentState === 'verifying' && (
+              <div className="py-8 flex flex-col items-center space-y-4">
+                <Loader2 className="w-16 h-16 animate-spin text-slate-800" />
+                <h3 className="text-xl font-bold text-gray-900">Verifying Payment</h3>
+                <p className="text-sm text-gray-505 max-w-xs leading-relaxed">
+                  Please hold on. We are securing your reservation and preparing your itinerary...
+                </p>
+              </div>
+            )}
+
+            {paymentState === 'success' && (
+              <div className="py-4 flex flex-col items-center">
+                {/* Custom animated green tick at the top */}
+                <div className="w-48 h-48 flex items-center justify-center mb-6">
+                  <Lottie animationData={tickAnimation} loop={false} style={{ width: '100%', height: '100%' }} />
+                </div>
+                
+                {/* Title & Details */}
+                <h3 className="text-2xl font-black text-gray-950 tracking-tight">Room Booking Confirmed</h3>
+                <p className="text-sm text-gray-500 mt-2 max-w-sm">
+                  Your luxury stay at <strong>{room?.name}</strong> has been successfully booked!
+                </p>
+
+                {/* Bottom Moving to mybookings indicator */}
+                <div className="mt-8 pt-6 border-t border-gray-100 w-full flex flex-col items-center space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#006749] uppercase tracking-widest bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#006749]" />
+                    Moving to My Bookings...
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {paymentState === 'error' && (
+              <div className="py-6 flex flex-col items-center space-y-4">
+                {/* Custom animated red cross */}
+                <div className="w-20 h-20 flex items-center justify-center mb-2">
+                  <svg className="w-20 h-20 text-rose-500" viewBox="0 0 52 52" fill="none" style={{ transformOrigin: 'center', animation: 'scale-up 0.5s ease-in-out 0.8s' }}>
+                    <circle cx="26" cy="26" r="25" fill="none" stroke="#f43f5e" strokeWidth="3" style={{ strokeDasharray: 166, strokeDashoffset: 166, strokeMiterlimit: 10, animation: 'draw-circle 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards' }} />
+                    <path fill="none" d="M16 16l20 20M36 16L16 36" stroke="#f43f5e" strokeWidth="4" strokeLinecap="round" style={{ strokeDasharray: 48, strokeDashoffset: 48, animation: 'draw-check 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards' }} />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-950">Payment Verification Failed</h3>
+                <p className="text-sm text-gray-505 max-w-xs leading-relaxed">
+                  We could not verify your payment. If your money was deducted, please contact support.
+                </p>
+                <button
+                  onClick={() => setPaymentState('idle')}
+                  className="mt-4 px-6 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors border-none cursor-pointer"
+                >
+                  Back to Checkout
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );

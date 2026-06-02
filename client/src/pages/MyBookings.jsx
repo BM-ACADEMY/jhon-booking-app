@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Clock, CreditCard, ChevronLeft, ChevronRight, Loader2, BedDouble, Star, X, Users } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../api';
+import BookingCardSkeleton from '../components/BookingCardSkeleton';
 
 const SERVER_URL = import.meta.env.VITE_BASE_URL;
 
@@ -92,12 +93,18 @@ const MyBookings = () => {
   const totalPages = Math.ceil(bookings.length / itemsPerPage);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
+  return (
+    <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <BookingCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-4 sm:px-6 lg:px-8">

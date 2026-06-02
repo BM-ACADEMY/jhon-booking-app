@@ -11,14 +11,60 @@ const HeroSection = () => {
   const [loading, setLoading] = useState(true);
 
   // Unified Search State
-  const [location, setLocation] = useState('');
-  const [dateRange, setDateRange] = useState([null, null]);
+  const [location, setLocation] = useState(() => sessionStorage.getItem('booking_location') || '');
+  const [dateRange, setDateRange] = useState(() => {
+    const startStr = sessionStorage.getItem('booking_start_date');
+    const endStr = sessionStorage.getItem('booking_end_date');
+    return [
+      startStr ? new Date(startStr) : null,
+      endStr ? new Date(endStr) : null
+    ];
+  });
   const [startDate, endDate] = dateRange;
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [roomsCount, setRoomsCount] = useState(1);
+  const [adults, setAdults] = useState(() => parseInt(sessionStorage.getItem('booking_adults')) || 1);
+  const [children, setChildren] = useState(() => parseInt(sessionStorage.getItem('booking_children')) || 0);
+  const [roomsCount, setRoomsCount] = useState(() => parseInt(sessionStorage.getItem('booking_rooms')) || 1);
   const [showError, setShowError] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Sync state changes with sessionStorage and broadcast to other components
+  useEffect(() => {
+    sessionStorage.setItem('booking_location', location);
+    sessionStorage.setItem('booking_start_date', startDate ? startDate.toISOString() : '');
+    sessionStorage.setItem('booking_end_date', endDate ? endDate.toISOString() : '');
+    sessionStorage.setItem('booking_adults', adults.toString());
+    sessionStorage.setItem('booking_children', children.toString());
+    sessionStorage.setItem('booking_rooms', roomsCount.toString());
+    window.dispatchEvent(new Event('booking-search-sync'));
+  }, [location, startDate, endDate, adults, children, roomsCount]);
+
+  // Listen to state changes from other components (like Navbar)
+  useEffect(() => {
+    const handleSync = () => {
+      const loc = sessionStorage.getItem('booking_location') || '';
+      const startStr = sessionStorage.getItem('booking_start_date');
+      const endStr = sessionStorage.getItem('booking_end_date');
+      const ad = parseInt(sessionStorage.getItem('booking_adults')) || 1;
+      const ch = parseInt(sessionStorage.getItem('booking_children')) || 0;
+      const rm = parseInt(sessionStorage.getItem('booking_rooms')) || 1;
+
+      if (loc !== location) setLocation(loc);
+      const newStart = startStr ? new Date(startStr) : null;
+      const newEnd = endStr ? new Date(endStr) : null;
+      if (
+        (newStart?.getTime() !== startDate?.getTime()) ||
+        (newEnd?.getTime() !== endDate?.getTime())
+      ) {
+        setDateRange([newStart, newEnd]);
+      }
+      if (ad !== adults) setAdults(ad);
+      if (ch !== children) setChildren(ch);
+      if (rm !== roomsCount) setRoomsCount(rm);
+    };
+
+    window.addEventListener('booking-search-sync', handleSync);
+    return () => window.removeEventListener('booking-search-sync', handleSync);
+  }, [location, startDate, endDate, adults, children, roomsCount]);
 
   // Mobile Search Modal & Animation State
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -27,6 +73,20 @@ const HeroSection = () => {
   // Desktop Guest Popover State
   const [isGuestDropdownOpen, setIsGuestDropdownOpen] = useState(false);
   const guestDropdownRef = useRef(null);
+  const checkoutPickerRef = useRef(null);
+  const mobileCheckoutPickerRef = useRef(null);
+
+  // Track scrolling to hide the hero booking bar when header search bar appears
+  const [scrolledPastThreshold, setScrolledPastThreshold] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolledPastThreshold(window.scrollY > 250);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -120,7 +180,7 @@ const HeroSection = () => {
 
   return (
     <>
-      <section className="relative h-[450px] md:h-[500px] lg:min-h-screen rounded-b-[2.5rem] lg:rounded-b-none font-sans flex flex-col overflow-hidden bg-gray-100 shadow-xl">
+      <section className="relative h-[420px] md:h-[480px] lg:h-[520px] rounded-b-[2.5rem] lg:rounded-b-none font-sans flex flex-col overflow-hidden lg:overflow-visible bg-gray-100 shadow-xl">
         <style>{`
           @keyframes reveal {
             from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
@@ -157,7 +217,7 @@ const HeroSection = () => {
         `}</style>
 
         {/* Dynamic Background */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 overflow-hidden rounded-b-[2.5rem] lg:rounded-b-none">
           {videoSrc ? (
             <video
               key={videoSrc}
@@ -180,14 +240,14 @@ const HeroSection = () => {
         </div>
 
         {/* Main Hero Content Container */}
-        {/* CHANGED: pt-16 to pt-28 (sm:pt-32) to push content down slightly */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col justify-center items-center h-full pt-28 sm:pt-32 lg:pt-0 pb-8 lg:pb-0">
+        {/* CHANGED: pt-16 to pt-28 (sm:pt-32) to push content down slightly, and lg:pt-24 for small desktop height */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col justify-center items-center h-full pt-28 sm:pt-32 lg:pt-24 pb-8 lg:pb-8">
 
           {/* ========================================= */}
           {/* COMMON TITLE & SUBTITLE (Visible on ALL)  */}
           {/* ========================================= */}
-          <div className="flex flex-col items-center w-full mb-6 lg:mb-12">
-            <h1 className="text-[2rem] sm:text-4xl md:text-5xl lg:text-[4rem] font-bold text-white leading-[1.15] tracking-tight mb-3 lg:mb-4 drop-shadow-md animate-reveal [animation-delay:200ms] opacity-0 text-center">
+          <div className="flex flex-col items-center w-full mb-5 lg:mb-8">
+            <h1 className="text-[2rem] sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold text-white leading-[1.15] tracking-tight mb-2.5 lg:mb-3.5 drop-shadow-md animate-reveal [animation-delay:200ms] opacity-0 text-center">
               <span className="text-white inline-block cursor-default">
                 {hero?.titleLine1 || "Experience Luxury Like"}
               </span>
@@ -233,164 +293,178 @@ const HeroSection = () => {
           {/* ========================================= */}
           {/* DESKTOP BOOKING BAR (Visible lg+)         */}
           {/* ========================================= */}
-          <div className="hidden lg:flex bg-white rounded-[2.5rem] p-2 max-w-5xl w-full shadow-2xl flex-row items-center gap-2 divide-x divide-gray-100 animate-reveal [animation-delay:600ms] opacity-0 relative z-40">
-            
-            {/* Check-In */}
-            <div className="flex-[1.2] flex items-center gap-2 px-3 py-2 w-full group">
-              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                <CalendarDays className="w-4 h-4 text-gray-500" />
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Check‑In</p>
-                <DatePicker
-                  selected={startDate}
-                  onChange={(date) => setDateRange([date, endDate])}
-                  selectsStart
-                  startDate={startDate}
-                  endDate={endDate}
-                  minDate={new Date()}
-                  dateFormat="dd MMM yyyy"
-                  placeholderText="Select date"
-                  className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400"
-                  popperProps={{ strategy: "fixed" }}
-                  popperClassName="z-50"
-                />
-              </div>
-            </div>
-
-            {/* Check-Out */}
-            <div className="flex-[1.2] flex items-center gap-2 px-3 py-2 w-full group">
-              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                <CalendarDays className="w-4 h-4 text-gray-500" />
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Check‑Out</p>
-                <DatePicker
-                  selected={endDate}
-                  onChange={(date) => setDateRange([startDate, date])}
-                  selectsEnd
-                  startDate={startDate}
-                  endDate={endDate}
-                  minDate={startDate || new Date()}
-                  dateFormat="dd MMM yyyy"
-                  placeholderText="Select date"
-                  className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400"
-                  popperProps={{ strategy: "fixed" }}
-                  popperClassName="z-50"
-                />
-              </div>
-            </div>
-
-            {/* Guests & Rooms */}
-            <div className="flex-[1.4] flex items-center gap-2 px-3 py-2 w-full group relative" ref={guestDropdownRef}>
-              <div 
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform cursor-pointer"
-                onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
-              >
-                <Users className="w-4 h-4 text-gray-500" />
-              </div>
-              <div 
-                className="flex-1 text-left cursor-pointer"
-                onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
-              >
-                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Guests & Rooms</p>
-                <div className="w-full text-xs font-bold text-gray-900 outline-none bg-transparent flex items-center justify-between">
-                  <span>{adults + children} Guest{adults + children > 1 ? 's' : ''}, {roomsCount} Room{roomsCount > 1 ? 's' : ''}</span>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isGuestDropdownOpen ? 'rotate-180' : ''}`} />
+          <div className={`hidden lg:block lg:absolute lg:bottom-0 lg:left-1/2 lg:-translate-x-1/2 lg:translate-y-1/2 lg:z-40 w-full max-w-5xl px-4 lg:px-0 transition-all duration-300 ${scrolledPastThreshold ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
+            <div className="bg-white rounded-[2.5rem] p-2 w-full shadow-2xl flex flex-row items-center gap-2 divide-x divide-gray-100 animate-reveal [animation-delay:600ms] opacity-0 relative z-40">
+              
+              {/* Check-In */}
+              <div className="flex-[1.2] flex items-center gap-2 px-3 py-2 w-full group">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <CalendarDays className="w-4 h-4 text-gray-500" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Check‑In</p>
+                  <DatePicker
+                    selected={startDate}
+                    onChange={(date) => {
+                      const newStart = date;
+                      const newEnd = (endDate && date && endDate > date) ? endDate : null;
+                      setDateRange([newStart, newEnd]);
+                      if (!newEnd) {
+                        setTimeout(() => {
+                          if (checkoutPickerRef.current) {
+                            checkoutPickerRef.current.setOpen(true);
+                          }
+                        }, 100);
+                      }
+                    }}
+                    selectsStart
+                    startDate={startDate}
+                    endDate={endDate}
+                    minDate={new Date()}
+                    dateFormat="dd MMM yyyy"
+                    placeholderText="Select date"
+                    className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400"
+                    popperProps={{ strategy: "fixed" }}
+                    popperClassName="z-50"
+                  />
                 </div>
               </div>
 
-              {isGuestDropdownOpen && (
-                <div className="absolute top-full right-0 mt-4 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50">
-                  <div className="space-y-4">
-                    {/* Adults */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-800">Adults</span>
-                      <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
-                        <button 
-                          onClick={() => setAdults(Math.max(1, adults - 1))}
-                          className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
-                        >
-                          <span className="text-xl font-light leading-none">−</span>
-                        </button>
-                        <span className="w-4 text-center text-sm font-semibold text-gray-900">{adults}</span>
-                        <button 
-                          onClick={() => setAdults(Math.min(10, adults + 1))}
-                          className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
-                        >
-                          <span className="text-xl font-light leading-none">+</span>
-                        </button>
-                      </div>
-                    </div>
+              {/* Check-Out */}
+              <div className="flex-[1.2] flex items-center gap-2 px-3 py-2 w-full group">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <CalendarDays className="w-4 h-4 text-gray-500" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Check‑Out</p>
+                  <DatePicker
+                    ref={checkoutPickerRef}
+                    selected={endDate}
+                    onChange={(date) => setDateRange([startDate, date])}
+                    selectsEnd
+                    startDate={startDate}
+                    endDate={endDate}
+                    minDate={startDate || new Date()}
+                    dateFormat="dd MMM yyyy"
+                    placeholderText="Select date"
+                    className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400"
+                    popperProps={{ strategy: "fixed" }}
+                    popperClassName="z-50"
+                  />
+                </div>
+              </div>
 
-                    {/* Children */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-800">Children</span>
-                      <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
-                        <button 
-                          onClick={() => setChildren(Math.max(0, children - 1))}
-                          className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
-                        >
-                          <span className="text-xl font-light leading-none">−</span>
-                        </button>
-                        <span className="w-4 text-center text-sm font-semibold text-gray-900">{children}</span>
-                        <button 
-                          onClick={() => setChildren(Math.min(10, children + 1))}
-                          className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
-                        >
-                          <span className="text-xl font-light leading-none">+</span>
-                        </button>
-                      </div>
-                    </div>
+              {/* Guests & Rooms */}
+              <div className="flex-[1.4] flex items-center gap-2 px-3 py-2 w-full group relative" ref={guestDropdownRef}>
+                <div 
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform cursor-pointer"
+                  onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
+                >
+                  <Users className="w-4 h-4 text-gray-500" />
+                </div>
+                <div 
+                  className="flex-1 text-left cursor-pointer"
+                  onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
+                >
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Guests & Rooms</p>
+                  <div className="w-full text-xs font-bold text-gray-900 outline-none bg-transparent flex items-center justify-between">
+                    <span>{adults + children} Guest{adults + children > 1 ? 's' : ''}, {roomsCount} Room{roomsCount > 1 ? 's' : ''}</span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isGuestDropdownOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </div>
 
-                    {/* Rooms */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-800">Rooms</span>
-                      <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
-                        <button 
-                          onClick={() => setRoomsCount(Math.max(1, roomsCount - 1))}
-                          className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
-                        >
-                          <span className="text-xl font-light leading-none">−</span>
-                        </button>
-                        <span className="w-4 text-center text-sm font-semibold text-gray-900">{roomsCount}</span>
-                        <button 
-                          onClick={() => setRoomsCount(Math.min(10, roomsCount + 1))}
-                          className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
-                        >
-                          <span className="text-xl font-light leading-none">+</span>
-                        </button>
+                {isGuestDropdownOpen && (
+                  <div className="absolute top-full right-0 mt-4 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50">
+                    <div className="space-y-4">
+                      {/* Adults */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">Adults</span>
+                        <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                          <button 
+                            onClick={() => setAdults(Math.max(1, adults - 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">−</span>
+                          </button>
+                          <span className="w-4 text-center text-sm font-semibold text-gray-900">{adults}</span>
+                          <button 
+                            onClick={() => setAdults(Math.min(10, adults + 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">+</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Children */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">Children</span>
+                        <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                          <button 
+                            onClick={() => setChildren(Math.max(0, children - 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">−</span>
+                          </button>
+                          <span className="w-4 text-center text-sm font-semibold text-gray-900">{children}</span>
+                          <button 
+                            onClick={() => setChildren(Math.min(10, children + 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">+</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Rooms */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">Rooms</span>
+                        <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                          <button 
+                            onClick={() => setRoomsCount(Math.max(1, roomsCount - 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">−</span>
+                          </button>
+                          <span className="w-4 text-center text-sm font-semibold text-gray-900">{roomsCount}</span>
+                          <button 
+                            onClick={() => setRoomsCount(Math.min(10, roomsCount + 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">+</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Search Button */}
-            <div className="px-2 w-full md:w-auto mt-2 md:mt-0 flex self-stretch py-1">
-              <button
-                onClick={handleSearch}
-                className="w-full md:w-auto bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-xs rounded-full px-6 py-3 flex items-center justify-center gap-2 transition-all hover:shadow-lg active:scale-95 group"
-              >
-                <Search className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
-                <span>SEARCH</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Error Banner below Desktop Booking Bar (placed on the left side with an upward pointing arrow - ultra compact size) */}
-          {showError && (
-            <div className="hidden lg:block w-full max-w-4xl relative z-30">
-              <div className="absolute left-8 top-3 bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] px-3 py-1.5 rounded-lg shadow-md animate-in fade-in slide-in-from-top-1 duration-300 w-fit flex items-center gap-1.5">
-                {/* Upward pointing indicator arrow */}
-                <div className="absolute -top-[4.5px] left-6 w-2 h-2 bg-[#FFFBEB] border-t border-l border-[#FDE68A] rotate-45"></div>
-                
-                <AlertTriangle className="w-3.5 h-3.5 text-[#D97706] shrink-0 relative z-10" strokeWidth={2.5} />
-                <span className="font-semibold text-[11px] tracking-wide relative z-10">{errorMsg}</span>
+              {/* Search Button */}
+              <div className="px-2 w-full md:w-auto mt-2 md:mt-0 flex self-stretch py-1">
+                <button
+                  onClick={handleSearch}
+                  className="w-full md:w-auto bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-xs rounded-full px-6 py-3 flex items-center justify-center gap-2 transition-all hover:shadow-lg active:scale-95 group"
+                >
+                  <Search className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
+                  <span>SEARCH</span>
+                </button>
               </div>
             </div>
-          )}
+
+            {/* Error Banner below Desktop Booking Bar (placed on the left side with an upward pointing arrow - ultra compact size) */}
+            {showError && (
+              <div className="w-full relative z-30">
+                <div className="absolute left-8 top-3 bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] px-3 py-1.5 rounded-lg shadow-md animate-in fade-in slide-in-from-top-1 duration-300 w-fit flex items-center gap-1.5">
+                  {/* Upward pointing indicator arrow */}
+                  <div className="absolute -top-[4.5px] left-6 w-2 h-2 bg-[#FFFBEB] border-t border-l border-[#FDE68A] rotate-45"></div>
+                  
+                  <AlertTriangle className="w-3.5 h-3.5 text-[#D97706] shrink-0 relative z-10" strokeWidth={2.5} />
+                  <span className="font-semibold text-[11px] tracking-wide relative z-10">{errorMsg}</span>
+                </div>
+              </div>
+            )}
+          </div>
           
         </div>
       </section>
@@ -420,7 +494,18 @@ const HeroSection = () => {
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Check-In</p>
                   <DatePicker
                     selected={startDate}
-                    onChange={(date) => setDateRange([date, endDate])}
+                    onChange={(date) => {
+                      const newStart = date;
+                      const newEnd = (endDate && date && endDate > date) ? endDate : null;
+                      setDateRange([newStart, newEnd]);
+                      if (!newEnd) {
+                        setTimeout(() => {
+                          if (mobileCheckoutPickerRef.current) {
+                            mobileCheckoutPickerRef.current.setOpen(true);
+                          }
+                        }, 100);
+                      }
+                    }}
                     selectsStart
                     startDate={startDate}
                     endDate={endDate}
@@ -439,6 +524,7 @@ const HeroSection = () => {
                 <div className="flex-1">
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Check-Out</p>
                   <DatePicker
+                    ref={mobileCheckoutPickerRef}
                     selected={endDate}
                     onChange={(date) => setDateRange([startDate, date])}
                     selectsEnd

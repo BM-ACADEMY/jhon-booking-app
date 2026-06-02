@@ -10,9 +10,14 @@ import {
   ChevronDown,
   ChevronRight,
   Heart,
+  CalendarDays,
+  Search,
+  Users,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const navLinks = [
   { label: "Home", to: "/" },
@@ -33,11 +38,101 @@ const Navbar = () => {
   const isRoomDetailPage = (location.pathname.startsWith("/rooms/") && location.pathname !== "/rooms") || location.pathname === "/mybookings" || location.pathname === "/wishlist" || location.pathname === "/profile";
   const isHeaderScrolled = scrolled || isRoomDetailPage;
 
+  // Sync search state with sessionStorage / Hero section
+  const [locationState, setLocationState] = useState(() => sessionStorage.getItem('booking_location') || '');
+  const [dateRange, setDateRange] = useState(() => {
+    const startStr = sessionStorage.getItem('booking_start_date');
+    const endStr = sessionStorage.getItem('booking_end_date');
+    return [
+      startStr ? new Date(startStr) : null,
+      endStr ? new Date(endStr) : null
+    ];
+  });
+  const [startDate, endDate] = dateRange;
+  const [adults, setAdults] = useState(() => parseInt(sessionStorage.getItem('booking_adults')) || 1);
+  const [children, setChildren] = useState(() => parseInt(sessionStorage.getItem('booking_children')) || 0);
+  const [roomsCount, setRoomsCount] = useState(() => parseInt(sessionStorage.getItem('booking_rooms')) || 1);
+
+  const [isNavGuestDropdownOpen, setIsNavGuestDropdownOpen] = useState(false);
+  const [showSearchInHeader, setShowSearchInHeader] = useState(false);
+
+  const navGuestDropdownRef = useRef(null);
+  const navCheckoutPickerRef = useRef(null);
+
+  // Sync state changes with sessionStorage and broadcast to other components
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    sessionStorage.setItem('booking_location', locationState);
+    sessionStorage.setItem('booking_start_date', startDate ? startDate.toISOString() : '');
+    sessionStorage.setItem('booking_end_date', endDate ? endDate.toISOString() : '');
+    sessionStorage.setItem('booking_adults', adults.toString());
+    sessionStorage.setItem('booking_children', children.toString());
+    sessionStorage.setItem('booking_rooms', roomsCount.toString());
+    window.dispatchEvent(new Event('booking-search-sync'));
+  }, [locationState, startDate, endDate, adults, children, roomsCount]);
+
+  // Listen to state changes from other components (like HeroSection)
+  useEffect(() => {
+    const handleSync = () => {
+      const loc = sessionStorage.getItem('booking_location') || '';
+      const startStr = sessionStorage.getItem('booking_start_date');
+      const endStr = sessionStorage.getItem('booking_end_date');
+      const ad = parseInt(sessionStorage.getItem('booking_adults')) || 1;
+      const ch = parseInt(sessionStorage.getItem('booking_children')) || 0;
+      const rm = parseInt(sessionStorage.getItem('booking_rooms')) || 1;
+
+      if (loc !== locationState) setLocationState(loc);
+      const newStart = startStr ? new Date(startStr) : null;
+      const newEnd = endStr ? new Date(endStr) : null;
+      if (
+        (newStart?.getTime() !== startDate?.getTime()) ||
+        (newEnd?.getTime() !== endDate?.getTime())
+      ) {
+        setDateRange([newStart, newEnd]);
+      }
+      if (ad !== adults) setAdults(ad);
+      if (ch !== children) setChildren(ch);
+      if (rm !== roomsCount) setRoomsCount(rm);
+    };
+
+    window.addEventListener('booking-search-sync', handleSync);
+    return () => window.removeEventListener('booking-search-sync', handleSync);
+  }, [locationState, startDate, endDate, adults, children, roomsCount]);
+
+  // Close guest dropdown on clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (navGuestDropdownRef.current && !navGuestDropdownRef.current.contains(event.target)) {
+        setIsNavGuestDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const formatDateLocal = (date) => {
+    if (!date) return '';
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const handleSearch = () => {
+    if (!startDate || !endDate) return;
+    const checkInStr = formatDateLocal(startDate);
+    const checkOutStr = formatDateLocal(endDate);
+    navigate(`/rooms?location=${locationState}&checkIn=${checkInStr}&checkOut=${checkOutStr}&adults=${adults}&children=${children}&rooms=${roomsCount}`);
+  };
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 40);
+      const isSearchablePage = location.pathname === '/' || location.pathname === '/rooms';
+      setShowSearchInHeader(isSearchablePage && window.scrollY > 250);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [location.pathname]);
 
   // Close menus on route change
   useEffect(() => {
@@ -74,7 +169,7 @@ const Navbar = () => {
     <header className="fixed top-0 left-0 right-0 z-50 p-4 sm:p-6 pointer-events-none outline-none border-none">
       <div
         className={`pointer-events-auto max-w-7xl mx-auto transition-all duration-500 ease-out border rounded-full ${isHeaderScrolled
-          ? "bg-white/80 backdrop-blur-[4px] backdrop-saturate-150 border-gray-300/80 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.8)] py-3 px-6 lg:px-8"
+          ? "bg-white/90 backdrop-blur-[4px] backdrop-saturate-150 border-gray-300/80 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.8)] py-3 px-6 lg:px-8"
           : "bg-transparent border-transparent py-2 px-4 lg:px-6 shadow-none"
           }`}
       >
@@ -94,15 +189,15 @@ const Navbar = () => {
                 className={`w-5 h-5 transition-colors ${isHeaderScrolled ? "text-white" : "text-white"}`}
               />
             </div>
-            <div className="leading-tight">
+            <div className="leading-tight flex-shrink-0 whitespace-nowrap">
               <p
-                className={`font-bold text-[15px] tracking-wide transition-colors ${isHeaderScrolled ? "text-gray-900" : "text-white"
+                className={`font-bold text-[15px] tracking-wide transition-colors whitespace-nowrap ${isHeaderScrolled ? "text-gray-900" : "text-white"
                   }`}
               >
                 The Balified Villa
               </p>
               <p
-                className={`text-[10px] uppercase tracking-[0.2em] transition-colors ${isHeaderScrolled ? "text-gray-500" : "text-white/70"
+                className={`text-[10px] uppercase tracking-[0.2em] transition-colors whitespace-nowrap ${isHeaderScrolled ? "text-gray-500" : "text-white/70"
                   }`}
               >
                 Luxury Hotel
@@ -110,34 +205,198 @@ const Navbar = () => {
             </div>
           </Link>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center gap-10">
-            {navLinks.map(({ label, to }) => {
-              const active = location.pathname === to;
-              return (
-                <Link
-                  key={to}
-                  to={to}
-                  className={`text-sm font-medium transition-all relative group tracking-wider outline-none ${isHeaderScrolled
-                    ? active
-                      ? "text-gray-900"
-                      : "text-gray-600 hover:text-gray-900"
-                    : active
-                      ? "text-white"
-                      : "text-white/70 hover:text-white"
-                    }`}
-                >
-                  {label}
-                  <span
-                    className={`absolute -bottom-2 left-1/2 -translate-x-1/2 h-[3px] w-[3px] rounded-full transition-all duration-300 ${active
-                      ? "opacity-100 bg-current scale-100"
-                      : "opacity-0 bg-current scale-0 group-hover:opacity-50 group-hover:scale-100"
-                      }`}
+          {/* Desktop Nav Links / Compact Search Bar */}
+          {showSearchInHeader ? (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="hidden lg:flex bg-transparent max-w-3xl w-full items-center gap-1.5 divide-x divide-gray-200/50"
+            >
+              {/* Check-In */}
+              <div className="flex-[1.2] flex items-center gap-2 px-3 py-1.5 w-full group">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <CalendarDays className="w-4 h-4 text-gray-500" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Check‑In</p>
+                  <DatePicker
+                    selected={startDate}
+                    onChange={(date) => {
+                      const newStart = date;
+                      const newEnd = (endDate && date && endDate > date) ? endDate : null;
+                      setDateRange([newStart, newEnd]);
+                      if (!newEnd) {
+                        setTimeout(() => {
+                          if (navCheckoutPickerRef.current) {
+                            navCheckoutPickerRef.current.setOpen(true);
+                          }
+                        }, 100);
+                      }
+                    }}
+                    selectsStart
+                    startDate={startDate}
+                    endDate={endDate}
+                    minDate={new Date()}
+                    dateFormat="dd MMM yyyy"
+                    placeholderText="Select date"
+                    className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400 leading-tight"
+                    popperProps={{ strategy: "fixed" }}
+                    popperClassName="z-50"
                   />
-                </Link>
-              );
-            })}
-          </nav>
+                </div>
+              </div>
+
+              {/* Check-Out */}
+              <div className="flex-[1.2] flex items-center gap-2 px-3 py-1.5 w-full group">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <CalendarDays className="w-4 h-4 text-gray-500" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Check‑Out</p>
+                  <DatePicker
+                    ref={navCheckoutPickerRef}
+                    selected={endDate}
+                    onChange={(date) => setDateRange([startDate, date])}
+                    selectsEnd
+                    startDate={startDate}
+                    endDate={endDate}
+                    minDate={startDate || new Date()}
+                    dateFormat="dd MMM yyyy"
+                    placeholderText="Select date"
+                    className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400 leading-tight"
+                    popperProps={{ strategy: "fixed" }}
+                    popperClassName="z-50"
+                  />
+                </div>
+              </div>
+
+              {/* Guests & Rooms */}
+              <div className="flex-[1.4] flex items-center gap-2 px-3 py-1.5 w-full group relative" ref={navGuestDropdownRef}>
+                <div 
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform cursor-pointer"
+                  onClick={() => setIsNavGuestDropdownOpen(!isNavGuestDropdownOpen)}
+                >
+                  <Users className="w-4 h-4 text-gray-500" />
+                </div>
+                <div 
+                  className="flex-1 text-left cursor-pointer"
+                  onClick={() => setIsNavGuestDropdownOpen(!isNavGuestDropdownOpen)}
+                >
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Guests & Rooms</p>
+                  <div className="w-full text-xs font-bold text-gray-900 outline-none bg-transparent flex items-center justify-between mt-0.5">
+                    <span>{adults} Adult{adults > 1 ? 's' : ''}{children > 0 ? `, ${children} Child${children > 1 ? 'ren' : ''}` : ''}, {roomsCount} Room{roomsCount > 1 ? 's' : ''}</span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isNavGuestDropdownOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </div>
+
+                {isNavGuestDropdownOpen && (
+                  <div className="absolute top-full right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50">
+                    <div className="space-y-4">
+                      {/* Adults */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">Adults</span>
+                        <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                          <button 
+                            onClick={() => setAdults(Math.max(1, adults - 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">−</span>
+                          </button>
+                          <span className="w-4 text-center text-sm font-semibold text-gray-900">{adults}</span>
+                          <button 
+                            onClick={() => setAdults(Math.min(10, adults + 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">+</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Children */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">Children</span>
+                        <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                          <button 
+                            onClick={() => setChildren(Math.max(0, children - 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">−</span>
+                          </button>
+                          <span className="w-4 text-center text-sm font-semibold text-gray-900">{children}</span>
+                          <button 
+                            onClick={() => setChildren(Math.min(10, children + 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">+</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Rooms */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">Rooms</span>
+                        <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                          <button 
+                            onClick={() => setRoomsCount(Math.max(1, roomsCount - 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">−</span>
+                          </button>
+                          <span className="w-4 text-center text-sm font-semibold text-gray-900">{roomsCount}</span>
+                          <button 
+                            onClick={() => setRoomsCount(Math.min(10, roomsCount + 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">+</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Search Button */}
+              <div className="px-2 w-full md:w-auto mt-0 flex self-stretch py-0.5">
+                <button
+                  onClick={handleSearch}
+                  className="w-full md:w-auto bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-[10px] rounded-full px-5 py-2.5 flex items-center justify-center gap-1.5 transition-all hover:shadow active:scale-95 group"
+                >
+                  <Search className="w-3.5 h-3.5 group-hover:scale-110 transition-transform duration-300" />
+                  <span>SEARCH</span>
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <nav className="hidden lg:flex items-center gap-10">
+              {navLinks.map(({ label, to }) => {
+                const active = location.pathname === to;
+                return (
+                  <Link
+                    key={to}
+                    to={to}
+                    className={`text-sm font-medium transition-all relative group tracking-wider outline-none ${isHeaderScrolled
+                      ? active
+                        ? "text-gray-900"
+                        : "text-gray-600 hover:text-gray-900"
+                      : active
+                        ? "text-white"
+                        : "text-white/70 hover:text-white"
+                      }`}
+                  >
+                    {label}
+                    <span
+                      className={`absolute -bottom-2 left-1/2 -translate-x-1/2 h-[3px] w-[3px] rounded-full transition-all duration-300 ${active
+                        ? "opacity-100 bg-current scale-100"
+                        : "opacity-0 bg-current scale-0 group-hover:opacity-50 group-hover:scale-100"
+                        }`}
+                    />
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
 
           {/* Desktop Right Section */}
           <div className="hidden lg:flex items-center gap-5">

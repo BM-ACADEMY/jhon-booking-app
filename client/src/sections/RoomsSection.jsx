@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Loader2, BedDouble, Star, Heart, Users, Bath, Maximize } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api, { getRoomSlug } from '../api';
-
+import RoomCardSkeleton from '../components/RoomCardSkeleton';
 const RoomsSection = () => {
   const [rooms, setRooms] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -197,8 +197,10 @@ const RoomsSection = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <RoomCardSkeleton key={i} />
+            ))}
           </div>
         ) : grouped.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
