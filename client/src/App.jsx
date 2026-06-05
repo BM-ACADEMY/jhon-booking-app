@@ -29,6 +29,7 @@ import Settings from './admin/pages/Settings';
 import AdminProfile from './admin/pages/AdminProfile';
 import RoomsReview from './admin/pages/RoomsReview';
 import AddonsManagement from './admin/pages/AddonsManagement';
+import RoomVisitors from './admin/pages/RoomVisitors';
 import AddonsPage from './pages/AddonsPage';
 
 const ProtectedRoute = ({ children }) => {
@@ -80,6 +81,7 @@ const AppRoutes = () => (
       <Route path="sections" element={<DynamicSections />} />
       <Route path="settings" element={<Settings />} />
       <Route path="profile" element={<AdminProfile />} />
+      <Route path="visitors" element={<RoomVisitors />} />
     </Route>
 
     <Route path="*" element={<Navigate to="/" replace />} />

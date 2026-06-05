@@ -10,6 +10,13 @@ const settingSchema = new mongoose.Schema({
   instagram: { type: String, default: '' },
   twitter: { type: String, default: '' },
   linkedin: { type: String, default: '' },
+  cancelDurationHrs: { type: Number, default: 24 },
+  advancePercent1Day: { type: Number, default: 100 },
+  advancePercent2Day: { type: Number, default: 50 },
+  advancePercent3Day: { type: Number, default: 40 },
+  advancePercent4Day: { type: Number, default: 30 },
+  advancePercent5To7Days: { type: Number, default: 25 },
+  advancePercentAbove7Days: { type: Number, default: 20 },
 }, { timestamps: true });
 
 export default mongoose.model('Setting', settingSchema);

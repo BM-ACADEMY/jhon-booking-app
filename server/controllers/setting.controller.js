@@ -14,7 +14,14 @@ export const getSettings = async (req, res) => {
         facebook: '',
         instagram: '',
         twitter: '',
-        linkedin: ''
+        linkedin: '',
+        cancelDurationHrs: 24,
+        advancePercent1Day: 100,
+        advancePercent2Day: 50,
+        advancePercent3Day: 40,
+        advancePercent4Day: 30,
+        advancePercent5To7Days: 25,
+        advancePercentAbove7Days: 20
       });
     }
     res.json(setting);
@@ -34,7 +41,14 @@ export const updateSettings = async (req, res) => {
       facebook,
       instagram,
       twitter,
-      linkedin
+      linkedin,
+      cancelDurationHrs,
+      advancePercent1Day,
+      advancePercent2Day,
+      advancePercent3Day,
+      advancePercent4Day,
+      advancePercent5To7Days,
+      advancePercentAbove7Days
     } = req.body;
 
     let setting = await Setting.findOne();
@@ -49,6 +63,13 @@ export const updateSettings = async (req, res) => {
       setting.instagram = instagram !== undefined ? instagram : setting.instagram;
       setting.twitter = twitter !== undefined ? twitter : setting.twitter;
       setting.linkedin = linkedin !== undefined ? linkedin : setting.linkedin;
+      setting.cancelDurationHrs = cancelDurationHrs !== undefined ? Number(cancelDurationHrs) : setting.cancelDurationHrs;
+      setting.advancePercent1Day = advancePercent1Day !== undefined ? Number(advancePercent1Day) : setting.advancePercent1Day;
+      setting.advancePercent2Day = advancePercent2Day !== undefined ? Number(advancePercent2Day) : setting.advancePercent2Day;
+      setting.advancePercent3Day = advancePercent3Day !== undefined ? Number(advancePercent3Day) : setting.advancePercent3Day;
+      setting.advancePercent4Day = advancePercent4Day !== undefined ? Number(advancePercent4Day) : setting.advancePercent4Day;
+      setting.advancePercent5To7Days = advancePercent5To7Days !== undefined ? Number(advancePercent5To7Days) : setting.advancePercent5To7Days;
+      setting.advancePercentAbove7Days = advancePercentAbove7Days !== undefined ? Number(advancePercentAbove7Days) : setting.advancePercentAbove7Days;
       await setting.save();
     } else {
       setting = await Setting.create({
@@ -60,7 +81,14 @@ export const updateSettings = async (req, res) => {
         facebook,
         instagram,
         twitter,
-        linkedin
+        linkedin,
+        cancelDurationHrs,
+        advancePercent1Day,
+        advancePercent2Day,
+        advancePercent3Day,
+        advancePercent4Day,
+        advancePercent5To7Days,
+        advancePercentAbove7Days
       });
     }
 

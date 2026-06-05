@@ -29,6 +29,8 @@ const AddonsPage = () => {
   const [selectedAddons, setSelectedAddons] = useState([]);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [paymentState, setPaymentState] = useState('idle'); // 'idle' | 'verifying' | 'success' | 'error'
+  const [advancePercent, setAdvancePercent] = useState(100);
+  const [paymentType, setPaymentType] = useState('full'); // 'full' | 'advance'
 
   // If redirect direct without state
   useEffect(() => {
@@ -38,7 +40,17 @@ const AddonsPage = () => {
     }
   }, [state, navigate]);
 
-  const { roomId, checkIn, checkOut, adults = 1, children = 0, roomsCount = 1, guests, total: staySubtotal, nights, breakdown } = state || {};
+  const { roomId, checkIn, checkOut, adults = 1, children = 0, infants = 0, roomsCount = 1, selectedRoomIds = [], guests, total: staySubtotal, nights, breakdown } = state || {};
+
+  const getAdvancePercent = (settings, nightsCount) => {
+    if (!settings) return 100;
+    if (nightsCount === 1) return settings.advancePercent1Day ?? 100;
+    if (nightsCount === 2) return settings.advancePercent2Day ?? 50;
+    if (nightsCount === 3) return settings.advancePercent3Day ?? 40;
+    if (nightsCount === 4) return settings.advancePercent4Day ?? 30;
+    if (nightsCount >= 5 && nightsCount <= 7) return settings.advancePercent5To7Days ?? 25;
+    return settings.advancePercentAbove7Days ?? 20;
+  };
 
   useEffect(() => {
     const fetchRoomDetailsAndAddons = async () => {
@@ -47,12 +59,15 @@ const AddonsPage = () => {
         setLoading(true);
         // Wait 1200ms to show the beautifully designed skeleton-loading state as requested
         await new Promise(resolve => setTimeout(resolve, 1200));
-        const [roomRes, addonsRes] = await Promise.all([
+        const [roomRes, addonsRes, settingsRes] = await Promise.all([
           api.get(`/rooms/${roomId}`),
-          api.get('/addons')
+          api.get('/addons'),
+          api.get('/settings')
         ]);
         setRoom(roomRes.data);
         setAddons(addonsRes.data);
+        const percent = getAdvancePercent(settingsRes.data, nights || 1);
+        setAdvancePercent(percent);
       } catch (err) {
         toast.error('Failed to load details');
         navigate('/rooms');
@@ -97,16 +112,19 @@ const AddonsPage = () => {
       }));
 
       const finalAmount = isSkipping ? staySubtotal : finalTotal;
+      const actualAmount = paymentType === 'advance' ? Math.round(finalAmount * (advancePercent / 100)) : finalAmount;
 
       const orderRes = await api.post('/bookings/razorpay-order', {
-        amount: finalAmount,
+        amount: actualAmount,
         currency: 'INR',
         roomId: room._id,
         checkIn,
         checkOut,
         adults,
         children,
-        roomsCount
+        infants,
+        roomsCount,
+        selectedRoomIds
       });
       const order = orderRes.data;
 
@@ -115,7 +133,7 @@ const AddonsPage = () => {
         amount: order.amount,
         currency: order.currency,
         name: 'The Balified Villa',
-        description: `Room stay + ${addonsPayload.length} Add-on(s)`,
+        description: paymentType === 'advance' ? `Advance stay payment (${advancePercent}%)` : `Room stay + ${addonsPayload.length} Add-on(s)`,
         order_id: order.id,
         handler: async (response) => {
           try {
@@ -130,9 +148,13 @@ const AddonsPage = () => {
                 checkOut,
                 adults,
                 children,
+                infants,
                 roomsCount,
-                guests: adults + children,
+                selectedRoomIds,
+                guests: adults + children + infants,
                 totalAmount: finalAmount,
+                paidAmount: actualAmount,
+                paymentType,
                 addons: addonsPayload
               }
             });
@@ -359,7 +381,7 @@ const AddonsPage = () => {
                   <div>
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Occupancy</p>
                     <p className="text-sm font-bold text-gray-700">
-                      {adults} Ad{children > 0 ? `·${children}Ch` : ''}
+                      {adults} Ad{children > 0 ? `·${children}Ch` : ''}{infants > 0 ? `·${infants}Inf` : ''}
                     </p>
                   </div>
                 </div>
@@ -375,14 +397,16 @@ const AddonsPage = () => {
               {/* Detailed Date-by-date Breakdown */}
               <div className="space-y-3">
                 <h4 className="text-[10px] font-black uppercase tracking-wider text-gray-400">Stay Price Breakdown</h4>
-                <div className="space-y-2 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-                  {breakdown && breakdown.map((day, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-sm">
-                      <span className="text-gray-500 font-medium">{formatDateLabel(day.dateStr)}</span>
-                      <span className="font-bold text-gray-800">₹{day.price.toLocaleString('en-IN')}</span>
-                    </div>
-                  ))}
-                  <div className="h-px bg-gray-100 my-2" />
+                <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 space-y-2">
+                  <div className="max-h-36 overflow-y-auto pr-1 space-y-2">
+                    {breakdown && breakdown.map((day, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-xs">
+                        <span className="text-gray-500 font-medium">{formatDateLabel(day.dateStr)}</span>
+                        <span className="font-bold text-gray-800">₹{day.price.toLocaleString('en-IN')}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="h-px bg-gray-200/60 my-2" />
                   <div className="flex justify-between items-center text-sm font-bold">
                     <span className="text-gray-600">Stay Subtotal ({nights} nights)</span>
                     <span className="text-gray-900">₹{staySubtotal.toLocaleString('en-IN')}</span>
@@ -413,16 +437,69 @@ const AddonsPage = () => {
                 </div>
               )}
 
-              {/* Total Billing */}
-              <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-gray-400  tracking-widest">Total Amount</p>
+              {/* Payment Type Selection */}
+              {advancePercent < 100 && (
+                <div className="space-y-3 pt-4 border-t border-gray-100 animate-in fade-in duration-300">
+                  <h4 className="text-[10px] font-black uppercase tracking-wider text-gray-450">Payment Type</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Pay Full Card */}
+                    <div
+                      onClick={() => setPaymentType('full')}
+                      className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                        paymentType === 'full'
+                          ? 'border-[#ffe135] bg-yellow-50/5'
+                          : 'border-gray-100 hover:border-gray-200 bg-white'
+                      }`}
+                    >
+                      <span className="text-xs font-bold text-gray-900">Pay Full</span>
+                      <span className="text-base font-black text-gray-900 mt-2">
+                        ₹{finalTotal.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+
+                    {/* Pay Advance Card */}
+                    <div
+                      onClick={() => setPaymentType('advance')}
+                      className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                        paymentType === 'advance'
+                          ? 'border-[#ffe135] bg-yellow-50/5'
+                          : 'border-gray-100 hover:border-gray-200 bg-white'
+                      }`}
+                    >
+                      <div>
+                        <span className="text-xs font-bold text-gray-900">Pay Advance</span>
+                        <span className="block text-[8px] text-gray-400 mt-0.5 uppercase tracking-wide font-black">
+                          {advancePercent}% for {nights} night(s)
+                        </span>
+                      </div>
+                      <span className="text-base font-black text-gray-900 mt-2">
+                        ₹{Math.round(finalTotal * (advancePercent / 100)).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-3xl font-black text-gray-900">
+              )}
+
+              {/* Total Billing */}
+              <div className="pt-4 border-t border-gray-100 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-gray-400 tracking-widest">Total Amount</p>
+                  <span className="text-2xl font-black text-gray-900">
                     ₹{finalTotal.toLocaleString('en-IN')}
                   </span>
                 </div>
+                {paymentType === 'advance' && (
+                  <>
+                    <div className="flex items-center justify-between text-xs font-semibold text-emerald-600">
+                      <p>Due Now (Advance)</p>
+                      <span>₹{Math.round(finalTotal * (advancePercent / 100)).toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs font-semibold text-amber-600">
+                      <p>Remaining Balance</p>
+                      <span>₹{(finalTotal - Math.round(finalTotal * (advancePercent / 100))).toLocaleString('en-IN')}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Primary Action Button */}
@@ -435,7 +512,7 @@ const AddonsPage = () => {
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    Confirm & Pay
+                    {paymentType === 'advance' ? 'Pay Advance Stay' : 'Confirm & Pay'}
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -454,9 +531,11 @@ const AddonsPage = () => {
       {/* Sticky Bottom Bar for Mobile Screens */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/20 backdrop-blur-lg border-t border-white/30 p-4 flex items-center justify-between lg:hidden shadow-[0_-8px_24px_rgba(0,0,0,0.06)]">
         <div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Amount</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            {paymentType === 'advance' ? 'Due Now (Advance)' : 'Total Amount'}
+          </p>
           <p className="text-xl font-black text-gray-900 mt-0.5">
-            ₹{finalTotal.toLocaleString('en-IN')}
+            ₹{(paymentType === 'advance' ? Math.round(finalTotal * (advancePercent / 100)) : finalTotal).toLocaleString('en-IN')}
           </p>
         </div>
         <button
@@ -468,7 +547,7 @@ const AddonsPage = () => {
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <>
-              Pay
+              {paymentType === 'advance' ? 'Pay Advance' : 'Pay'}
               <ArrowRight className="w-3.5 h-3.5" />
             </>
           )}

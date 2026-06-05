@@ -155,7 +155,7 @@ const RoomsSection = () => {
               ))}
             </div>
             <span className="text-xs text-gray-500 font-bold">
-              ({room.reviewCount > 0 ? room.reviewCount * 12 + 5 : 429} Visitors)
+              ({room.visitorsCount || 0} Visitors)
             </span>
           </div>
 

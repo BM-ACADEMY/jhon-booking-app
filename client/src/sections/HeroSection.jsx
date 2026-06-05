@@ -23,6 +23,7 @@ const HeroSection = () => {
   const [startDate, endDate] = dateRange;
   const [adults, setAdults] = useState(() => parseInt(sessionStorage.getItem('booking_adults')) || 1);
   const [children, setChildren] = useState(() => parseInt(sessionStorage.getItem('booking_children')) || 0);
+  const [infants, setInfants] = useState(() => parseInt(sessionStorage.getItem('booking_infants')) || 0);
   const [roomsCount, setRoomsCount] = useState(() => parseInt(sessionStorage.getItem('booking_rooms')) || 1);
   const [showError, setShowError] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -34,9 +35,10 @@ const HeroSection = () => {
     sessionStorage.setItem('booking_end_date', endDate ? endDate.toISOString() : '');
     sessionStorage.setItem('booking_adults', adults.toString());
     sessionStorage.setItem('booking_children', children.toString());
+    sessionStorage.setItem('booking_infants', infants.toString());
     sessionStorage.setItem('booking_rooms', roomsCount.toString());
     window.dispatchEvent(new Event('booking-search-sync'));
-  }, [location, startDate, endDate, adults, children, roomsCount]);
+  }, [location, startDate, endDate, adults, children, infants, roomsCount]);
 
   // Listen to state changes from other components (like Navbar)
   useEffect(() => {
@@ -46,6 +48,7 @@ const HeroSection = () => {
       const endStr = sessionStorage.getItem('booking_end_date');
       const ad = parseInt(sessionStorage.getItem('booking_adults')) || 1;
       const ch = parseInt(sessionStorage.getItem('booking_children')) || 0;
+      const inf = parseInt(sessionStorage.getItem('booking_infants')) || 0;
       const rm = parseInt(sessionStorage.getItem('booking_rooms')) || 1;
 
       if (loc !== location) setLocation(loc);
@@ -59,12 +62,13 @@ const HeroSection = () => {
       }
       if (ad !== adults) setAdults(ad);
       if (ch !== children) setChildren(ch);
+      if (inf !== infants) setInfants(inf);
       if (rm !== roomsCount) setRoomsCount(rm);
     };
 
     window.addEventListener('booking-search-sync', handleSync);
     return () => window.removeEventListener('booking-search-sync', handleSync);
-  }, [location, startDate, endDate, adults, children, roomsCount]);
+  }, [location, startDate, endDate, adults, children, infants, roomsCount]);
 
   // Mobile Search Modal & Animation State
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -144,7 +148,7 @@ const HeroSection = () => {
     const checkInStr = formatDateLocal(startDate);
     const checkOutStr = formatDateLocal(endDate);
     setIsMobileSearchOpen(false);
-    navigate(`/rooms?location=${location}&checkIn=${checkInStr}&checkOut=${checkOutStr}&adults=${adults}&children=${children}&rooms=${roomsCount}`);
+    navigate(`/rooms?location=${location}&checkIn=${checkInStr}&checkOut=${checkOutStr}&adults=${adults}&children=${children}&infants=${infants}&rooms=${roomsCount}`);
   };
 
   useEffect(() => {
@@ -176,7 +180,7 @@ const HeroSection = () => {
     ? `${startDate.getDate()} ${startDate.toLocaleString('default', { month: 'short' })} - ${endDate.getDate()} ${endDate.toLocaleString('default', { month: 'short' })}` 
     : 'Date range';
     
-  const guestText = `${adults} Adult${adults > 1 ? 's' : ''}${children > 0 ? `, ${children} Child${children > 1 ? 'ren' : ''}` : ''} · ${roomsCount} Room${roomsCount > 1 ? 's' : ''}`;
+  const guestText = `${adults} Adult${adults > 1 ? 's' : ''}${children > 0 ? `, ${children} Child${children > 1 ? 'ren' : ''}` : ''}${infants > 0 ? `, ${infants} Infant${infants > 1 ? 's' : ''}` : ''} · ${roomsCount} Room${roomsCount > 1 ? 's' : ''}`;
 
   return (
     <>
@@ -306,16 +310,12 @@ const HeroSection = () => {
                   <DatePicker
                     selected={startDate}
                     onChange={(date) => {
-                      const newStart = date;
-                      const newEnd = (endDate && date && endDate > date) ? endDate : null;
-                      setDateRange([newStart, newEnd]);
-                      if (!newEnd) {
-                        setTimeout(() => {
-                          if (checkoutPickerRef.current) {
-                            checkoutPickerRef.current.setOpen(true);
-                          }
-                        }, 100);
-                      }
+                      setDateRange([date, null]);
+                      setTimeout(() => {
+                        if (checkoutPickerRef.current) {
+                          checkoutPickerRef.current.setOpen(true);
+                        }
+                      }, 100);
                     }}
                     selectsStart
                     startDate={startDate}
@@ -368,7 +368,7 @@ const HeroSection = () => {
                 >
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Guests & Rooms</p>
                   <div className="w-full text-xs font-bold text-gray-900 outline-none bg-transparent flex items-center justify-between">
-                    <span>{adults + children} Guest{adults + children > 1 ? 's' : ''}, {roomsCount} Room{roomsCount > 1 ? 's' : ''}</span>
+                    <span>{adults} Adult{adults > 1 ? 's' : ''}{children > 0 ? `, ${children} Child${children > 1 ? 'ren' : ''}` : ''}{infants > 0 ? `, ${infants} Infant${infants > 1 ? 's' : ''}` : ''}, {roomsCount} Room{roomsCount > 1 ? 's' : ''}</span>
                     <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isGuestDropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
@@ -409,6 +409,26 @@ const HeroSection = () => {
                           <span className="w-4 text-center text-sm font-semibold text-gray-900">{children}</span>
                           <button 
                             onClick={() => setChildren(Math.min(10, children + 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">+</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Infants */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">Infants</span>
+                        <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                          <button 
+                            onClick={() => setInfants(Math.max(0, infants - 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">−</span>
+                          </button>
+                          <span className="w-4 text-center text-sm font-semibold text-gray-900">{infants}</span>
+                          <button 
+                            onClick={() => setInfants(Math.min(10, infants + 1))}
                             className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
                           >
                             <span className="text-xl font-light leading-none">+</span>
@@ -495,16 +515,12 @@ const HeroSection = () => {
                   <DatePicker
                     selected={startDate}
                     onChange={(date) => {
-                      const newStart = date;
-                      const newEnd = (endDate && date && endDate > date) ? endDate : null;
-                      setDateRange([newStart, newEnd]);
-                      if (!newEnd) {
-                        setTimeout(() => {
-                          if (mobileCheckoutPickerRef.current) {
-                            mobileCheckoutPickerRef.current.setOpen(true);
-                          }
-                        }, 100);
-                      }
+                      setDateRange([date, null]);
+                      setTimeout(() => {
+                        if (mobileCheckoutPickerRef.current) {
+                          mobileCheckoutPickerRef.current.setOpen(true);
+                        }
+                      }, 100);
                     }}
                     selectsStart
                     startDate={startDate}
@@ -581,6 +597,29 @@ const HeroSection = () => {
                     <span className="w-4 text-center text-sm font-bold text-gray-900">{children}</span>
                     <button 
                       onClick={() => setChildren(Math.min(10, children + 1))}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 text-gray-500 hover:text-blue-500 active:scale-95 transition-all"
+                    >
+                      <span className="text-xl font-light leading-none">+</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Infants */}
+                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm font-semibold text-gray-800">Infants</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => setInfants(Math.max(0, infants - 1))}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 text-gray-500 hover:text-blue-500 active:scale-95 transition-all"
+                    >
+                      <span className="text-xl font-light leading-none">−</span>
+                    </button>
+                    <span className="w-4 text-center text-sm font-bold text-gray-900">{infants}</span>
+                    <button 
+                      onClick={() => setInfants(Math.min(10, infants + 1))}
                       className="w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 text-gray-500 hover:text-blue-500 active:scale-95 transition-all"
                     >
                       <span className="text-xl font-light leading-none">+</span>

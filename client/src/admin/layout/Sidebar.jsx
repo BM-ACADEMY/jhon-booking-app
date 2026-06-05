@@ -15,6 +15,7 @@ import {
   ChevronRight,
   User,
   MessageSquare,
+  Eye,
 } from 'lucide-react';
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
   { label: 'Hero Section', icon: Film, path: '/admin/hero' },
   { label: 'Rooms & Categories', icon: BedDouble, path: '/admin/rooms' },
   { label: 'Bookings', icon: CalendarCheck, path: '/admin/bookings' },
+  { label: 'Room Visitors', icon: Eye, path: '/admin/visitors' },
   { label: 'Users', icon: Users, path: '/admin/users' },
   { label: 'Rooms Review', icon: Star, path: '/admin/reviews' },
   { label: 'Testimonials', icon: Star, path: '/admin/testimonials' },

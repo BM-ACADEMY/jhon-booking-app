@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Hotel, Save, Globe, Loader2, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Linkedin, Clock } from 'lucide-react';
+import { Settings as SettingsIcon, Hotel, Save, Globe, Loader2, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Linkedin, Clock, Percent } from 'lucide-react';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
 
@@ -40,6 +40,13 @@ const Settings = () => {
   const [instagram, setInstagram] = useState('');
   const [twitter, setTwitter] = useState('');
   const [linkedin, setLinkedin] = useState('');
+  const [cancelDurationHrs, setCancelDurationHrs] = useState(24);
+  const [advancePercent1Day, setAdvancePercent1Day] = useState(100);
+  const [advancePercent2Day, setAdvancePercent2Day] = useState(50);
+  const [advancePercent3Day, setAdvancePercent3Day] = useState(40);
+  const [advancePercent4Day, setAdvancePercent4Day] = useState(30);
+  const [advancePercent5To7Days, setAdvancePercent5To7Days] = useState(25);
+  const [advancePercentAbove7Days, setAdvancePercentAbove7Days] = useState(20);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -67,6 +74,13 @@ const Settings = () => {
         setInstagram(d.instagram || '');
         setTwitter(d.twitter || '');
         setLinkedin(d.linkedin || '');
+        setCancelDurationHrs(d.cancelDurationHrs !== undefined ? d.cancelDurationHrs : 24);
+        setAdvancePercent1Day(d.advancePercent1Day !== undefined ? d.advancePercent1Day : 100);
+        setAdvancePercent2Day(d.advancePercent2Day !== undefined ? d.advancePercent2Day : 50);
+        setAdvancePercent3Day(d.advancePercent3Day !== undefined ? d.advancePercent3Day : 40);
+        setAdvancePercent4Day(d.advancePercent4Day !== undefined ? d.advancePercent4Day : 30);
+        setAdvancePercent5To7Days(d.advancePercent5To7Days !== undefined ? d.advancePercent5To7Days : 25);
+        setAdvancePercentAbove7Days(d.advancePercentAbove7Days !== undefined ? d.advancePercentAbove7Days : 20);
       } catch (err) {
         toast.error('Failed to load settings');
         console.error(err);
@@ -93,7 +107,14 @@ const Settings = () => {
         facebook,
         instagram,
         twitter,
-        linkedin
+        linkedin,
+        cancelDurationHrs,
+        advancePercent1Day,
+        advancePercent2Day,
+        advancePercent3Day,
+        advancePercent4Day,
+        advancePercent5To7Days,
+        advancePercentAbove7Days
       });
       toast.success('Settings saved successfully');
     } catch (err) {
@@ -264,6 +285,108 @@ const Settings = () => {
                       <option value="PM">PM</option>
                     </select>
                   </div>
+                </div>
+                {/* Cancel Duration (hours) */}
+                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 sm:col-span-2">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4">
+                    <Clock className="w-4 h-4 text-gray-500" /> Cancel Duration (Hours before Check-In)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={cancelDurationHrs}
+                    onChange={(e) => setCancelDurationHrs(Math.max(1, parseInt(e.target.value, 10) || 0))}
+                    className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-[#4F46E5] transition-all"
+                  />
+                  <p className="text-xs text-gray-400 mt-2">Specify the minimum number of hours before check-in time that a guest can cancel their booking for a full refund.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Advance Payment Configuration Card */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                <div className="p-2.5 bg-indigo-50 rounded-xl">
+                  <Percent className="w-5 h-5 text-[#4F46E5]" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">Advance Payment Rules</h2>
+              </div>
+
+              <p className="text-xs text-gray-400 mb-6">Configure the percentage of the total stay price that users must pay in advance, based on the duration of their stay.</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div>
+                  <label className={labelClass}>1 Night Stay (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    required
+                    value={advancePercent1Day}
+                    onChange={(e) => setAdvancePercent1Day(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>2 Nights Stay (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    required
+                    value={advancePercent2Day}
+                    onChange={(e) => setAdvancePercent2Day(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>3 Nights Stay (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    required
+                    value={advancePercent3Day}
+                    onChange={(e) => setAdvancePercent3Day(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>4 Nights Stay (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    required
+                    value={advancePercent4Day}
+                    onChange={(e) => setAdvancePercent4Day(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>5 to 7 Nights Stay (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    required
+                    value={advancePercent5To7Days}
+                    onChange={(e) => setAdvancePercent5To7Days(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>7+ Nights Stay (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    required
+                    value={advancePercentAbove7Days}
+                    onChange={(e) => setAdvancePercentAbove7Days(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    className={inputClass}
+                  />
                 </div>
               </div>
             </div>

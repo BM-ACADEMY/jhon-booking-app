@@ -1,5 +1,25 @@
 import mongoose from 'mongoose';
 import Room from '../models/Room.js';
+import RoomVisit from '../models/RoomVisit.js';
+
+// Helper to count unique visitors using mongo aggregation
+const getVisitorCounts = async (roomIds) => {
+  try {
+    const counts = await RoomVisit.aggregate([
+      { $match: { room: { $in: roomIds } } },
+      { $group: { _id: '$room', uniqueVisitors: { $addToSet: '$visitorId' } } },
+      { $project: { _id: 1, count: { $size: '$uniqueVisitors' } } }
+    ]);
+    const countMap = {};
+    counts.forEach(c => {
+      countMap[c._id.toString()] = c.count;
+    });
+    return countMap;
+  } catch (err) {
+    console.error('Error getting visitor counts:', err);
+    return {};
+  }
+};
 
 // Public: only return published rooms
 export const getRooms = async (req, res) => {
@@ -9,7 +29,16 @@ export const getRooms = async (req, res) => {
     if (category) filter.category = category;
     if (available) filter.isAvailable = available === 'true';
     const rooms = await Room.find(filter).sort({ createdAt: -1 });
-    res.json(rooms);
+
+    const roomIds = rooms.map(r => r._id);
+    const visitorCounts = await getVisitorCounts(roomIds);
+    const roomsWithVisitors = rooms.map(r => {
+      const roomObj = r.toObject();
+      roomObj.visitorsCount = visitorCounts[r._id.toString()] || 0;
+      return roomObj;
+    });
+
+    res.json(roomsWithVisitors);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -23,7 +52,16 @@ export const getAllRoomsAdmin = async (req, res) => {
     if (category) filter.category = category;
     if (available) filter.isAvailable = available === 'true';
     const rooms = await Room.find(filter).sort({ createdAt: -1 });
-    res.json(rooms);
+
+    const roomIds = rooms.map(r => r._id);
+    const visitorCounts = await getVisitorCounts(roomIds);
+    const roomsWithVisitors = rooms.map(r => {
+      const roomObj = r.toObject();
+      roomObj.visitorsCount = visitorCounts[r._id.toString()] || 0;
+      return roomObj;
+    });
+
+    res.json(roomsWithVisitors);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -50,7 +88,13 @@ export const getRoomById = async (req, res) => {
     }
     
     if (!room) return res.status(404).json({ message: 'Room not found' });
-    res.json(room);
+
+    // Inject visitor count
+    const uniqueVisitors = await RoomVisit.distinct('visitorId', { room: room._id });
+    const roomObj = room.toObject();
+    roomObj.visitorsCount = uniqueVisitors.length;
+
+    res.json(roomObj);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -150,3 +194,94 @@ export const deleteRoom = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Public: Record a room visit
+export const recordVisit = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { visitorId, userId } = req.body;
+
+    if (!visitorId) {
+      return res.status(400).json({ message: 'visitorId is required' });
+    }
+
+    // Resolve room ID (could be ID or name slug)
+    let roomId = id;
+    if (!mongoose.isValidObjectId(id)) {
+      const words = id.split('-');
+      const slugRegex = new RegExp(
+        '^\\W*' + 
+        words.map(w => w.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('\\W+') + 
+        '\\W*$', 
+        'i'
+      );
+      const room = await Room.findOne({ name: { $regex: slugRegex } });
+      if (!room) return res.status(404).json({ message: 'Room not found' });
+      roomId = room._id;
+    }
+
+    // Set range for start/end of today
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    // Check if same visitor logged for same room today
+    const existingVisit = await RoomVisit.findOne({
+      room: roomId,
+      visitorId,
+      visitedAt: { $gte: todayStart }
+    });
+
+    if (!existingVisit) {
+      await RoomVisit.create({
+        room: roomId,
+        visitorId,
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+        userId: userId || null
+      });
+    }
+
+    const uniqueVisitors = await RoomVisit.distinct('visitorId', { room: roomId });
+
+    res.json({ success: true, visitorsCount: uniqueVisitors.length });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Admin: Get stats of all rooms with visitor count
+export const getAdminVisitorsStats = async (req, res) => {
+  try {
+    const rooms = await Room.find({});
+    const roomIds = rooms.map(r => r._id);
+    const visitorCounts = await getVisitorCounts(roomIds);
+    
+    const stats = rooms.map(r => ({
+      _id: r._id,
+      name: r.name,
+      category: r.category,
+      price: r.price,
+      guests: r.guests,
+      visitorsCount: visitorCounts[r._id.toString()] || 0
+    }));
+
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Admin: Get detailed visits for a specific room
+export const getAdminRoomVisits = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const visits = await RoomVisit.find({ room: id })
+      .populate('userId', 'name email avatar')
+      .sort({ visitedAt: -1 });
+
+    res.json(visits);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+

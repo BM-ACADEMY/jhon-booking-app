@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, CreditCard, ChevronLeft, ChevronRight, Loader2, BedDouble, Star, X, Users } from 'lucide-react';
+import { Calendar, MapPin, Clock, CreditCard, ChevronLeft, ChevronRight, Loader2, BedDouble, Star, X, Users, Check, Bath } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../api';
 import BookingCardSkeleton from '../components/BookingCardSkeleton';
@@ -29,6 +29,12 @@ const MyBookings = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [hoveredStars, setHoveredStars] = useState({});
 
+  // Cancellation States
+  const [cancelPolicyHours, setCancelPolicyHours] = useState(24);
+  const [hotelCheckInTime, setHotelCheckInTime] = useState('14:00');
+  const [cancellingBooking, setCancellingBooking] = useState(null);
+  const [refundingLoader, setRefundingLoader] = useState(false);
+
   useEffect(() => {
     const fetchBookings = async () => {
       try {
@@ -40,7 +46,21 @@ const MyBookings = () => {
         setLoading(false);
       }
     };
+    
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/settings');
+        if (res.data) {
+          setCancelPolicyHours(res.data.cancelDurationHrs ?? 24);
+          setHotelCheckInTime(res.data.checkInTime ?? '14:00');
+        }
+      } catch (err) {
+        console.error('Failed to fetch cancel duration settings', err);
+      }
+    };
+
     fetchBookings();
+    fetchSettings();
   }, []);
 
   const handleOpenReviewModal = (booking, initialRating = 5) => {
@@ -87,24 +107,104 @@ const MyBookings = () => {
     }
   };
 
+  const canCancelBooking = (booking) => {
+    if (booking.status !== 'confirmed' && booking.status !== 'pending') return false;
+
+    const checkInDate = new Date(booking.checkIn);
+    const [hours, minutes] = hotelCheckInTime.split(':');
+    checkInDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+
+    const deadline = new Date(checkInDate.getTime() - cancelPolicyHours * 60 * 60 * 1000);
+    return new Date() < deadline;
+  };
+
+  const handleCancelBooking = async () => {
+    if (!cancellingBooking) return;
+    setRefundingLoader(true);
+    try {
+      await api.post(`/bookings/${cancellingBooking._id}/cancel`);
+      toast.success('Your booking has been cancelled successfully.');
+      
+      // Update local state
+      setBookings(prev => prev.map(b => b._id === cancellingBooking._id ? { ...b, status: 'cancelled' } : b));
+      setCancellingBooking(null);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to cancel booking.');
+      console.error(err);
+    } finally {
+      setRefundingLoader(false);
+    }
+  };
+
+  const handleCancelClick = (booking) => {
+    if (canCancelBooking(booking)) {
+      setCancellingBooking(booking);
+    } else {
+      toast.error(`You can only cancel this booking up to ${cancelPolicyHours} hours before check-in.`);
+    }
+  };
+
+  const handlePayBalance = async (booking) => {
+    try {
+      const orderRes = await api.post(`/bookings/${booking._id}/balance-razorpay-order`);
+      const order = orderRes.data;
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'The Balified Villa',
+        description: `Remaining balance payment for booking`,
+        order_id: order.id,
+        handler: async (response) => {
+          try {
+            const verifyRes = await api.post(`/bookings/${booking._id}/verify-balance-payment`, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            });
+            toast.success('Balance payment completed successfully!');
+            // Update local state
+            setBookings(prev => prev.map(b => b._id === booking._id ? {
+              ...b,
+              paymentStatus: 'paid',
+              paidAmount: b.totalAmount,
+              dueAmount: 0
+            } : b));
+          } catch (err) {
+            toast.error(err.response?.data?.message || 'Payment verification failed');
+          }
+        },
+        prefill: { email: booking.user?.email || '' },
+        theme: { color: '#EAB308' }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to initiate balance payment');
+    }
+  };
+
+
   const indexOfLastBooking = currentPage * itemsPerPage;
   const indexOfFirstBooking = indexOfLastBooking - itemsPerPage;
   const currentBookings = bookings.slice(indexOfFirstBooking, indexOfLastBooking);
   const totalPages = Math.ceil(bookings.length / itemsPerPage);
 
   if (loading) {
-  return (
-    <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <BookingCardSkeleton key={i} />
-          ))}
+    return (
+      <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <BookingCardSkeleton key={i} />
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-4 sm:px-6 lg:px-8">
@@ -136,9 +236,9 @@ const MyBookings = () => {
               return (
                 <div key={booking._id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col">
                   {/* Top Section: Room Preview & Info Row */}
-                  <div className="flex flex-col md:flex-row md:h-[310px]">
+                  <div className="flex flex-col md:flex-row md:h-[280px]">
                     {/* Room Preview */}
-                    <div className="w-full md:w-80 h-52 md:h-[310px] relative bg-gray-100 flex-shrink-0">
+                    <div className="w-full md:w-72 h-48 md:h-[280px] relative bg-gray-100 flex-shrink-0">
                       {booking.room.images?.[0] ? (
                         <img
                           src={getImageUrl(booking.room.images[0])}
@@ -163,20 +263,31 @@ const MyBookings = () => {
                     </div>
 
                     {/* Booking Info */}
-                    <div className="p-6 md:p-8 flex-1 flex flex-col justify-between md:h-[310px]">
+                    <div className="p-5 md:p-6 flex-1 flex flex-col justify-between md:h-[280px]">
                       <div>
-                        <div className="flex justify-between items-start mb-4">
+                        <div className="flex justify-between items-start mb-3">
                           <div>
                             <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mb-1">{booking.room.category}</p>
-                            <h2 className="text-xl font-black text-gray-900 line-clamp-1">{booking.room.name}</h2>
+                            <h2 className="text-xl font-black text-gray-900 line-clamp-2">
+                              {booking.rooms && booking.rooms.length > 0
+                                ? booking.rooms.map(r => r.name).join(', ')
+                                : booking.room.name}
+                            </h2>
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-black text-gray-900">₹{booking.totalAmount?.toLocaleString('en-IN')}</p>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase">Total Paid</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">Total Price</p>
+                            {booking.dueAmount > 0 && (
+                              <div className="text-[9px] font-bold mt-1 text-slate-500">
+                                Paid: <span className="text-emerald-600">₹{booking.paidAmount?.toLocaleString('en-IN')}</span>
+                                <br />
+                                Due: <span className="text-amber-600">₹{booking.dueAmount?.toLocaleString('en-IN')}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 py-4 border-y border-gray-50">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-3 border-y border-gray-50">
                           <div>
                             <div className="flex items-center gap-2 text-gray-400 mb-1">
                               <Calendar className="w-3.5 h-3.5" />
@@ -197,8 +308,9 @@ const MyBookings = () => {
                               <span className="text-[10px] font-black uppercase tracking-widest">Guests</span>
                             </div>
                             <p className="text-sm font-bold text-gray-800">
-                              {booking.adults || booking.guests || 1} Adult{ (booking.adults || booking.guests || 1) > 1 ? 's' : '' }
-                              {booking.children ? `, ${booking.children} Child${booking.children > 1 ? 'ren' : ''}` : ''}
+                              {booking.adults || booking.guests || 1} Adult{(booking.adults || booking.guests || 1) > 1 ? 's' : ''}
+                              {booking.children > 0 ? `, ${booking.children} Child${booking.children > 1 ? 'ren' : ''}` : ''}
+                              {booking.infants > 0 ? `, ${booking.infants} Infant${booking.infants > 1 ? 's' : ''}` : ''}
                             </p>
                           </div>
                           <div>
@@ -210,8 +322,34 @@ const MyBookings = () => {
                           </div>
                         </div>
 
+                        {booking.rooms && booking.rooms.length > 1 && (
+                          <div className="mt-4">
+                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Booked Rooms</span>
+                            <div className="flex flex-wrap gap-2">
+                              {booking.rooms.map((r, rIdx) => (
+                                <Link
+                                  key={rIdx}
+                                  to={`/rooms/${r._id}`}
+                                  className="inline-flex items-center gap-2 bg-gray-50 hover:bg-gray-100 active:scale-95 text-gray-700 pl-1.5 pr-2.5 py-1 rounded-lg text-[10px] font-bold border border-gray-200 shadow-sm transition-all"
+                                >
+                                  <div className="w-5 h-5 rounded-md overflow-hidden bg-gray-200 flex-shrink-0 border border-gray-200/40">
+                                    {r.images?.length > 0 ? (
+                                      <img src={getImageUrl(r.images[0])} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center">
+                                        <BedDouble className="w-3 h-3 text-gray-400" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  {r.name}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         {booking.addons && booking.addons.length > 0 ? (
-                          <div className="mt-3 h-[42px] overflow-hidden">
+                          <div className="mt-2 h-[36px] overflow-hidden">
                             <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Selected Add-ons</span>
                             <div className="flex flex-wrap gap-1.5">
                               {booking.addons.map((addon, aIdx) => (
@@ -222,11 +360,11 @@ const MyBookings = () => {
                             </div>
                           </div>
                         ) : (
-                          <div className="mt-3 h-[42px] invisible" aria-hidden="true" />
+                          <div className="mt-2 h-[36px] invisible" aria-hidden="true" />
                         )}
                       </div>
 
-                      <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between border-t border-gray-50 pt-4 gap-4">
+                      <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between border-t border-gray-50 pt-3 gap-4">
                         <div className="flex items-center gap-4 flex-wrap">
                           <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                             <Clock className="w-4 h-4 text-gray-400" />
@@ -240,6 +378,26 @@ const MyBookings = () => {
                           )}
                         </div>
                         <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-50">
+                          {booking.dueAmount > 0 && booking.status !== 'cancelled' && (
+                            <button
+                              onClick={() => handlePayBalance(booking)}
+                              className="px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl border border-yellow-250 bg-yellow-50 hover:bg-yellow-100 text-slate-900 active:scale-[0.98] transition-all cursor-pointer"
+                            >
+                              Pay Balance (₹{booking.dueAmount?.toLocaleString('en-IN')})
+                            </button>
+                          )}
+                          {(booking.status === 'confirmed' || booking.status === 'pending') && (
+                            <button
+                              onClick={() => handleCancelClick(booking)}
+                              className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl border transition-all cursor-pointer ${
+                                canCancelBooking(booking)
+                                  ? "bg-red-50 hover:bg-red-100 text-red-600 border-red-100 active:scale-[0.98]"
+                                  : "bg-gray-50 text-gray-400 border-gray-200"
+                              }`}
+                            >
+                              Cancel Stay
+                            </button>
+                          )}
                           <Link to={`/rooms/${booking.room._id}`} className="p-2 hover:bg-gray-50 rounded-xl transition-all">
                             <ChevronRight className="w-5 h-5 text-gray-300" />
                           </Link>
@@ -298,7 +456,7 @@ const MyBookings = () => {
                     </div>
                   )}
                 </div>
-            );
+              );
             })}
 
             {/* Pagination Controls */}
@@ -500,8 +658,6 @@ const MyBookings = () => {
                 />
               </div>
 
-
-
               {/* Submit Button */}
               <button
                 type="submit"
@@ -512,6 +668,60 @@ const MyBookings = () => {
                 {selectedBooking.isReviewed ? 'Update Review' : 'Submit Review'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Cancellation Modal */}
+      {cancellingBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => setCancellingBooking(null)}
+          />
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-8 relative z-10 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <span className="text-[10px] font-black text-red-650 uppercase tracking-widest block mb-1">Cancel Reservation</span>
+                <h2 className="text-xl font-black text-gray-900 leading-snug">Are you absolutely sure?</h2>
+              </div>
+              <button
+                onClick={() => setCancellingBooking(null)}
+                className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-900 active:scale-95 transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <p className="text-sm text-gray-500 leading-relaxed">
+                You are about to cancel your stay at <span className="font-bold text-gray-800">{cancellingBooking.room?.name}</span> scheduled for <span className="font-semibold text-gray-800">{new Date(cancellingBooking.checkIn).toLocaleDateString()}</span>.
+              </p>
+
+              <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
+                <h4 className="text-xs font-black text-amber-800 uppercase tracking-widest mb-1.5">Refund Policy</h4>
+                <p className="text-xs text-amber-705 leading-relaxed">
+                  Your payment of <span className="font-bold">₹{cancellingBooking.totalAmount.toLocaleString('en-IN')}</span> will be fully refunded to your original payment method. The refund will take <span className="font-bold">3 to 4 working days</span> to reflect in your account.
+                </p>
+              </div>
+
+              <div className="flex gap-3 mt-8">
+                <button
+                  onClick={() => setCancellingBooking(null)}
+                  className="w-1/2 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-black uppercase tracking-wider py-3.5 rounded-xl transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  No, Keep Stay
+                </button>
+                <button
+                  onClick={handleCancelBooking}
+                  disabled={refundingLoader}
+                  className="w-1/2 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-wider py-3.5 rounded-xl transition-all active:scale-[0.98] flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {refundingLoader && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Yes, Cancel
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

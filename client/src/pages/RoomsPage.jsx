@@ -126,6 +126,7 @@ const RoomsPage = () => {
   const queryCheckOut = searchParams.get('checkOut');
   const queryAdults = searchParams.get('adults') || '1';
   const queryChildren = searchParams.get('children') || '0';
+  const queryInfants = searchParams.get('infants') || '0';
   const queryRoomsCount = searchParams.get('roomsCount') || searchParams.get('rooms') || '1';
 
   // Search input states (local copy before clicking "Update Search")
@@ -151,6 +152,12 @@ const RoomsPage = () => {
     const query = searchParams.get('children');
     if (query) return parseInt(query, 10);
     const session = sessionStorage.getItem('booking_children');
+    return session ? parseInt(session, 10) : 0;
+  });
+  const [infantsInput, setInfantsInput] = useState(() => {
+    const query = searchParams.get('infants');
+    if (query) return parseInt(query, 10);
+    const session = sessionStorage.getItem('booking_infants');
     return session ? parseInt(session, 10) : 0;
   });
   const [roomsCountInput, setRoomsCountInput] = useState(() => {
@@ -188,9 +195,12 @@ const RoomsPage = () => {
     const chVal = parseInt(queryChildren, 10) || parseInt(sessionStorage.getItem('booking_children')) || 0;
     setChildrenInput(chVal);
 
+    const infVal = parseInt(queryInfants, 10) || parseInt(sessionStorage.getItem('booking_infants')) || 0;
+    setInfantsInput(infVal);
+
     const rmVal = parseInt(queryRoomsCount, 10) || parseInt(sessionStorage.getItem('booking_rooms')) || 1;
     setRoomsCountInput(rmVal);
-  }, [queryCheckIn, queryCheckOut, queryAdults, queryChildren, queryRoomsCount]);
+  }, [queryCheckIn, queryCheckOut, queryAdults, queryChildren, queryInfants, queryRoomsCount]);
 
   // Sync state changes with sessionStorage and broadcast to other components (like Navbar)
   useEffect(() => {
@@ -198,9 +208,10 @@ const RoomsPage = () => {
     sessionStorage.setItem('booking_end_date', checkOutInput ? checkOutInput.toISOString() : '');
     sessionStorage.setItem('booking_adults', adultsInput.toString());
     sessionStorage.setItem('booking_children', childrenInput.toString());
+    sessionStorage.setItem('booking_infants', infantsInput.toString());
     sessionStorage.setItem('booking_rooms', roomsCountInput.toString());
     window.dispatchEvent(new Event('booking-search-sync'));
-  }, [checkInInput, checkOutInput, adultsInput, childrenInput, roomsCountInput]);
+  }, [checkInInput, checkOutInput, adultsInput, childrenInput, infantsInput, roomsCountInput]);
 
   // Listen to state changes from other components (like Navbar)
   useEffect(() => {
@@ -209,6 +220,7 @@ const RoomsPage = () => {
       const endStr = sessionStorage.getItem('booking_end_date');
       const ad = parseInt(sessionStorage.getItem('booking_adults')) || 1;
       const ch = parseInt(sessionStorage.getItem('booking_children')) || 0;
+      const inf = parseInt(sessionStorage.getItem('booking_infants')) || 0;
       const rm = parseInt(sessionStorage.getItem('booking_rooms')) || 1;
 
       const newStart = startStr ? new Date(startStr) : null;
@@ -221,12 +233,13 @@ const RoomsPage = () => {
       }
       if (ad !== adultsInput) setAdultsInput(ad);
       if (ch !== childrenInput) setChildrenInput(ch);
+      if (inf !== infantsInput) setInfantsInput(inf);
       if (rm !== roomsCountInput) setRoomsCountInput(rm);
     };
 
     window.addEventListener('booking-search-sync', handleSync);
     return () => window.removeEventListener('booking-search-sync', handleSync);
-  }, [checkInInput, checkOutInput, adultsInput, childrenInput, roomsCountInput]);
+  }, [checkInInput, checkOutInput, adultsInput, childrenInput, infantsInput, roomsCountInput]);
 
   // Hero section data
   const [hero, setHero] = useState(null);
@@ -313,6 +326,7 @@ const RoomsPage = () => {
     if (checkOutInput) params.checkOut = formatDateLocal(checkOutInput);
     params.adults = adultsInput.toString();
     params.children = childrenInput.toString();
+    params.infants = infantsInput.toString();
     params.roomsCount = roomsCountInput.toString();
     setSearchParams(params);
   };
@@ -599,7 +613,9 @@ const RoomsPage = () => {
   const requestedRoomsCount = parseInt(queryRoomsCount, 10) || 1;
 
   const filteredRooms = basicFilteredPool.filter(room => {
-    return isRoomInValidCombination(room, basicFilteredPool, requestedRoomsCount, searchAdults, searchChildren);
+    const res = isRoomInValidCombination(room, basicFilteredPool, requestedRoomsCount, searchAdults, searchChildren);
+    console.log(`[Filter Debug] Room: "${room.name}" | searchAdults: ${searchAdults} | searchChildren: ${searchChildren} | roomsCount: ${requestedRoomsCount} | maxAdults: ${room.maxAdults} | maxChildren: ${room.maxChildren} | Match Result: ${res}`);
+    return res;
   });
 
   // Sorting
@@ -638,7 +654,7 @@ const RoomsPage = () => {
   const dateText = checkInInput && checkOutInput
     ? `${checkInInput.getDate()} ${checkInInput.toLocaleString('default', { month: 'short' })} – ${checkOutInput.getDate()} ${checkOutInput.toLocaleString('default', { month: 'short' })}`
     : 'Add your dates';
-  const guestText = `${adultsInput} Adult${adultsInput > 1 ? 's' : ''}${childrenInput > 0 ? `, ${childrenInput} Child${childrenInput > 1 ? 'ren' : ''}` : ''} · ${roomsCountInput} Room${roomsCountInput > 1 ? 's' : ''}`;  const renderFilterContent = () => (
+  const guestText = `${adultsInput} Adult${adultsInput > 1 ? 's' : ''}${childrenInput > 0 ? `, ${childrenInput} Child${childrenInput > 1 ? 'ren' : ''}` : ''}${infantsInput > 0 ? `, ${infantsInput} Infant${infantsInput > 1 ? 's' : ''}` : ''} · ${roomsCountInput} Room${roomsCountInput > 1 ? 's' : ''}`;  const renderFilterContent = () => (
     <>
       {/* Sort By Dropdown */}
       <div className="space-y-2 border-b border-gray-100 pb-5">
@@ -848,17 +864,13 @@ const RoomsPage = () => {
                   <DatePicker
                     selected={checkInInput}
                     onChange={(date) => {
-                      const newStart = date;
-                      const newEnd = (checkOutInput && date && checkOutInput > date) ? checkOutInput : null;
-                      setCheckInInput(newStart);
-                      setCheckOutInput(newEnd);
-                      if (!newEnd) {
-                        setTimeout(() => {
-                          if (checkoutPickerRef.current) {
-                            checkoutPickerRef.current.setOpen(true);
-                          }
-                        }, 100);
-                      }
+                      setCheckInInput(date);
+                      setCheckOutInput(null);
+                      setTimeout(() => {
+                        if (checkoutPickerRef.current) {
+                          checkoutPickerRef.current.setOpen(true);
+                        }
+                      }, 100);
                     }}
                     selectsStart
                     startDate={checkInInput}
@@ -866,7 +878,7 @@ const RoomsPage = () => {
                     minDate={new Date()}
                     dateFormat="dd MMM yyyy"
                     placeholderText="Add Date"
-                    className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer placeholder-gray-400"
+                    className="w-full text-xs font-semibold text-gray-900 bg-transparent outline-none cursor-pointer placeholder-gray-400"
                     popperPlacement="bottom-start"
                     popperProps={{ strategy: 'fixed', modifiers: [{ name: 'flip', enabled: false }, { name: 'preventOverflow', options: { mainAxis: false } }] }}
                     popperClassName="z-[200]"
@@ -891,7 +903,7 @@ const RoomsPage = () => {
                     minDate={checkInInput || new Date()}
                     dateFormat="dd MMM yyyy"
                     placeholderText="Add Date"
-                    className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer placeholder-gray-400"
+                    className="w-full text-xs font-semibold text-gray-900 bg-transparent outline-none cursor-pointer placeholder-gray-400"
                     popperPlacement="bottom-start"
                     popperProps={{ strategy: 'fixed', modifiers: [{ name: 'flip', enabled: false }, { name: 'preventOverflow', options: { mainAxis: false } }] }}
                     popperClassName="z-[200]"
@@ -912,8 +924,8 @@ const RoomsPage = () => {
                   onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
                 >
                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guests & Rooms</p>
-                  <div className="w-full text-sm font-bold text-gray-900 outline-none bg-transparent flex items-center justify-between">
-                     <span>{adultsInput} Adult{adultsInput > 1 ? 's' : ''}{childrenInput > 0 ? `, ${childrenInput} Child${childrenInput > 1 ? 'ren' : ''}` : ''}, {roomsCountInput} Room{roomsCountInput > 1 ? 's' : ''}</span>
+                  <div className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent flex items-center justify-between">
+                     <span>{adultsInput} Adult{adultsInput > 1 ? 's' : ''}{childrenInput > 0 ? `, ${childrenInput} Child${childrenInput > 1 ? 'ren' : ''}` : ''}{infantsInput > 0 ? `, ${infantsInput} Infant${infantsInput > 1 ? 's' : ''}` : ''}, {roomsCountInput} Room{roomsCountInput > 1 ? 's' : ''}</span>
                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isGuestDropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
@@ -961,6 +973,26 @@ const RoomsPage = () => {
                         </div>
                       </div>
 
+                      {/* Infants */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">Infants</span>
+                        <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
+                          <button
+                            onClick={() => setInfantsInput(Math.max(0, infantsInput - 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">−</span>
+                          </button>
+                          <span className="w-4 text-center text-sm font-semibold text-gray-900">{infantsInput}</span>
+                          <button
+                            onClick={() => setInfantsInput(Math.min(10, infantsInput + 1))}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
+                          >
+                            <span className="text-xl font-light leading-none">+</span>
+                          </button>
+                        </div>
+                      </div>
+
                       {/* Rooms */}
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-gray-800">Rooms</span>
@@ -989,7 +1021,7 @@ const RoomsPage = () => {
               <div className="px-2 flex self-stretch py-1">
                 <button
                   onClick={handleUpdateSearch}
-                  className="w-full bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-sm rounded-full px-8 py-4 flex items-center justify-center gap-2 transition-all hover:shadow-lg active:scale-95 group cursor-pointer"
+                  className="w-full bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-xs rounded-full px-6 py-2.5 flex items-center justify-center gap-2 transition-all hover:shadow-lg active:scale-95 group cursor-pointer"
                 >
                   <Search className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
                   <span>SEARCH</span>
@@ -1020,21 +1052,17 @@ const RoomsPage = () => {
                     <DatePicker
                       selected={checkInInput}
                       onChange={(date) => {
-                        const newStart = date;
-                        const newEnd = (checkOutInput && date && checkOutInput > date) ? checkOutInput : null;
-                        setCheckInInput(newStart);
-                        setCheckOutInput(newEnd);
-                        if (!newEnd) {
-                          setTimeout(() => {
-                            if (mobileCheckoutPickerRef.current) {
-                              mobileCheckoutPickerRef.current.setOpen(true);
-                            }
-                          }, 100);
-                        }
+                        setCheckInInput(date);
+                        setCheckOutInput(null);
+                        setTimeout(() => {
+                          if (mobileCheckoutPickerRef.current) {
+                            mobileCheckoutPickerRef.current.setOpen(true);
+                          }
+                        }, 100);
                       }}
                       selectsStart startDate={checkInInput} endDate={checkOutInput}
                       minDate={new Date()} dateFormat="dd MMM yyyy" placeholderText="Select date"
-                      className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer"
+                      className="w-full text-xs font-semibold text-gray-900 bg-transparent outline-none cursor-pointer"
                       popperProps={{ strategy: 'fixed' }} popperClassName="z-[110]"
                     />
                   </div>
@@ -1049,7 +1077,7 @@ const RoomsPage = () => {
                       onChange={(date) => setCheckOutInput(date)}
                       selectsEnd startDate={checkInInput} endDate={checkOutInput}
                       minDate={checkInInput || new Date()} dateFormat="dd MMM yyyy" placeholderText="Select date"
-                      className="w-full text-sm font-bold text-gray-900 bg-transparent outline-none cursor-pointer"
+                      className="w-full text-xs font-semibold text-gray-900 bg-transparent outline-none cursor-pointer"
                       popperProps={{ strategy: 'fixed' }} popperClassName="z-[110]"
                     />
                   </div>
@@ -1079,6 +1107,21 @@ const RoomsPage = () => {
                       </button>
                       <span className="w-4 text-center text-[15px] font-bold text-gray-900">{childrenInput}</span>
                       <button onClick={() => setChildrenInput(Math.min(10, childrenInput + 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
+                        <span className="text-2xl font-light leading-none">+</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <Users className="w-6 h-6 text-gray-400" />
+                  <div className="flex-1 flex items-center justify-between">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Infants</p>
+                    <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+                      <button onClick={() => setInfantsInput(Math.max(0, infantsInput - 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
+                        <span className="text-2xl font-light leading-none">−</span>
+                      </button>
+                      <span className="w-4 text-center text-[15px] font-bold text-gray-900">{infantsInput}</span>
+                      <button onClick={() => setInfantsInput(Math.min(10, infantsInput + 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
                         <span className="text-2xl font-light leading-none">+</span>
                       </button>
                     </div>
@@ -1238,7 +1281,7 @@ const RoomsPage = () => {
                               ))}
                             </div>
                             <span className="text-xs text-gray-500 font-bold">
-                              ({room.reviewCount > 0 ? room.reviewCount * 12 + 5 : 429} Visitors)
+                              ({room.visitorsCount || 0} Visitors)
                             </span>
                           </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import {
@@ -23,6 +23,89 @@ const getImageUrl = (img) => {
 };
 
 const getIcon = (name) => Icons[name] || Icons.Check;
+
+const RoomSelectDropdown = ({ value, onChange, options, getImageUrl, placeholder = "Choose a room..." }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const selectedRoom = options.find(r => r._id === value);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      {/* Trigger Button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-white hover:bg-gray-50 border border-gray-300 rounded-xl p-2.5 flex items-center justify-between text-xs font-semibold text-gray-800 outline-none transition-colors cursor-pointer text-left shadow-sm"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          {selectedRoom ? (
+            <>
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                {selectedRoom.images?.length > 0 ? (
+                  <img src={getImageUrl(selectedRoom.images[0])} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                    <Icons.BedDouble className="w-4 h-4 text-gray-400" />
+                  </div>
+                )}
+              </div>
+              <span className="truncate">{selectedRoom.name} (₹{selectedRoom.price}/night)</span>
+            </>
+          ) : (
+            <span className="text-gray-400">{placeholder}</span>
+          )}
+        </div>
+        <Icons.ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
+      </button>
+
+      {/* Floating Options Menu */}
+      {isOpen && (
+        <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto py-1">
+          {options.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-gray-500">No rooms available</div>
+          ) : (
+            options.map(r => (
+              <button
+                key={r._id}
+                type="button"
+                onClick={() => {
+                  onChange(r._id);
+                  setIsOpen(false);
+                }}
+                className="w-full hover:bg-gray-50 px-3 py-2 flex items-center gap-2.5 text-left transition-colors border-b border-gray-100 last:border-none cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                  {r.images?.length > 0 ? (
+                    <img src={getImageUrl(r.images[0])} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                      <Icons.BedDouble className="w-5 h-5 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-gray-800 truncate">{r.name}</div>
+                  <div className="text-[11px] font-semibold text-gray-500">₹{r.price}/night</div>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const RoomDetailPage = () => {
   const { id } = useParams();
@@ -86,13 +169,18 @@ const RoomDetailPage = () => {
   const checkOutQuery = getQueryParam('checkOut');
   const adultsQuery = parseInt(getQueryParam('adults') || getQueryParam('guests') || '1', 10);
   const childrenQuery = parseInt(getQueryParam('children') || '0', 10);
+  const infantsQuery = parseInt(getQueryParam('infants') || '0', 10);
   const roomsCountQuery = parseInt(getQueryParam('roomsCount') || getQueryParam('rooms') || '1', 10);
 
   const [checkIn, setCheckIn] = useState(checkInQuery);
   const [checkOut, setCheckOut] = useState(checkOutQuery);
   const [adults, setAdults] = useState(adultsQuery);
   const [children, setChildren] = useState(childrenQuery);
+  const [infants, setInfants] = useState(infantsQuery);
   const [roomsCount, setRoomsCount] = useState(roomsCountQuery);
+
+  const [allRooms, setAllRooms] = useState([]);
+  const [selectedAdditionalRooms, setSelectedAdditionalRooms] = useState([]);
 
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -100,16 +188,18 @@ const RoomDetailPage = () => {
   const [activeSelectType, setActiveSelectType] = useState('checkIn'); // 'checkIn' or 'checkOut'
 
   useEffect(() => {
-    if (!room) return;
-    const maxAdultsAllowed = ((room.maxAdults !== undefined && room.maxAdults !== null) ? room.maxAdults : (room.guests || 10)) * roomsCount;
-    if (adults > maxAdultsAllowed) {
-      setAdults(maxAdultsAllowed);
-    }
-    const maxChildrenAllowed = ((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 10) * roomsCount;
-    if (children > maxChildrenAllowed) {
-      setChildren(maxChildrenAllowed);
-    }
-  }, [roomsCount, room]);
+    setSelectedAdditionalRooms(prev => {
+      const needed = Math.max(0, roomsCount - 1);
+      const next = [...prev];
+      if (next.length > needed) {
+        return next.slice(0, needed);
+      }
+      while (next.length < needed) {
+        next.push('');
+      }
+      return next;
+    });
+  }, [roomsCount]);
 
   const getDatesInRangeList = (startDate, endDate) => {
     const start = new Date(startDate);
@@ -122,6 +212,39 @@ const RoomDetailPage = () => {
     }
     return dates;
   };
+
+  const getAvailableOtherRooms = () => {
+    if (!room || !allRooms) return [];
+    const otherPublished = allRooms.filter(r => r._id !== room._id && r.status === 'published');
+    if (!checkIn || !checkOut) return otherPublished;
+
+    const start = parseLocalDate(checkIn);
+    const end = parseLocalDate(checkOut);
+    if (!start || !end) return otherPublished;
+    const requestedDates = getDatesInRangeList(start, end);
+
+    return otherPublished.filter(r => {
+      const hasOverlap = r.unavailableDates && r.unavailableDates.some(unDate => {
+        const uDate = new Date(unDate);
+        return requestedDates.some(reqDate => uDate.toDateString() === reqDate.toDateString());
+      });
+      return !hasOverlap;
+    });
+  };
+
+  const availableOtherRooms = getAvailableOtherRooms();
+
+  useEffect(() => {
+    if (!room) return;
+    const maxAdultsAllowed = ((room.maxAdults !== undefined && room.maxAdults !== null) ? room.maxAdults : (room.guests || 10)) * roomsCount;
+    if (adults > maxAdultsAllowed) {
+      setAdults(maxAdultsAllowed);
+    }
+    const maxChildrenAllowed = ((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 10) * roomsCount;
+    if (children > maxChildrenAllowed) {
+      setChildren(maxChildrenAllowed);
+    }
+  }, [roomsCount, room]);
 
   const isDateBooked = (date) => {
     if (!room || !room.unavailableDates) return false;
@@ -181,6 +304,9 @@ const RoomDetailPage = () => {
     if (getQueryParam('children')) {
       setChildren(parseInt(getQueryParam('children') || '0', 10));
     }
+    if (getQueryParam('infants')) {
+      setInfants(parseInt(getQueryParam('infants') || '0', 10));
+    }
     if (getQueryParam('roomsCount')) {
       setRoomsCount(parseInt(getQueryParam('roomsCount') || '1', 10));
     }
@@ -190,12 +316,34 @@ const RoomDetailPage = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const res = await api.get(`/rooms/${id}`);
-        setRoom(res.data);
-
-        // Fetch reviews
-        const reviewsRes = await api.get(`/reviews/room/${res.data._id || id}`);
+        const [roomRes, reviewsRes, allRoomsRes] = await Promise.all([
+          api.get(`/rooms/${id}`),
+          api.get(`/reviews/room/${id}`),
+          api.get('/rooms')
+        ]);
+        const fetchedRoom = roomRes.data;
+        setRoom(fetchedRoom);
         setReviews(reviewsRes.data);
+        setAllRooms(allRoomsRes.data || []);
+
+        // Record room visit
+        let visitorId = localStorage.getItem('room_visitor_id');
+        if (!visitorId) {
+          visitorId = 'visitor_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+          localStorage.setItem('room_visitor_id', visitorId);
+        }
+
+        try {
+          const visitRes = await api.post(`/rooms/${fetchedRoom._id}/visit`, {
+            visitorId,
+            userId: user?._id || null
+          });
+          if (visitRes.data?.success) {
+            setRoom(prev => prev ? { ...prev, visitorsCount: visitRes.data.visitorsCount } : null);
+          }
+        } catch (visitErr) {
+          console.error('Failed to log room visit:', visitErr);
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -203,7 +351,7 @@ const RoomDetailPage = () => {
       }
     };
     load();
-  }, [id]);
+  }, [id, user?._id]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -599,11 +747,20 @@ const RoomDetailPage = () => {
     );
   };
 
-  const getBookingPriceBreakdown = (room, checkInStr, checkOutStr) => {
+  const getBookingPriceBreakdown = (room, checkInStr, checkOutStr, additionalRoomIds = []) => {
     if (!room || !checkInStr || !checkOutStr) return { total: 0, average: room?.price || 0, nights: 0, breakdown: [] };
     const start = parseLocalDate(checkInStr);
     const end = parseLocalDate(checkOutStr);
     if (!start || !end || start > end) return { total: 0, average: room?.price || 0, nights: 0, breakdown: [] };
+
+    // Get all room objects in the booking combination
+    const selectedRooms = [room];
+    additionalRoomIds.forEach(id => {
+      if (id) {
+        const found = allRooms.find(r => r._id === id);
+        if (found) selectedRooms.push(found);
+      }
+    });
 
     let total = 0;
     const breakdown = [];
@@ -615,29 +772,32 @@ const RoomDetailPage = () => {
       const dd = String(curr.getDate()).padStart(2, '0');
       const dateStr = `${yyyy}-${mm}-${dd}`;
 
-      let dayPrice = room.price || 0;
-      if (room.datePrices && Array.isArray(room.datePrices)) {
-        const found = room.datePrices.find(dp => matchDate(dp.date, dateStr));
-        if (found) {
-          dayPrice = found.price;
+      // Sum prices of all selected rooms for this day
+      let dayTotal = 0;
+      selectedRooms.forEach(r => {
+        let rPrice = r.price || 0;
+        if (r.datePrices && Array.isArray(r.datePrices)) {
+          const found = r.datePrices.find(dp => matchDate(dp.date, dateStr));
+          if (found) rPrice = found.price;
         }
-      }
+        dayTotal += rPrice;
+      });
 
-      total += dayPrice;
-      breakdown.push({ dateStr, price: dayPrice });
+      total += dayTotal;
+      breakdown.push({ dateStr, price: dayTotal });
 
       curr.setDate(curr.getDate() + 1);
     }
 
     return {
       total,
-      average: breakdown.length > 0 ? Math.round(total / breakdown.length) : room.price || 0,
+      average: breakdown.length > 0 ? Math.round(total / breakdown.length) : selectedRooms.reduce((sum, r) => sum + (r.price || 0), 0),
       nights: breakdown.length,
       breakdown
     };
   };
 
-  const { total, average, nights, breakdown } = getBookingPriceBreakdown(room, checkIn, checkOut);
+  const { total, average, nights, breakdown } = getBookingPriceBreakdown(room, checkIn, checkOut, selectedAdditionalRooms);
 
   const handleBooking = async () => {
     if (!user) {
@@ -654,6 +814,14 @@ const RoomDetailPage = () => {
       return;
     }
 
+    // Check if user has selected all additional rooms
+    if (roomsCount > 1 && selectedAdditionalRooms.some(id => !id)) {
+      toast.error('Please select all additional rooms before proceeding.');
+      return;
+    }
+
+    const selectedRoomIds = [room._id, ...selectedAdditionalRooms];
+
     navigate('/checkout/addons', {
       state: {
         roomId: room._id,
@@ -661,7 +829,9 @@ const RoomDetailPage = () => {
         checkOut,
         adults,
         children,
+        infants,
         roomsCount,
+        selectedRoomIds,
         total,
         nights,
         breakdown
@@ -892,10 +1062,12 @@ const RoomDetailPage = () => {
               {/* Ratings and Reviews */}
               <div>
                 <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6">Rating and reviews</h2>
-                <div className="flex items-center gap-2 mb-6 lg:mb-8">
+                 <div className="flex items-center gap-2 mb-6 lg:mb-8">
                   <Star className="w-5 h-5 lg:w-6 lg:h-6 text-gray-900" strokeWidth={2} />
                   <span className="text-[17px] lg:text-2xl font-bold text-gray-900">{reviews.length > 0 && room.rating ? room.rating.toFixed(1) : '0.0'}</span>
                   <span className="text-gray-500 font-medium text-sm lg:text-base">({reviews.length} reviews)</span>
+                  <span className="text-gray-300 font-normal select-none">•</span>
+                  <span className="text-gray-500 font-medium text-sm lg:text-base">({room.visitorsCount || 0} unique visitors)</span>
                 </div>
 
                 <div className="space-y-3.5 lg:space-y-4 max-w-lg">
@@ -1005,14 +1177,14 @@ const RoomDetailPage = () => {
                   </span>
                 </div>
 
-                <div className="bg-white border border-gray-300 rounded-2xl overflow-hidden mb-6">
+                <div className="bg-white border border-gray-300 rounded-2xl mb-6">
                   <div className="flex border-b border-gray-300">
                     <div
                       onClick={() => {
                         setActiveSelectType('checkIn');
                         setShowCalendarModal(true);
                       }}
-                      className="flex-1 p-3 border-r border-gray-300 cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="flex-1 p-3 border-r border-gray-300 cursor-pointer hover:bg-gray-50 rounded-tl-2xl transition-colors"
                     >
                       <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1 cursor-pointer">Check-in</label>
                       <div className="text-sm font-semibold text-gray-700">
@@ -1024,7 +1196,7 @@ const RoomDetailPage = () => {
                         setActiveSelectType('checkOut');
                         setShowCalendarModal(true);
                       }}
-                      className="flex-1 p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="flex-1 p-3 cursor-pointer hover:bg-gray-50 rounded-tr-2xl transition-colors"
                     >
                       <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1 cursor-pointer">Check-out</label>
                       <div className="text-sm font-semibold text-gray-700">
@@ -1032,7 +1204,7 @@ const RoomDetailPage = () => {
                       </div>
                     </div>
                   </div>
-                  <div className={`p-3 flex items-center justify-between ${((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 0) > 0 ? 'border-b border-gray-300' : ''}`}>
+                  <div className="p-3 flex items-center justify-between border-b border-gray-300">
                     <div>
                       <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Adults</label>
                       <span className="text-sm text-gray-700">{adults} Adult{adults > 1 ? 's' : ''}</span>
@@ -1043,7 +1215,7 @@ const RoomDetailPage = () => {
                     </div>
                   </div>
                   {((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 0) > 0 && (
-                    <div className="p-3 flex items-center justify-between">
+                    <div className="p-3 flex items-center justify-between border-b border-gray-300">
                       <div>
                         <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Children</label>
                         <span className="text-sm text-gray-700">{children} Child{children !== 1 ? 'ren' : ''}</span>
@@ -1054,6 +1226,43 @@ const RoomDetailPage = () => {
                       </div>
                     </div>
                   )}
+                  <div className="p-3 flex items-center justify-between border-b border-gray-300">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Infants</label>
+                      <span className="text-sm text-gray-700">{infants} Infant{infants !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setInfants(g => Math.max(0, g - 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">−</button>
+                      <button onClick={() => setInfants(g => Math.min(10 * roomsCount, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
+                    </div>
+                  </div>
+                  <div className={`p-3 flex items-center justify-between ${roomsCount > 1 ? 'border-b border-gray-300' : ''}`}>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Rooms</label>
+                      <span className="text-sm text-gray-700">{roomsCount} Room{roomsCount !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setRoomsCount(g => Math.max(1, g - 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">−</button>
+                      <button onClick={() => setRoomsCount(g => Math.min(10, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
+                    </div>
+                  </div>
+                  {roomsCount > 1 && selectedAdditionalRooms.map((roomIdVal, idx) => (
+                    <div key={idx} className={`p-3 flex flex-col gap-1.5 ${idx < selectedAdditionalRooms.length - 1 ? 'border-b border-gray-300' : ''}`}>
+                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider text-left">Select Room {idx + 2}</label>
+                      <RoomSelectDropdown
+                        value={roomIdVal}
+                        onChange={(nextVal) => {
+                          setSelectedAdditionalRooms(prev => {
+                            const next = [...prev];
+                            next[idx] = nextVal;
+                            return next;
+                          });
+                        }}
+                        options={availableOtherRooms}
+                        getImageUrl={getImageUrl}
+                      />
+                    </div>
+                  ))}
                 </div>
 
                 {nights > 0 && (
@@ -1128,8 +1337,10 @@ const RoomDetailPage = () => {
               </button>
             </div>
 
-            {/* Stacked Input Cards */}
-            <div className="space-y-3 mb-2">
+            {/* Scrollable Container for inputs and pricing info to prevent off-screen cutoff on mobile */}
+            <div className="flex-1 overflow-y-auto max-h-[50vh] pr-1 space-y-4">
+              {/* Stacked Input Cards */}
+              <div className="space-y-3 mb-2">
               {/* Check-In Card */}
               <div
                 onClick={() => {
@@ -1201,6 +1412,61 @@ const RoomDetailPage = () => {
                   <ChevronDown className="w-5 h-5 text-gray-900 mr-1" />
                 </div>
               )}
+
+              {/* Infants Card */}
+              <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80">
+                <Users className="w-6 h-6 text-gray-400" />
+                <div className="flex flex-col flex-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Infants</label>
+                  <select
+                    value={infants}
+                    onChange={e => setInfants(parseInt(e.target.value, 10))}
+                    className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none"
+                  >
+                    {[...Array((10 * roomsCount) + 1)].map((_, i) => (
+                      <option key={i} value={i}>{i} Infant{i !== 1 ? 's' : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                <ChevronDown className="w-5 h-5 text-gray-900 mr-1" />
+              </div>
+
+              {/* Rooms Card */}
+              <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80">
+                <Users className="w-6 h-6 text-gray-400" />
+                <div className="flex flex-col flex-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Rooms</label>
+                  <select
+                    value={roomsCount}
+                    onChange={e => setRoomsCount(parseInt(e.target.value, 10))}
+                    className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none"
+                  >
+                    {[...Array(10)].map((_, i) => (
+                      <option key={i+1} value={i+1}>{i+1} Room{i+1 !== 1 ? 's' : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                <ChevronDown className="w-5 h-5 text-gray-900 mr-1" />
+              </div>
+
+              {/* Mobile Additional Rooms Cards */}
+              {roomsCount > 1 && selectedAdditionalRooms.map((roomIdVal, idx) => (
+                <div key={idx} className="bg-[#F8F9FA] rounded-2xl p-4 flex flex-col gap-1 border border-gray-100/80">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-left">Select Room {idx + 2}</label>
+                  <RoomSelectDropdown
+                    value={roomIdVal}
+                    onChange={(nextVal) => {
+                      setSelectedAdditionalRooms(prev => {
+                        const next = [...prev];
+                        next[idx] = nextVal;
+                        return next;
+                      });
+                    }}
+                    options={availableOtherRooms}
+                    getImageUrl={getImageUrl}
+                  />
+                </div>
+              ))}
             </div>
 
             {/* Total Mobile Summary */}
@@ -1227,6 +1493,8 @@ const RoomDetailPage = () => {
                 </div>
               </div>
             )}
+
+            </div>
 
             {/* Action Button inside Modal */}
             <button

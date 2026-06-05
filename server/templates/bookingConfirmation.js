@@ -468,3 +468,242 @@ export const getAdminBookingEmailTemplate = (user, booking, primaryRoomDetails) 
     </html>
   `;
 };
+
+export const getCancelBookingEmailTemplate = (user, booking, primaryRoomDetails) => {
+  const invoiceNo = booking._id ? booking._id.toString().toUpperCase().slice(-8) : 'TEMP';
+  const checkInDate = new Date(booking.checkIn).toLocaleDateString('en-IN', {
+    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+  });
+  const checkOutDate = new Date(booking.checkOut).toLocaleDateString('en-IN', {
+    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+  });
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Booking Cancellation Confirmed</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f4f6f8; font-family: 'Outfit', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f6f8; padding: 40px 10px;">
+        <tr>
+          <td align="center">
+            <!-- Main Card Container -->
+            <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e1e8ed;">
+              
+              <!-- Header Band -->
+              <tr>
+                <td style="background-color: #e11d48; padding: 30px 40px;">
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td>
+                        <span style="font-size: 20px; font-weight: 700; color: #ffffff; letter-spacing: 2px; text-transform: uppercase;">THE BALIFIED VILLA</span>
+                      </td>
+                      <td align="right">
+                        <span style="font-size: 12px; font-weight: 600; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase;">CANCELLATION CONFIRMED</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Content Padding -->
+              <tr>
+                <td style="padding: 40px;">
+                  
+                  <!-- Greeting & Status -->
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 30px;">
+                    <tr>
+                      <td>
+                        <h2 style="margin: 0 0 10px 0; font-size: 22px; color: #1a1d20; font-weight: 600;">Your Booking Has Been Cancelled</h2>
+                        <p style="margin: 0; font-size: 14px; color: #64748b; line-height: 1.6;">Dear ${user.name}, this email confirms that your booking (Ref: <strong>#TBV-${invoiceNo}</strong>) at The Balified Villa has been cancelled successfully.</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Refund Info Banner -->
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fef2f2; border-radius: 8px; border: 1px solid #fecaca; margin-bottom: 30px;">
+                    <tr>
+                      <td style="padding: 15px;">
+                        <strong style="color: #991b1b; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Refund Information</strong>
+                        <p style="margin: 0; font-size: 14px; color: #b91c1c; line-height: 1.5; font-weight: 500;">
+                          A full refund of <strong>₹${booking.totalAmount.toLocaleString('en-IN')}</strong> has been approved. The refund will be credited back to your original payment method within <strong>3 to 4 working days</strong>.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Booking details section -->
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+                    <tr>
+                      <td style="padding: 20px;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 13px; color: #1a1d20; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Cancelled Booking Details</h3>
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td width="50%" style="padding-bottom: 12px; font-size: 13px; color: #64748b;">
+                              <strong style="color: #1a1d20; display: block; margin-bottom: 2px;">Accommodation</strong>
+                              ${primaryRoomDetails.name}
+                            </td>
+                            <td width="50%" style="padding-bottom: 12px; font-size: 13px; color: #64748b;">
+                              <strong style="color: #1a1d20; display: block; margin-bottom: 2px;">Check-In Date</strong>
+                              ${checkInDate}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td width="50%" style="font-size: 13px; color: #64748b;">
+                              <strong style="color: #1a1d20; display: block; margin-bottom: 2px;">Check-Out Date</strong>
+                              ${checkOutDate}
+                            </td>
+                            <td width="50%" style="font-size: 13px; color: #64748b;">
+                              <strong style="color: #1a1d20; display: block; margin-bottom: 2px;">Total Refund Amount</strong>
+                              ₹${booking.totalAmount.toLocaleString('en-IN')}
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <p style="margin: 0; font-size: 14px; color: #64748b; line-height: 1.6;">
+                    If you have any questions or did not authorize this cancellation, please contact our support team immediately at info@jhonhotel.com.
+                  </p>
+
+                </td>
+              </tr>
+
+              <!-- Footer Band -->
+              <tr>
+                <td style="background-color: #1a1d20; padding: 40px 40px 30px 40px; text-align: center; border-top: 1px solid #2e343b;">
+                  <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: #ffffff; letter-spacing: 2px;">THE BALIFIED VILLA</p>
+                  <p style="margin: 0 0 25px 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                    Jalan Luxury Villa No. 8, Seminyak, Bali, Indonesia<br/>
+                    Tel: +62 361 123456 | Email: info@jhonhotel.com
+                  </p>
+                  <p style="margin: 0; font-size: 10px; color: #475569;">&copy; 2026 The Balified Villa. All rights reserved.</p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+};
+
+export const getRefundEmailTemplate = (user, booking, primaryRoomDetails) => {
+  const invoiceNo = booking._id ? booking._id.toString().toUpperCase().slice(-8) : 'TEMP';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Refund Processed</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f4f6f8; font-family: 'Outfit', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f6f8; padding: 40px 10px;">
+        <tr>
+          <td align="center">
+            <!-- Main Card Container -->
+            <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e1e8ed;">
+              
+              <!-- Header Band -->
+              <tr>
+                <td style="background-color: #10b981; padding: 30px 40px;">
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td>
+                        <span style="font-size: 20px; font-weight: 700; color: #ffffff; letter-spacing: 2px; text-transform: uppercase;">THE BALIFIED VILLA</span>
+                      </td>
+                      <td align="right">
+                        <span style="font-size: 12px; font-weight: 600; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase;">REFUND SUCCESSFUL</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Content Padding -->
+              <tr>
+                <td style="padding: 40px;">
+                  
+                  <!-- Greeting & Status -->
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 30px;">
+                    <tr>
+                      <td>
+                        <h2 style="margin: 0 0 10px 0; font-size: 22px; color: #1a1d20; font-weight: 600;">Refund Has Been Processed</h2>
+                        <p style="margin: 0; font-size: 14px; color: #64748b; line-height: 1.6;">Dear ${user.name}, we have successfully processed your refund of <strong>₹${booking.totalAmount.toLocaleString('en-IN')}</strong> for the cancelled booking (Ref: <strong>#TBV-${invoiceNo}</strong>).</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Confirmation Banner -->
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #ecfdf5; border-radius: 8px; border: 1px solid #a7f3d0; margin-bottom: 30px;">
+                    <tr>
+                      <td style="padding: 15px;">
+                        <strong style="color: #065f46; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Transaction Status</strong>
+                        <p style="margin: 0; font-size: 14px; color: #047857; line-height: 1.5; font-weight: 500;">
+                          The refund amount has been released to your account. Depending on your financial institution, it may take 1-3 business days to reflect in your bank statement.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Details -->
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+                    <tr>
+                      <td style="padding: 20px;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 13px; color: #1a1d20; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Refund Summary</h3>
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td width="50%" style="font-size: 13px; color: #64748b;">
+                              <strong style="color: #1a1d20; display: block; margin-bottom: 2px;">Booking Ref ID</strong>
+                              #TBV-${invoiceNo}
+                            </td>
+                            <td width="50%" style="font-size: 13px; color: #64748b;">
+                              <strong style="color: #1a1d20; display: block; margin-bottom: 2px;">Refunded Amount</strong>
+                              ₹${booking.totalAmount.toLocaleString('en-IN')}
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <p style="margin: 0; font-size: 14px; color: #64748b; line-height: 1.6;">
+                    Thank you for your patience and understanding. We hope to welcome you back to The Balified Villa in the near future.
+                  </p>
+
+                </td>
+              </tr>
+
+              <!-- Footer Band -->
+              <tr>
+                <td style="background-color: #1a1d20; padding: 40px 40px 30px 40px; text-align: center; border-top: 1px solid #2e343b;">
+                  <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: #ffffff; letter-spacing: 2px;">THE BALIFIED VILLA</p>
+                  <p style="margin: 0 0 25px 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                    Jalan Luxury Villa No. 8, Seminyak, Bali, Indonesia<br/>
+                    Tel: +62 361 123456 | Email: info@jhonhotel.com
+                  </p>
+                  <p style="margin: 0; font-size: 10px; color: #475569;">&copy; 2026 The Balified Villa. All rights reserved.</p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+};
+

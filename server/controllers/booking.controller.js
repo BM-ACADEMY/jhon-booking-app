@@ -5,7 +5,13 @@ import Review from '../models/Review.js';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import sendEmail from '../utils/email.js';
-import { getGuestBookingEmailTemplate, getAdminBookingEmailTemplate } from '../templates/bookingConfirmation.js';
+import Setting from '../models/Setting.js';
+import { 
+  getGuestBookingEmailTemplate, 
+  getAdminBookingEmailTemplate,
+  getCancelBookingEmailTemplate,
+  getRefundEmailTemplate
+} from '../templates/bookingConfirmation.js';
 
 let razorpayInstance = null;
 
@@ -66,7 +72,7 @@ const canAccommodateCombination = (roomsList, adults, children) => {
 
 
 // Helper to verify if room is available
-const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children, roomsCount = 1) => {
+const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children, roomsCount = 1, infants = 0, selectedRoomIds = []) => {
   if (!roomId) return { isAvailable: true };
   const primaryRoom = await Room.findById(roomId);
   if (!primaryRoom) return { isAvailable: false, message: 'Room not found.' };
@@ -84,6 +90,40 @@ const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children
 
     if (hasOverlap) {
       return { isAvailable: false, message: 'Primary room is already booked for the selected dates!' };
+    }
+  }
+
+  // Verify custom selectedRoomIds combination if provided and matches roomsCount
+  if (selectedRoomIds && Array.isArray(selectedRoomIds) && selectedRoomIds.length === roomsCount) {
+    if (!selectedRoomIds.map(id => id.toString()).includes(roomId.toString())) {
+      return { isAvailable: false, message: 'Primary room must be part of the booking combination.' };
+    }
+
+    const selectedRooms = await Room.find({ _id: { $in: selectedRoomIds } });
+    if (selectedRooms.length !== roomsCount) {
+      return { isAvailable: false, message: 'One or more selected rooms were not found.' };
+    }
+
+    if (checkIn && checkOut) {
+      const start = new Date(checkIn);
+      const end = new Date(checkOut);
+      const requestedDates = getDatesInRange(start, end);
+
+      for (const r of selectedRooms) {
+        const hasOverlap = r.unavailableDates && r.unavailableDates.some(unDate => {
+          const uDate = new Date(unDate);
+          return requestedDates.some(reqDate => uDate.toDateString() === reqDate.toDateString());
+        });
+        if (hasOverlap) {
+          return { isAvailable: false, message: `Room "${r.name}" is already booked for the selected dates.` };
+        }
+      }
+    }
+
+    if (canAccommodateCombination(selectedRooms, Number(adults), Number(children))) {
+      return { isAvailable: true, rooms: selectedRoomIds };
+    } else {
+      return { isAvailable: false, message: 'Selected room combination cannot accommodate the guests.' };
     }
   }
 
@@ -157,6 +197,7 @@ export const getAllBookings = async (req, res) => {
     const bookings = await Booking.find()
       .populate('user', 'name email phone')
       .populate('room', 'name category price')
+      .populate('rooms', 'name category price')
       .sort({ createdAt: -1 });
     res.json(bookings);
   } catch (err) {
@@ -167,7 +208,8 @@ export const getAllBookings = async (req, res) => {
 export const getMyBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ user: req.user._id })
-      .populate('room', 'name category price images')
+      .populate('room')
+      .populate('rooms')
       .sort({ createdAt: -1 });
 
     const reviews = await Review.find({ user: req.user._id });
@@ -189,11 +231,11 @@ export const getMyBookings = async (req, res) => {
 
 export const createRazorpayOrder = async (req, res) => {
   try {
-    const { amount, currency = 'INR', roomId, checkIn, checkOut, adults, children, roomsCount } = req.body;
+    const { amount, currency = 'INR', roomId, checkIn, checkOut, adults, children, roomsCount, infants, selectedRoomIds } = req.body;
 
     // Check room availability first
     if (roomId && checkIn && checkOut) {
-      const availability = await checkRoomAvailability(roomId, checkIn, checkOut, adults, children, roomsCount || 1);
+      const availability = await checkRoomAvailability(roomId, checkIn, checkOut, adults, children, roomsCount || 1, infants || 0, selectedRoomIds || []);
       if (!availability.isAvailable) {
         return res.status(400).json({ message: availability.message });
       }
@@ -241,13 +283,21 @@ export const verifyRazorpayPayment = async (req, res) => {
       bookingData.checkOut, 
       bookingData.adults, 
       bookingData.children,
-      bookingData.roomsCount || 1
+      bookingData.roomsCount || 1,
+      bookingData.infants || 0,
+      bookingData.selectedRoomIds || []
     );
     if (!availability.isAvailable) {
       return res.status(400).json({ message: availability.message });
     }
 
     // Payment is verified, create the booking
+    const isAdvance = bookingData.paymentType === 'advance';
+    const totalAmount = bookingData.totalAmount;
+    const paidAmount = bookingData.paidAmount || totalAmount;
+    const dueAmount = totalAmount - paidAmount;
+    const paymentStatus = isAdvance ? 'partially_paid' : 'paid';
+
     const booking = await Booking.create({
       ...bookingData,
       user: req.user._id,
@@ -256,7 +306,11 @@ export const verifyRazorpayPayment = async (req, res) => {
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
       razorpaySignature: razorpay_signature,
-      paymentStatus: 'paid',
+      paymentType: bookingData.paymentType || 'full',
+      advanceAmount: isAdvance ? paidAmount : 0,
+      paidAmount,
+      dueAmount,
+      paymentStatus,
       status: 'confirmed'
     });
 
@@ -306,19 +360,31 @@ export const verifyRazorpayPayment = async (req, res) => {
 
 export const createBooking = async (req, res) => {
   try {
-    const { room, checkIn, checkOut, adults, children, roomsCount } = req.body;
+    const { room, checkIn, checkOut, adults, children, roomsCount, infants, selectedRoomIds } = req.body;
 
     // Check availability
-    const availability = await checkRoomAvailability(room, checkIn, checkOut, adults, children, roomsCount || 1);
+    const availability = await checkRoomAvailability(room, checkIn, checkOut, adults, children, roomsCount || 1, infants || 0, selectedRoomIds || []);
     if (!availability.isAvailable) {
       return res.status(400).json({ message: availability.message });
     }
+
+    const totalAmount = req.body.totalAmount || 0;
+    const paidAmount = req.body.paidAmount !== undefined ? req.body.paidAmount : totalAmount;
+    const dueAmount = totalAmount - paidAmount;
+    const paymentStatus = req.body.paymentStatus || (dueAmount === 0 ? 'paid' : (paidAmount > 0 ? 'partially_paid' : 'unpaid'));
+    const paymentType = req.body.paymentType || (paidAmount < totalAmount && paidAmount > 0 ? 'advance' : 'full');
+    const advanceAmount = paymentType === 'advance' ? paidAmount : 0;
 
     const booking = await Booking.create({
       ...req.body,
       user: req.user._id,
       rooms: availability.rooms || [room],
-      roomsCount: availability.rooms ? availability.rooms.length : 1
+      roomsCount: availability.rooms ? availability.rooms.length : 1,
+      paymentType,
+      advanceAmount,
+      paidAmount,
+      dueAmount,
+      paymentStatus
     });
 
     // Block dates for all rooms in combination
@@ -519,3 +585,189 @@ export const getDashboardStats = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const cancelBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id).populate('room');
+    if (!booking) return res.status(404).json({ message: 'Booking not found.' });
+
+    // Ensure user owns this booking
+    if (booking.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'You are not authorized to cancel this booking.' });
+    }
+
+    if (booking.status === 'cancelled') {
+      return res.status(400).json({ message: 'Booking is already cancelled.' });
+    }
+    if (booking.status === 'completed') {
+      return res.status(400).json({ message: 'Completed stays cannot be cancelled.' });
+    }
+
+    // Dynamic cancellation duration validation
+    const setting = await Setting.findOne() || { cancelDurationHrs: 24, checkInTime: '14:00' };
+    const cancelDurationHrs = setting.cancelDurationHrs ?? 24;
+
+    const checkInDate = new Date(booking.checkIn);
+    const [hours, minutes] = (setting.checkInTime || '14:00').split(':');
+    checkInDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+
+    const cancelDeadline = new Date(checkInDate.getTime() - cancelDurationHrs * 60 * 60 * 1000);
+
+    if (new Date() >= cancelDeadline) {
+      return res.status(400).json({ 
+        message: `Cancellation window has expired. Bookings can only be cancelled up to ${cancelDurationHrs} hours before the check-in time.` 
+      });
+    }
+
+    // Cancel booking status
+    booking.status = 'cancelled';
+    await booking.save();
+
+    // Release dates
+    const bookedDates = getDatesInRange(booking.checkIn, booking.checkOut);
+    const roomsToUnblock = booking.rooms && booking.rooms.length > 0 ? booking.rooms : [booking.room];
+    await Room.updateMany(
+      { _id: { $in: roomsToUnblock } },
+      { $pull: { unavailableDates: { $in: bookedDates } } }
+    );
+
+    // Send cancellation email in background
+    User.findById(req.user._id)
+      .then(user => {
+        if (user) {
+          const emailHtml = getCancelBookingEmailTemplate(user, booking, booking.room);
+          sendEmail({
+            email: user.email,
+            subject: 'Booking Cancellation - The Balified Villa',
+            html: emailHtml
+          }).catch(err => console.error('Error sending cancel email:', err));
+        }
+      })
+      .catch(err => console.error('Error fetching user for cancellation email:', err));
+
+    res.json({ message: 'Booking cancelled successfully.', booking });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const processRefund = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id).populate('room');
+    if (!booking) return res.status(404).json({ message: 'Booking not found.' });
+
+    if (booking.status !== 'cancelled') {
+      return res.status(400).json({ message: 'Only cancelled bookings can be refunded.' });
+    }
+    if (booking.paymentStatus === 'refunded') {
+      return res.status(400).json({ message: 'Refund has already been processed.' });
+    }
+
+    booking.paymentStatus = 'refunded';
+    await booking.save();
+
+    // Send refund processed email
+    User.findById(booking.user)
+      .then(user => {
+        if (user) {
+          const emailHtml = getRefundEmailTemplate(user, booking, booking.room);
+          sendEmail({
+            email: user.email,
+            subject: 'Refund Processed - The Balified Villa',
+            html: emailHtml
+          }).catch(err => console.error('Error sending refund email:', err));
+        }
+      })
+      .catch(err => console.error('Error fetching user for refund email:', err));
+
+    res.json({ message: 'Refund processed and confirmation mail sent successfully.', booking });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const updatePaymentNotes = async (req, res) => {
+  try {
+    const { notes } = req.body;
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    booking.paymentNotes = notes || '';
+    await booking.save();
+    res.json(booking);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const markPaymentComplete = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    booking.paymentStatus = 'paid';
+    booking.paidAmount = booking.totalAmount;
+    booking.dueAmount = 0;
+    await booking.save();
+    res.json(booking);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const createBalanceRazorpayOrder = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    const totalAmount = Number(booking.totalAmount) || 0;
+    const paidAmount = booking.paidAmount !== undefined ? Number(booking.paidAmount) : (booking.paymentStatus === 'paid' ? totalAmount : 0);
+    const dueAmount = booking.dueAmount !== undefined ? Number(booking.dueAmount) : (totalAmount - paidAmount);
+
+    if (dueAmount <= 0) return res.status(400).json({ message: 'No pending balance for this booking' });
+
+    const options = {
+      amount: Math.round(dueAmount * 100), // paise
+      currency: 'INR',
+      receipt: `bal_${String(booking._id).slice(-8)}_${String(Date.now()).slice(-8)}`,
+    };
+
+    const razorpay = getRazorpayInstance();
+    const order = await razorpay.orders.create(options);
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const verifyBalanceRazorpayPayment = async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
+    } = req.body;
+
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    const shasum = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
+    shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+    const digest = shasum.digest('hex');
+
+    if (digest !== razorpay_signature) {
+      return res.status(400).json({ message: 'Transaction not legitimate!' });
+    }
+
+    // Update booking payment info
+    booking.razorpayOrderId = razorpay_order_id;
+    booking.razorpayPaymentId = razorpay_payment_id;
+    booking.paymentStatus = 'paid';
+    booking.paidAmount = booking.totalAmount;
+    booking.dueAmount = 0;
+    await booking.save();
+
+    res.json({ message: 'Balance payment verified successfully', booking });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+

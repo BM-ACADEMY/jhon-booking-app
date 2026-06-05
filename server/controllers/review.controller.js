@@ -22,7 +22,15 @@ const updateRoomRating = async (roomId) => {
 // 1. Get verified reviews for a specific room
 export const getReviewsByRoom = async (req, res) => {
   try {
-    const { roomId } = req.params;
+    let { roomId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(roomId)) {
+      const roomObj = await Room.findOne({ slug: roomId });
+      if (roomObj) {
+        roomId = roomObj._id;
+      } else {
+        return res.json([]);
+      }
+    }
     const reviews = await Review.find({ room: roomId, verified: true })
       .populate('user', 'name avatar')
       .sort({ createdAt: -1 });
@@ -52,12 +60,6 @@ export const createReview = async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to review this booking' });
     }
 
-    // Verify booking is completed / expired (checkOut is in the past)
-    const currentDate = new Date();
-    const checkOutDate = new Date(booking.checkOut);
-    if (checkOutDate > currentDate) {
-      return res.status(400).json({ message: 'You can only review a room after your checkout date' });
-    }
 
     // Parse ratings (supporting both individual fields and nested ratings object)
     let comm = req.body.communication;
@@ -91,29 +93,6 @@ export const createReview = async (req, res) => {
 
     const rating = Math.round(((communication + cleanliness + comfort + facilities) / 4) * 10) / 10;
 
-    // Update if review already exists
-    const existingReview = await Review.findOne({ booking: bookingId });
-    if (existingReview) {
-      existingReview.ratings = {
-        communication,
-        cleanliness,
-        comfort,
-        facilities
-      };
-      existingReview.rating = rating;
-      existingReview.comment = comment || '';
-      existingReview.verified = false; // require verification again on edit
-      await existingReview.save();
-
-      // Recalculate room rating
-      await updateRoomRating(booking.room);
-
-      return res.status(200).json({
-        message: 'Review updated successfully. It will be visible after admin verification.',
-        review: existingReview
-      });
-    }
-
     // Handle image uploads
     const images = [];
     if (req.files && req.files.length > 0) {
@@ -122,26 +101,56 @@ export const createReview = async (req, res) => {
       });
     }
 
-    const newReview = await Review.create({
-      user: req.user._id,
-      userName: req.user.name,
-      room: booking.room,
-      booking: bookingId,
-      ratings: {
-        communication,
-        cleanliness,
-        comfort,
-        facilities
-      },
-      rating,
-      comment: comment || '',
-      images,
-      verified: false, // Default is false, requires admin approval
-    });
+    const roomsToReview = booking.rooms && booking.rooms.length > 0
+      ? [...new Set(booking.rooms.map(r => r.toString()))]
+      : [booking.room.toString()];
 
+    const reviewsSaved = [];
+
+    for (const roomId of roomsToReview) {
+      // Check if review already exists for this specific room and booking
+      let review = await Review.findOne({ booking: bookingId, room: roomId });
+      if (review) {
+        review.ratings = {
+          communication,
+          cleanliness,
+          comfort,
+          facilities
+        };
+        review.rating = rating;
+        review.comment = comment || '';
+        review.verified = false; // require verification again on edit
+        if (images.length > 0) {
+          review.images = images;
+        }
+        await review.save();
+      } else {
+        review = await Review.create({
+          user: req.user._id,
+          userName: req.user.name,
+          room: roomId,
+          booking: bookingId,
+          ratings: {
+            communication,
+            cleanliness,
+            comfort,
+            facilities
+          },
+          rating,
+          comment: comment || '',
+          images,
+          verified: false, // Default is false, requires admin approval
+        });
+      }
+      reviewsSaved.push(review);
+      // Recalculate room rating
+      await updateRoomRating(roomId);
+    }
+
+    const isUpdate = await Review.countDocuments({ booking: bookingId }) > roomsToReview.length; // rough check or just generic message
     res.status(201).json({
       message: 'Review submitted successfully. It will be visible after admin verification.',
-      review: newReview
+      review: reviewsSaved[0]
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -17,7 +17,9 @@ import {
   ChevronRight,
   TrendingUp,
   ChevronDown,
-  Percent
+  Percent,
+  CircleCheckBig,
+  MessageSquare
 } from 'lucide-react';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
@@ -45,6 +47,7 @@ const paymentConfig = {
   paid: 'bg-green-100 text-green-700 border border-green-200',
   unpaid: 'bg-orange-100 text-orange-700 border border-orange-200',
   refunded: 'bg-gray-100 text-gray-700 border border-gray-250',
+  partially_paid: 'bg-yellow-100 text-yellow-750 border border-yellow-200',
 };
 
 const BookingManagement = () => {
@@ -54,11 +57,16 @@ const BookingManagement = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [refundingBooking, setRefundingBooking] = useState(null);
 
   // Date Filter States
   const [dateFilter, setDateFilter] = useState('All');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  // Payment Notes Modal State
+  const [paymentModalBooking, setPaymentModalBooking] = useState(null);
+  const [paymentModalNotes, setPaymentModalNotes] = useState('');
 
   // Add-on Details Modal State
   const [activeAddonsBooking, setActiveAddonsBooking] = useState(null);
@@ -110,6 +118,26 @@ const BookingManagement = () => {
     }
   };
 
+  const handleProcessRefund = async () => {
+    if (!refundingBooking) return;
+    try {
+      setActionLoading(true);
+      const res = await api.post(`/bookings/${refundingBooking._id}/refund`);
+      toast.success(res.data.message || 'Refund mail was sent successfully');
+      
+      // Update local state
+      const updatedBookings = bookings.map(b => 
+        b._id === refundingBooking._id ? { ...b, paymentStatus: 'refunded' } : b
+      );
+      setBookings(updatedBookings);
+      setRefundingBooking(null);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to process refund');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const statuses = ['All', 'pending', 'confirmed', 'completed', 'cancelled'];
 
   // Filtering Logic with safe fallbacks
@@ -117,7 +145,7 @@ const BookingManagement = () => {
     const guestName = b.user?.name || '';
     const guestEmail = b.user?.email || '';
     const guestPhone = b.user?.phone || '';
-    const roomName = b.room?.name || '';
+    const roomName = b.rooms && b.rooms.length > 0 ? b.rooms.map(r => r.name).join(' ') : (b.room?.name || '');
     const mongoId = b._id || '';
     const razorpayPayId = b.razorpayPaymentId || '';
 
@@ -418,7 +446,7 @@ const BookingManagement = () => {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  {['Booking ID', 'Guest details', 'Room type', 'Add-ons', 'Check In / Out', 'Guests', 'Amount', 'Payment status', 'Booking status', 'Actions'].map((h) => (
+                  {['Booking ID', 'Guest details', 'Room type', 'Add-ons', 'Check In / Out', 'Guests', 'Amount', 'Payment status', 'Booking status', 'Refund', 'Payment Notes & Completion', 'Actions'].map((h) => (
                     <th key={h} className="text-left text-xs font-bold text-gray-500 uppercase tracking-wider px-5 py-4 whitespace-nowrap">
                       {h}
                     </th>
@@ -427,7 +455,14 @@ const BookingManagement = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {currentItems.map((b) => (
-                  <tr key={b._id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr 
+                    key={b._id} 
+                    className={`transition-colors ${
+                      b.status === 'cancelled' 
+                        ? 'bg-red-50/70 hover:bg-red-100/50' 
+                        : 'hover:bg-gray-50/50'
+                    }`}
+                  >
                     <td className="px-5 py-3.5 text-xs font-mono text-gray-500" title={b._id}>
                       {b._id ? `${b._id.slice(-8).toUpperCase()}` : 'N/A'}
                     </td>
@@ -437,7 +472,11 @@ const BookingManagement = () => {
                       <p className="text-xs text-violet-650 font-bold mt-0.5">{b.user?.phone || 'No Phone'}</p>
                     </td>
                     <td className="px-5 py-3.5">
-                      <p className="text-sm font-semibold text-gray-700">{b.room?.name || 'Deleted Room'}</p>
+                      <p className="text-sm font-semibold text-gray-700">
+                        {b.rooms && b.rooms.length > 0 
+                          ? b.rooms.map(r => r.name).join(', ') 
+                          : b.room?.name || 'Deleted Room'}
+                      </p>
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">{b.room?.category || 'N/A'}</p>
                     </td>
                     <td className="px-5 py-3.5">
@@ -462,20 +501,65 @@ const BookingManagement = () => {
                       <p>{b.checkIn ? new Date(b.checkIn).toLocaleDateString() : 'N/A'}</p>
                       <p className="text-gray-400 font-medium">to {b.checkOut ? new Date(b.checkOut).toLocaleDateString() : 'N/A'}</p>
                     </td>
-                    <td className="px-5 py-3.5 text-sm font-bold text-center text-gray-600">
-                      <div>{b.adults || b.guests || 1}A {b.children > 0 ? `· ${b.children}C` : ''}</div>
-                      <div className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">{b.roomsCount || 1} Room{(b.roomsCount || 1) !== 1 ? 's' : ''}</div>
+                    <td className="px-5 py-3.5 text-xs text-gray-600 font-semibold">
+                      <div className="font-bold text-gray-800">{b.adults || 1} Adult{ (b.adults || 1) > 1 ? 's' : '' }</div>
+                      <div className="text-[10px] text-gray-500 mt-0.5">
+                        {b.children || 0} Child{ (b.children || 0) !== 1 ? 'ren' : '' } · {b.infants || 0} Infant{ (b.infants || 0) !== 1 ? 's' : '' }
+                      </div>
+                      <div className="text-[10px] text-gray-400 font-bold uppercase mt-1">{b.roomsCount || 1} Room{(b.roomsCount || 1) !== 1 ? 's' : ''}</div>
                     </td>
-                    <td className="px-5 py-3.5 text-sm font-black text-gray-800">₹{b.totalAmount}</td>
+                    <td className="px-5 py-3.5 text-sm font-black text-gray-800">
+                      ₹{b.totalAmount}
+                      {b.paymentType === 'advance' && (
+                        <div className="text-[10px] text-gray-400 font-semibold mt-1">
+                          Paid: ₹{b.paidAmount || 0}
+                          <br />
+                          Due: ₹{b.dueAmount || 0}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${paymentConfig[b.paymentStatus || 'unpaid']}`}>
-                        {b.paymentStatus || 'unpaid'}
+                        {b.paymentStatus === 'partially_paid' ? 'partially paid' : (b.paymentStatus || 'unpaid')}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${statusConfig[getEffectiveStatus(b) || 'pending'].class}`}>
                         {statusConfig[getEffectiveStatus(b) || 'pending'].label}
                       </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-center">
+                      {b.status === 'cancelled' ? (
+                        b.paymentStatus === 'refunded' ? (
+                          <div className="flex items-center justify-center text-emerald-600 gap-1" title="Refund Processed">
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="text-[10px] font-black uppercase tracking-wider">Done</span>
+                          </div>
+                        ) : b.paymentStatus === 'paid' ? (
+                          <button
+                            disabled={actionLoading}
+                            onClick={() => setRefundingBooking(b)}
+                            className="p-1.5 rounded-lg bg-red-50 hover:bg-red-105 text-red-650 transition-colors disabled:opacity-40 cursor-pointer"
+                            title="Process Refund & Send Email"
+                          >
+                            <CircleCheckBig className="w-4 h-4" />
+                          </button>
+                        ) : null
+                      ) : null}
+                    </td>
+                    <td className="px-5 py-3.5 text-center">
+                      <button
+                        onClick={() => {
+                          setPaymentModalBooking(b);
+                          setPaymentModalNotes(b.paymentNotes || '');
+                        }}
+                        className={`p-2 rounded-xl transition-all cursor-pointer ${
+                          b.paymentNotes ? 'bg-violet-50 text-violet-600 hover:bg-violet-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                        }`}
+                        title="Payment Notes & Completion"
+                      >
+                        <MessageSquare className="w-4.5 h-4.5" />
+                      </button>
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1">
@@ -656,7 +740,11 @@ const BookingManagement = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 border border-gray-200 rounded-2xl p-4">
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Room Type</span>
-                    <span className="text-sm font-bold text-gray-800">{selectedBooking.room?.name || 'Deleted Room'}</span>
+                    <span className="text-sm font-bold text-gray-800">
+                      {selectedBooking.rooms && selectedBooking.rooms.length > 0 
+                        ? selectedBooking.rooms.map(r => r.name).join(', ') 
+                        : selectedBooking.room?.name || 'Deleted Room'}
+                    </span>
                   </div>
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Category</span>
@@ -691,8 +779,14 @@ const BookingManagement = () => {
                   </div>
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Guests</span>
-                    <span className="text-xs font-bold text-gray-800">
-                      {selectedBooking.adults || selectedBooking.guests || 1}A{selectedBooking.children > 0 ? ` + ${selectedBooking.children}C` : ''}
+                    <span className="text-xs font-bold text-gray-800 block">
+                      {selectedBooking.adults || 1} Adult{ (selectedBooking.adults || 1) > 1 ? 's' : '' }
+                    </span>
+                    <span className="text-[11px] text-gray-500 font-semibold block mt-0.5">
+                      {selectedBooking.children || 0} Child{ (selectedBooking.children || 0) !== 1 ? 'ren' : '' }
+                    </span>
+                    <span className="text-[11px] text-gray-500 font-semibold block">
+                      {selectedBooking.infants || 0} Infant{ (selectedBooking.infants || 0) !== 1 ? 's' : '' }
                     </span>
                   </div>
                   <div>
@@ -744,12 +838,20 @@ const BookingManagement = () => {
                   <div>
                     <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Payment Status</span>
                     <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${paymentConfig[selectedBooking.paymentStatus || 'unpaid']}`}>
-                      {selectedBooking.paymentStatus || 'unpaid'}
+                      {selectedBooking.paymentStatus === 'partially_paid' ? 'partially paid' : (selectedBooking.paymentStatus || 'unpaid')}
                     </span>
                   </div>
                   <div>
-                    <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Paid Amount</span>
-                    <span className="text-sm font-black text-gray-800">₹{selectedBooking.totalAmount}</span>
+                    <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Payment Breakdown</span>
+                    <div className="text-xs text-gray-700 font-semibold space-y-0.5">
+                      <p>Total stay amount: ₹{selectedBooking.totalAmount}</p>
+                      <p className="text-emerald-600">Paid amount: ₹{selectedBooking.paidAmount || 0}</p>
+                      <p className="text-amber-600 font-bold">Due balance: ₹{selectedBooking.dueAmount || 0}</p>
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Payment Notes Log</span>
+                    <p className="text-xs bg-gray-100 p-2.5 rounded-lg font-mono text-gray-700 whitespace-pre-wrap">{selectedBooking.paymentNotes || 'No notes added yet'}</p>
                   </div>
                 </div>
               </div>
@@ -850,6 +952,144 @@ const BookingManagement = () => {
                 className="bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs uppercase tracking-widest px-6 py-3 rounded-xl transition-all cursor-pointer shadow-lg shadow-violet-500/10"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refund Confirmation Modal */}
+      {refundingBooking && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-100 flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+              <div>
+                <h3 className="font-black text-gray-950 text-base flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-red-650" />
+                  Confirm Refund Process
+                </h3>
+              </div>
+              <button
+                onClick={() => setRefundingBooking(null)}
+                className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-150 rounded-xl transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Are you sure you want to process the refund of <span className="font-bold text-gray-800">₹{refundingBooking.totalAmount.toLocaleString()}</span> for <span className="font-bold text-gray-800">{refundingBooking.user?.name || 'Guest'}</span>?
+              </p>
+              <p className="text-xs text-gray-450 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-200/60">
+                This action will update the booking payment status to <strong className="text-gray-750">refunded</strong> and send a confirmation email to the user.
+              </p>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
+              <button
+                onClick={() => setRefundingBooking(null)}
+                className="border border-gray-200 bg-white hover:bg-gray-50 text-gray-650 font-extrabold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={actionLoading}
+                onClick={handleProcessRefund}
+                className="bg-red-600 hover:bg-red-750 text-white font-extrabold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow shadow-red-500/10 flex items-center gap-2 disabled:opacity-50"
+              >
+                {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                Confirm & Send Mail
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Notes & Completion Modal */}
+      {paymentModalBooking && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-100 flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+              <div>
+                <h3 className="font-black text-gray-950 text-base flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-violet-600" />
+                  Payment Notes & Log
+                </h3>
+                <p className="text-xs text-gray-400 font-mono mt-0.5">Booking ID: {paymentModalBooking._id?.slice(-8).toUpperCase()}</p>
+              </div>
+              <button
+                onClick={() => setPaymentModalBooking(null)}
+                className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-150 rounded-xl transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-1 text-xs text-gray-600">
+                <div className="flex justify-between">
+                  <span className="font-bold">Total Amount:</span>
+                  <span className="font-black text-gray-800">₹{paymentModalBooking.totalAmount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-bold">Paid Amount:</span>
+                  <span className="font-black text-emerald-600">₹{paymentModalBooking.paidAmount || 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-bold">Due Balance:</span>
+                  <span className="font-black text-amber-600">₹{paymentModalBooking.dueAmount || 0}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Notes & Log Data</label>
+                <textarea
+                  value={paymentModalNotes}
+                  onChange={(e) => setPaymentModalNotes(e.target.value)}
+                  placeholder="Enter manual payment log details here..."
+                  className="w-full text-sm p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-violet-500 bg-gray-55 focus:bg-white resize-none"
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex gap-3">
+              {paymentModalBooking.dueAmount > 0 && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await api.patch(`/bookings/${paymentModalBooking._id}/payment-complete`);
+                      toast.success('Payment completed successfully!');
+                      setPaymentModalBooking(null);
+                      fetchBookings();
+                    } catch (err) {
+                      toast.error('Failed to complete payment');
+                    }
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer shadow shadow-green-500/10 flex justify-center items-center gap-1.5"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Mark Paid
+                </button>
+              )}
+              <button
+                onClick={async () => {
+                  try {
+                    await api.patch(`/bookings/${paymentModalBooking._id}/payment-notes`, { notes: paymentModalNotes });
+                    toast.success('Notes saved successfully!');
+                    setPaymentModalBooking(null);
+                    fetchBookings();
+                  } catch (err) {
+                    toast.error('Failed to save notes');
+                  }
+                }}
+                className="w-full bg-violet-600 hover:bg-violet-750 text-white font-extrabold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer shadow shadow-violet-500/10"
+              >
+                Save Notes
               </button>
             </div>
           </div>
