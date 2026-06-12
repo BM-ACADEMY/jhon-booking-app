@@ -1,9 +1,82 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Loader2, BedDouble, Star, Heart, Users, Bath, Maximize } from 'lucide-react';
+import { ArrowRight, Loader2, BedDouble, Star, Heart, Users, Bath, Maximize, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api, { getRoomSlug } from '../api';
 import RoomCardSkeleton from '../components/RoomCardSkeleton';
+const ImageCarousel = ({ images, roomName }) => {
+  const [current, setCurrent] = useState(0);
+  const [hovered, setHovered] = useState(false);
+  const SERVER_URL = import.meta.env.VITE_BASE_URL;
+
+  const getImageUrl = (img) => {
+    const u = img?.url || img;
+    if (!u) return '';
+    if (typeof u === 'string' && u.startsWith('http')) return u;
+    return `${SERVER_URL}${u}`;
+  };
+
+  const prev = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrent((c) => (c - 1 + images.length) % images.length);
+  };
+
+  const next = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrent((c) => (c + 1) % images.length);
+  };
+
+  if (!images || images.length === 0) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-gray-150">
+        <BedDouble className="w-16 h-16 text-gray-300" />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="relative w-full h-full group"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <img
+        src={getImageUrl(images[current])}
+        alt={`${roomName} - View ${current + 1}`}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+      />
+      {images.length > 1 && hovered && (
+        <>
+          <button
+            onClick={prev}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 cursor-pointer border-none"
+          >
+            <ChevronLeft className="w-4 h-4 text-gray-700" />
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 cursor-pointer border-none"
+          >
+            <ChevronRight className="w-4 h-4 text-gray-700" />
+          </button>
+        </>
+      )}
+      {images.length > 1 && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+          {images.map((_, idx) => (
+            <span
+              key={idx}
+              className={`w-1.5 h-1.5 rounded-full transition-all ${current === idx ? 'bg-white scale-125' : 'bg-white/50'}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const RoomsSection = () => {
   const [rooms, setRooms] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -99,24 +172,14 @@ const RoomsSection = () => {
       >
         {/* Image Container */}
         <div className="relative aspect-[4/3] rounded-[24px] overflow-hidden bg-gray-150 shadow-sm">
-          {room.images && room.images.length > 0 ? (
-            <img
-              src={(() => { const u = room.images[0]?.url || room.images[0]; return typeof u === 'string' && u.startsWith('http') ? u : `${SERVER_URL}${u}`; })()}
-              alt={room.name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-              <BedDouble className="w-16 h-16 text-gray-300" />
-            </div>
-          )}
+          <ImageCarousel images={room.images} roomName={room.name} />
 
           {/* Floating Heart Button on Top-Right */}
           <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              if (!user) { navigate('/login'); return; }
+              if (!user) { setAuthModal('login'); return; }
               toggleUserWishlist(room._id);
             }}
             className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white hover:scale-105 shadow-md active:scale-95 transition-all flex items-center justify-center cursor-pointer border-none outline-none"

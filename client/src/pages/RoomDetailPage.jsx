@@ -111,7 +111,7 @@ const RoomDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, toggleUserWishlist } = useAuth();
+  const { user, toggleUserWishlist, setAuthModal } = useAuth();
   const [room, setRoom] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -802,7 +802,7 @@ const RoomDetailPage = () => {
   const handleBooking = async () => {
     if (!user) {
       toast.error('Please login to book a room');
-      navigate('/login');
+      setAuthModal('login');
       return;
     }
     if (!checkIn || !checkOut) {
@@ -888,7 +888,10 @@ const RoomDetailPage = () => {
         <div className="absolute bottom-10 right-5 z-20">
           <button
             onClick={async () => {
-              if (!user) return navigate('/login');
+              if (!user) {
+                setAuthModal('login');
+                return;
+              }
               await toggleUserWishlist(room?._id);
             }}
             className="w-12 h-12 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 shadow-[0_4px_15px_rgba(0,0,0,0.1)] active:scale-95 transition-all"
@@ -928,7 +931,7 @@ const RoomDetailPage = () => {
             <button onClick={handleShare} className="cursor-pointer flex items-center justify-center w-12 h-12 bg-white/95 backdrop-blur-md hover:bg-white border border-gray-200/50 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] transition-all active:scale-95">
               <Share2 className="w-4.5 h-4.5 text-gray-700 hover:text-black" />
             </button>
-            <button onClick={async () => { if (!user) return navigate('/login'); await toggleUserWishlist(room?._id); }} className="cursor-pointer flex items-center justify-center w-12 h-12 bg-white/95 backdrop-blur-md hover:bg-white border border-gray-200/50 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] transition-all active:scale-95">
+            <button onClick={async () => { if (!user) { setAuthModal('login'); return; } await toggleUserWishlist(room?._id); }} className="cursor-pointer flex items-center justify-center w-12 h-12 bg-white/95 backdrop-blur-md hover:bg-white border border-gray-200/50 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] transition-all active:scale-95">
               <Heart className={`w-4.5 h-4.5 transition-all ${isWishlisted ? 'text-red-500 fill-red-500 scale-110' : 'text-gray-700 hover:text-black'}`} />
             </button>
           </div>

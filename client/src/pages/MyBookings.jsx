@@ -236,9 +236,9 @@ const MyBookings = () => {
               return (
                 <div key={booking._id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col">
                   {/* Top Section: Room Preview & Info Row */}
-                  <div className="flex flex-col md:flex-row md:h-[280px]">
+                  <div className="flex flex-col md:flex-row md:min-h-[280px]">
                     {/* Room Preview */}
-                    <div className="w-full md:w-72 h-48 md:h-[280px] relative bg-gray-100 flex-shrink-0">
+                    <div className="w-full md:w-72 h-48 md:min-h-[280px] relative bg-gray-100 flex-shrink-0">
                       {booking.room.images?.[0] ? (
                         <img
                           src={getImageUrl(booking.room.images[0])}
@@ -263,7 +263,7 @@ const MyBookings = () => {
                     </div>
 
                     {/* Booking Info */}
-                    <div className="p-5 md:p-6 flex-1 flex flex-col justify-between md:h-[280px]">
+                    <div className="p-5 md:p-6 flex-1 flex flex-col justify-between md:min-h-[280px]">
                       <div>
                         <div className="flex justify-between items-start mb-3">
                           <div>
@@ -381,7 +381,7 @@ const MyBookings = () => {
                           {booking.dueAmount > 0 && booking.status !== 'cancelled' && (
                             <button
                               onClick={() => handlePayBalance(booking)}
-                              className="px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl border border-yellow-250 bg-yellow-50 hover:bg-yellow-100 text-slate-900 active:scale-[0.98] transition-all cursor-pointer"
+                              className="px-4 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl bg-[#FCE83A] hover:bg-[#f3df2c] text-slate-900 active:scale-[0.98] transition-all cursor-pointer border-none shadow-sm"
                             >
                               Pay Balance (₹{booking.dueAmount?.toLocaleString('en-IN')})
                             </button>

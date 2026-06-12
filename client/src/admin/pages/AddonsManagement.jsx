@@ -92,7 +92,7 @@ const AddonsManagement = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto p-4 sm:p-6">
+    <div className="space-y-6 max-w-6xl p-4 sm:p-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
         <div>

@@ -35,7 +35,7 @@ const WishlistPage = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate('/login');
+      navigate('/login', { state: { from: window.location.pathname + window.location.search } });
       return;
     }
     fetchWishlist();

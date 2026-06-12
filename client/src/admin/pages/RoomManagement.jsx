@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Plus, Search, Edit2, Trash2, BedDouble, Star, ChevronLeft, ChevronRight,
   Loader2, Folder, Tag, X, MapPin, Users, Home, Info, Image as ImageIcon,
@@ -89,6 +89,42 @@ const RoomManagement = () => {
   const [editRoomTarget, setEditRoomTarget] = useState(null);
   const [roomForm, setRoomForm] = useState(DEFAULT_ROOM_FORM);
   const [roomImages, setRoomImages] = useState([]); // File objects
+  const [replacingTarget, setReplacingTarget] = useState(null); // { type: 'existing' | 'new', index: number }
+  const replaceInputRef = useRef(null);
+
+  const triggerReplaceExisting = (idx) => {
+    setReplacingTarget({ type: 'existing', index: idx });
+    setTimeout(() => replaceInputRef.current?.click(), 50);
+  };
+
+  const triggerReplaceNew = (idx) => {
+    setReplacingTarget({ type: 'new', index: idx });
+    setTimeout(() => replaceInputRef.current?.click(), 50);
+  };
+
+  const handleReplaceFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !replacingTarget) return;
+
+    if (replacingTarget.type === 'existing') {
+      const imgToReplace = roomForm.images[replacingTarget.index];
+      // Remove from existing
+      setRoomForm(p => ({
+        ...p,
+        images: p.images.filter((_, i) => i !== replacingTarget.index)
+      }));
+      // Add to new images with the same label
+      setRoomImages(p => [...p, { file, label: imgToReplace.label || '' }]);
+    } else if (replacingTarget.type === 'new') {
+      // Replace file in local preview
+      setRoomImages(p => p.map((img, i) => i === replacingTarget.index ? { ...img, file } : img));
+    }
+    
+    // Reset file input
+    e.target.value = '';
+    setReplacingTarget(null);
+  };
+
   const [submittingRoom, setSubmittingRoom] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftId, setDraftId] = useState(null); // tracks in-progress draft _id
@@ -1173,47 +1209,49 @@ const cat = categories.find(c => c.name === catName);
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                      {/* Existing Images */}
                      {roomForm.images && roomForm.images.map((img, idx) => (
-                       <div key={idx} className="bg-gray-50 rounded-2xl p-3 border border-gray-100 flex flex-col gap-2">
-                          <div className="relative aspect-[4/3] rounded-xl overflow-hidden group shadow-sm">
-                             <img src={img.url.startsWith('http') ? img.url : `${SERVER_URL}${img.url}`} alt="Preview" className="w-full h-full object-cover" />
-                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <button type="button" onClick={() => setRoomForm(p => ({ ...p, images: p.images.filter((_, i) => i !== idx) }))} className="bg-red-500 text-white p-2 rounded-xl hover:bg-red-600 transition-all shadow-lg"><Trash2 className="w-4 h-4" /></button>
-                             </div>
-                          </div>
-                          <input
-                            type="text"
-                            placeholder="Image label (e.g. Kitchen)"
-                            value={img.label}
-                            onChange={(e) => {
-                              const next = [...roomForm.images];
-                              next[idx].label = e.target.value;
-                              setRoomForm(p => ({ ...p, images: next }));
-                            }}
-                            className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[10px] font-bold outline-none focus:border-primary-500"
-                          />
-                       </div>
+                        <div key={idx} className="bg-gray-50 rounded-2xl p-3 border border-gray-100 flex flex-col gap-2">
+                           <div className="relative aspect-[4/3] rounded-xl overflow-hidden group shadow-sm">
+                              <img src={img.url.startsWith('http') ? img.url : `${SERVER_URL}${img.url}`} alt="Preview" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                 <button type="button" onClick={() => triggerReplaceExisting(idx)} className="bg-blue-500 text-white p-2 rounded-xl hover:bg-blue-600 transition-all shadow-lg" title="Replace Image"><Edit2 className="w-4 h-4" /></button>
+                                 <button type="button" onClick={() => setRoomForm(p => ({ ...p, images: p.images.filter((_, i) => i !== idx) }))} className="bg-red-500 text-white p-2 rounded-xl hover:bg-red-600 transition-all shadow-lg" title="Delete Image"><Trash2 className="w-4 h-4" /></button>
+                              </div>
+                           </div>
+                           <input
+                             type="text"
+                             placeholder="Image label (e.g. Kitchen)"
+                             value={img.label}
+                             onChange={(e) => {
+                               const next = [...roomForm.images];
+                               next[idx].label = e.target.value;
+                               setRoomForm(p => ({ ...p, images: next }));
+                             }}
+                             className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[10px] font-bold outline-none focus:border-primary-500"
+                           />
+                        </div>
                      ))}
                      {/* Local Previews */}
                      {roomImages.map((imgObj, idx) => (
-                       <div key={`new-${idx}`} className="bg-gray-50 rounded-2xl p-3 border border-gray-100 flex flex-col gap-2">
-                          <div className="relative aspect-[4/3] rounded-xl overflow-hidden group shadow-sm">
-                             <img src={URL.createObjectURL(imgObj.file)} alt="New Preview" className="w-full h-full object-cover" />
-                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <button type="button" onClick={() => setRoomImages(p => p.filter((_, i) => i !== idx))} className="bg-red-500 text-white p-2 rounded-xl hover:bg-red-600 transition-all shadow-lg"><Trash2 className="w-4 h-4" /></button>
-                             </div>
-                          </div>
-                          <input
-                            type="text"
-                            placeholder="New label..."
-                            value={imgObj.label || ''}
-                            onChange={(e) => {
-                              const next = [...roomImages];
-                              next[idx].label = e.target.value;
-                              setRoomImages(next);
-                            }}
-                            className="bg-white border border-primary-200 rounded-lg px-3 py-1.5 text-[10px] font-bold outline-none focus:border-primary-500"
-                          />
-                       </div>
+                        <div key={`new-${idx}`} className="bg-gray-50 rounded-2xl p-3 border border-gray-100 flex flex-col gap-2">
+                           <div className="relative aspect-[4/3] rounded-xl overflow-hidden group shadow-sm">
+                              <img src={URL.createObjectURL(imgObj.file)} alt="New Preview" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                 <button type="button" onClick={() => triggerReplaceNew(idx)} className="bg-blue-500 text-white p-2 rounded-xl hover:bg-blue-600 transition-all shadow-lg" title="Replace Image"><Edit2 className="w-4 h-4" /></button>
+                                 <button type="button" onClick={() => setRoomImages(p => p.filter((_, i) => i !== idx))} className="bg-red-500 text-white p-2 rounded-xl hover:bg-red-600 transition-all shadow-lg" title="Delete Image"><Trash2 className="w-4 h-4" /></button>
+                              </div>
+                           </div>
+                           <input
+                             type="text"
+                             placeholder="New label..."
+                             value={imgObj.label || ''}
+                             onChange={(e) => {
+                               const next = [...roomImages];
+                               next[idx].label = e.target.value;
+                               setRoomImages(next);
+                             }}
+                             className="bg-white border border-primary-200 rounded-lg px-3 py-1.5 text-[10px] font-bold outline-none focus:border-primary-500"
+                           />
+                        </div>
                      ))}
                      {roomImages.length + (roomForm.images?.length || 0) < 12 && (
                        <label className="cursor-pointer aspect-[4/3] rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-primary-500 hover:text-primary-500 hover:bg-primary-50/30 transition-all group">
@@ -1226,6 +1264,7 @@ const cat = categories.find(c => c.name === catName);
                        </label>
                      )}
                   </div>
+                  <input type="file" ref={replaceInputRef} onChange={handleReplaceFile} className="hidden" accept="image/*" />
                   <p className="text-[10px] text-gray-400 font-bold text-center uppercase tracking-widest">Assign labels like "Master Bedroom" or "Dining Area" to help guests orient themselves.</p>
                 </div>
               )}

@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Search, Shield, ShieldOff, UserX, UserCheck, Users, Plus, Edit2, Trash2, X, Loader2, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { Search, Shield, ShieldOff, UserX, UserCheck, Users, Plus, Edit2, Trash2, X, Loader2, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, History, Calendar, Clock, BedDouble } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../api';
+
+const SERVER_URL = import.meta.env.VITE_BASE_URL;
+
+const getImageUrl = (img) => {
+  const u = img?.url || img;
+  if (!u || typeof u !== 'string') return null;
+  return u.startsWith('http') ? u : `${SERVER_URL}${u}`;
+};
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -30,6 +38,11 @@ const UserManagement = () => {
     isActive: true
   });
 
+  // Booking History State
+  const [historyUser, setHistoryUser] = useState(null);
+  const [userBookings, setUserBookings] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -39,6 +52,21 @@ const UserManagement = () => {
       console.error('Error fetching users:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserHistory = async (user) => {
+    setHistoryUser(user);
+    setLoadingHistory(true);
+    try {
+      const res = await api.get('/bookings');
+      const filteredBookings = res.data.filter(b => b.user && b.user._id === user._id);
+      setUserBookings(filteredBookings);
+    } catch (err) {
+      toast.error('Failed to fetch user booking history');
+      console.error(err);
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
@@ -412,6 +440,13 @@ const UserManagement = () => {
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1.5 transition-opacity">
                         <button
+                          onClick={() => fetchUserHistory(u)}
+                          className="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 transition-colors cursor-pointer"
+                          title="Booking History"
+                        >
+                          <History className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => toggleRole(u)}
                           className={`p-1.5 rounded-lg transition-colors cursor-pointer ${u.role === 'admin' ? 'hover:bg-gray-100 text-gray-400' : 'hover:bg-purple-50 text-purple-600'}`}
                           title={u.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
@@ -697,6 +732,172 @@ const UserManagement = () => {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Booking History Modal */}
+      {historyUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px]">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 flex-shrink-0">
+              <div className="text-left">
+                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                  <History className="w-5 h-5 text-emerald-600" />
+                  Booking History - {historyUser.name}
+                </h3>
+                <p className="text-xs text-gray-400 font-semibold mt-1">
+                  {historyUser.email} {historyUser.phone ? `• ${historyUser.phone}` : ''}
+                </p>
+              </div>
+              <button 
+                onClick={() => setHistoryUser(null)} 
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-lg transition-all cursor-pointer border-none bg-transparent"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1 bg-gray-50/50">
+              {loadingHistory ? (
+                <div className="flex flex-col items-center justify-center py-20 text-gray-450">
+                  <Loader2 className="w-8 h-8 animate-spin mb-2 text-primary-500" />
+                  <p className="text-xs font-bold uppercase tracking-widest animate-pulse">Loading booking history...</p>
+                </div>
+              ) : userBookings.length === 0 ? (
+                <div className="text-center py-20 bg-white border border-gray-200 rounded-xl">
+                  <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm font-bold text-gray-700">No Bookings Found</p>
+                  <p className="text-xs text-gray-400 mt-1">This user has not booked any rooms yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Summary row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                    <div className="bg-white border border-gray-200 rounded-xl p-4 text-left">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Bookings</p>
+                      <h4 className="text-xl font-bold text-gray-800 mt-1">{userBookings.length}</h4>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4 text-left">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Spent</p>
+                      <h4 className="text-xl font-bold text-emerald-600 mt-1">
+                        ₹{userBookings.reduce((sum, b) => {
+                          if (b.status === 'cancelled') return sum;
+                          const paid = b.paymentStatus === 'paid' ? b.totalAmount : (b.paidAmount || (b.totalAmount - (b.dueAmount || 0)) || 0);
+                          return sum + paid;
+                        }, 0).toLocaleString('en-IN')}
+                      </h4>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4 text-left">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pending Balance</p>
+                      <h4 className="text-xl font-bold text-amber-600 mt-1">
+                        ₹{userBookings.reduce((sum, b) => {
+                          if (b.status === 'cancelled') return sum;
+                          const due = b.paymentStatus === 'paid' ? 0 : (b.dueAmount !== undefined ? b.dueAmount : (b.totalAmount - (b.paidAmount || 0)));
+                          return sum + (due > 0 ? due : 0);
+                        }, 0).toLocaleString('en-IN')}
+                      </h4>
+                    </div>
+                  </div>
+
+                  {/* Booking list */}
+                  <div className="overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                          {['Room/Category', 'Check-In', 'Check-Out', 'Amount', 'Payment', 'Status', 'Booked On'].map((h) => (
+                            <th key={h} className="text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider px-4 py-3 whitespace-nowrap">
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 text-left">
+                        {userBookings.map((b) => (
+                          <tr key={b._id} className="hover:bg-gray-50/30 transition-colors">
+                            <td className="px-4 py-3.5">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
+                                  {((b.rooms && b.rooms[0]?.images?.[0]) || b.room?.images?.[0]) ? (
+                                    <img 
+                                      src={getImageUrl((b.rooms && b.rooms[0]?.images?.[0]) ? b.rooms[0].images[0] : b.room?.images?.[0])} 
+                                      alt="" 
+                                      className="w-full h-full object-cover" 
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <BedDouble className="w-4 h-4 text-gray-400" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p 
+                                    className="text-sm font-bold text-gray-800 truncate max-w-[220px]" 
+                                    title={b.rooms && b.rooms.length > 0 ? b.rooms.map(r => r.name).join(', ') : b.room?.name}
+                                  >
+                                    {b.rooms && b.rooms.length > 0 ? b.rooms.map(r => r.name).join(', ') : b.room?.name || 'Deleted Room'}
+                                  </p>
+                                  <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mt-0.5">
+                                    {b.room?.category || '—'}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-xs font-semibold text-gray-700">
+                              {new Date(b.checkIn).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </td>
+                            <td className="px-4 py-3.5 text-xs font-semibold text-gray-700">
+                              {new Date(b.checkOut).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <div>
+                                <p className="text-xs font-bold text-gray-900">₹{b.totalAmount?.toLocaleString('en-IN')}</p>
+                                {b.dueAmount > 0 && (
+                                  <p className="text-[9px] text-gray-400 font-semibold mt-0.5">
+                                    Due: <span className="text-amber-600">₹{b.dueAmount?.toLocaleString('en-IN')}</span>
+                                  </p>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-extrabold border ${
+                                b.paymentStatus === 'paid' ? 'bg-green-50 text-green-700 border-green-100' :
+                                b.paymentStatus === 'partially_paid' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                'bg-red-50 text-red-700 border-red-100'
+                              }`}>
+                                {b.paymentStatus || 'unpaid'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-extrabold border ${
+                                b.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                b.status === 'completed' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                b.status === 'cancelled' ? 'bg-red-50 text-red-600 border-red-100' :
+                                'bg-amber-50 text-amber-600 border-amber-100'
+                              }`}>
+                                {b.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5 text-xs text-gray-455 font-semibold">
+                              {new Date(b.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-gray-100 flex justify-end flex-shrink-0">
+              <button
+                onClick={() => setHistoryUser(null)}
+                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-all cursor-pointer border-none outline-none shadow-sm"
+              >
+                Close History
+              </button>
             </div>
           </div>
         </div>

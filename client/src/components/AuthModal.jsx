@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 
 const AuthModal = () => {
   const { authModal, setAuthModal, login } = useAuth();
+  const navigate = useNavigate();
   
   // Tab states: 'login', 'register', 'forgot', 'otp', 'reset'
   const isLogin = authModal === 'login';
@@ -16,11 +18,14 @@ const AuthModal = () => {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Register states
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
   const [registerError, setRegisterError] = useState('');
   const [registerLoading, setRegisterLoading] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showRegisterConfirm, setShowRegisterConfirm] = useState(false);
 
   // Forgot password & OTP & Reset states
   const [forgotEmail, setForgotEmail] = useState("");
@@ -71,6 +76,11 @@ const AuthModal = () => {
       login(data.user, data.token);
       toast.success("Welcome back!");
       setAuthModal(null);
+      const redirectTo = sessionStorage.getItem('redirect_after_login');
+      if (redirectTo) {
+        sessionStorage.removeItem('redirect_after_login');
+        navigate(redirectTo);
+      }
     } catch (err) {
       setLoginError(err.message);
     } finally {
@@ -105,6 +115,11 @@ const AuthModal = () => {
       login(data.user, data.token);
       toast.success("Account created successfully!");
       setAuthModal(null);
+      const redirectTo = sessionStorage.getItem('redirect_after_login');
+      if (redirectTo) {
+        sessionStorage.removeItem('redirect_after_login');
+        navigate(redirectTo);
+      }
     } catch (err) {
       setRegisterError(err.message);
     } finally {
@@ -259,15 +274,24 @@ const AuthModal = () => {
                 <label className="block text-sm font-semibold text-gray-800 text-left mb-1.5">
                   Password
                 </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={loginForm.password}
-                  onChange={handleLoginChange}
-                  required
-                  placeholder="********"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-white placeholder-gray-400"
-                />
+                <div className="relative">
+                  <input
+                    type={showLoginPassword ? "text" : "password"}
+                    name="password"
+                    value={loginForm.password}
+                    onChange={handleLoginChange}
+                    required
+                    placeholder="********"
+                    className="w-full pl-4 pr-12 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-white placeholder-gray-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer flex items-center"
+                  >
+                    {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               {/* Forgot password row */}
@@ -533,33 +557,51 @@ const AuthModal = () => {
               {/* Password */}
               <div>
                 <label className="block text-sm font-semibold text-gray-800 text-left mb-1.5">Password</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={registerForm.password}
-                  onChange={handleRegisterChange}
-                  required
-                  placeholder="Min. 6 characters"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-white placeholder-gray-400"
-                />
+                <div className="relative">
+                  <input
+                    type={showRegisterPassword ? "text" : "password"}
+                    name="password"
+                    value={registerForm.password}
+                    onChange={handleRegisterChange}
+                    required
+                    placeholder="Min. 6 characters"
+                    className="w-full pl-4 pr-12 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-white placeholder-gray-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer flex items-center"
+                  >
+                    {showRegisterPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               {/* Confirm Password */}
               <div>
                 <label className="block text-sm font-semibold text-gray-800 text-left mb-1.5">Confirm Password</label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={registerForm.confirmPassword}
-                  onChange={handleRegisterChange}
-                  required
-                  placeholder="Re-enter password"
-                  className={`w-full px-4 py-3 border rounded-xl text-sm outline-none focus:ring-1 transition-all bg-white ${
-                    registerForm.confirmPassword && registerForm.confirmPassword !== registerForm.password
-                      ? 'border-red-300 focus:border-red-500'
-                      : 'border-gray-200 focus:border-blue-600 focus:ring-blue-600'
-                  }`}
-                />
+                <div className="relative">
+                  <input
+                    type={showRegisterConfirm ? "text" : "password"}
+                    name="confirmPassword"
+                    value={registerForm.confirmPassword}
+                    onChange={handleRegisterChange}
+                    required
+                    placeholder="Re-enter password"
+                    className={`w-full pl-4 pr-12 py-3 border rounded-xl text-sm outline-none focus:ring-1 transition-all bg-white ${
+                      registerForm.confirmPassword && registerForm.confirmPassword !== registerForm.password
+                        ? 'border-red-300 focus:border-red-500'
+                        : 'border-gray-200 focus:border-blue-600 focus:ring-blue-600'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegisterConfirm(!showRegisterConfirm)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer flex items-center"
+                  >
+                    {showRegisterConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               {/* Submit Button */}

@@ -21,7 +21,7 @@ const categoryIcons = {
 const AddonsPage = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, setAuthModal } = useAuth();
 
   const [room, setRoom] = useState(null);
   const [addons, setAddons] = useState([]);
@@ -98,7 +98,7 @@ const AddonsPage = () => {
   const initiatePayment = async (isSkipping = false) => {
     if (!user) {
       toast.error('Please login to continue');
-      navigate('/login');
+      setAuthModal('login');
       return;
     }
 
