@@ -9,7 +9,7 @@ const RoomsSection = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { user, toggleUserWishlist } = useAuth();
+  const { user, toggleUserWishlist, setAuthModal } = useAuth();
   const wishlist = user?.wishlist || [];
 
   useEffect(() => {

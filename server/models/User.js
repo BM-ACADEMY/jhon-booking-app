@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String },
   isActive: { type: Boolean, default: true },
   wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room' }],
+  resetPasswordToken: { type: String },
+  resetPasswordExpire: { type: Date },
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

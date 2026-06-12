@@ -13,6 +13,7 @@ import WishlistPage from './pages/WishlistPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import ProfilePage from './pages/ProfilePage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 // Admin
 import AdminLayout from './admin/layout/AdminLayout';
@@ -45,6 +46,7 @@ const AppRoutes = () => (
     {/* Standalone auth pages (no Navbar/Footer) */}
     <Route path="/login" element={<LoginPage />} />
     <Route path="/signup" element={<SignupPage />} />
+    <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
     {/* Public website with Navbar + Footer */}
     <Route element={<PublicLayout />}>
@@ -91,6 +93,7 @@ const AppRoutes = () => (
 import { Toaster } from 'react-hot-toast';
 import ScrollToTop from './components/ScrollToTop';
 import { useState, useEffect } from 'react';
+import AuthModal from './components/AuthModal';
 
 const App = () => {
   const [toastPosition, setToastPosition] = useState(
@@ -112,10 +115,12 @@ const App = () => {
           position={toastPosition}
           reverseOrder={false}
           gutter={12}
+          containerStyle={{ zIndex: 99999 }}
           toastOptions={{
             duration: 4000,
           }}
         />
+        <AuthModal />
         <AppRoutes />
       </AuthProvider>
     </BrowserRouter>

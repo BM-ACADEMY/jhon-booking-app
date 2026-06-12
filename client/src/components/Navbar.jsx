@@ -33,7 +33,7 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, setAuthModal } = useAuth();
 
   const isRoomDetailPage = (location.pathname.startsWith("/rooms/") && location.pathname !== "/rooms") || location.pathname === "/mybookings" || location.pathname === "/wishlist" || location.pathname === "/profile";
   const isHeaderScrolled = scrolled || isRoomDetailPage;
@@ -58,6 +58,7 @@ const Navbar = () => {
   const [showSearchInHeader, setShowSearchInHeader] = useState(false);
 
   const navGuestDropdownRef = useRef(null);
+  const navCheckinPickerRef = useRef(null);
   const navCheckoutPickerRef = useRef(null);
 
   // Sync state changes with sessionStorage and broadcast to other components
@@ -218,13 +219,17 @@ const Navbar = () => {
               className="hidden lg:flex bg-transparent max-w-3xl w-full items-center gap-1.5 divide-x divide-gray-200/50"
             >
               {/* Check-In */}
-              <div className="flex-[1.2] flex items-center gap-2 px-3 py-1.5 w-full group">
+              <div 
+                className="flex-[1.2] flex items-center gap-2 px-3 py-1.5 w-full group cursor-pointer"
+                onClick={() => navCheckinPickerRef.current?.setOpen(true)}
+              >
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                   <CalendarDays className="w-4 h-4 text-gray-500" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Check‑In</p>
                   <DatePicker
+                    ref={navCheckinPickerRef}
                     selected={startDate}
                     onChange={(date) => {
                       setDateRange([date, null]);
@@ -248,7 +253,10 @@ const Navbar = () => {
               </div>
 
               {/* Check-Out */}
-              <div className="flex-[1.2] flex items-center gap-2 px-3 py-1.5 w-full group">
+              <div 
+                className="flex-[1.2] flex items-center gap-2 px-3 py-1.5 w-full group cursor-pointer"
+                onClick={() => navCheckoutPickerRef.current?.setOpen(true)}
+              >
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                   <CalendarDays className="w-4 h-4 text-gray-500" />
                 </div>
@@ -272,17 +280,15 @@ const Navbar = () => {
               </div>
 
               {/* Guests & Rooms */}
-              <div className="flex-[1.4] flex items-center gap-2 px-3 py-1.5 w-full group relative" ref={navGuestDropdownRef}>
-                <div 
-                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform cursor-pointer"
-                  onClick={() => setIsNavGuestDropdownOpen(!isNavGuestDropdownOpen)}
-                >
+              <div 
+                className="flex-[1.4] flex items-center gap-2 px-3 py-1.5 w-full group relative cursor-pointer" 
+                ref={navGuestDropdownRef}
+                onClick={() => setIsNavGuestDropdownOpen(!isNavGuestDropdownOpen)}
+              >
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                   <Users className="w-4 h-4 text-gray-500" />
                 </div>
-                <div 
-                  className="flex-1 text-left cursor-pointer"
-                  onClick={() => setIsNavGuestDropdownOpen(!isNavGuestDropdownOpen)}
-                >
+                <div className="flex-1 text-left">
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Guests & Rooms</p>
                   <div className="w-full text-xs font-bold text-gray-900 outline-none bg-transparent flex items-center justify-between mt-0.5">
                     <span>{adults} Adult{adults > 1 ? 's' : ''}{children > 0 ? `, ${children} Child${children > 1 ? 'ren' : ''}` : ''}{infants > 0 ? `, ${infants} Infant${infants > 1 ? 's' : ''}` : ''}, {roomsCount} Room{roomsCount > 1 ? 's' : ''}</span>
@@ -291,7 +297,10 @@ const Navbar = () => {
                 </div>
 
                 {isNavGuestDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50">
+                  <div 
+                    className="absolute top-full right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50 cursor-default"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <div className="space-y-4">
                       {/* Adults */}
                       <div className="flex items-center justify-between">
@@ -517,24 +526,24 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center gap-4">
-                <Link
-                  to="/login"
-                  className={`text-sm font-medium tracking-wide transition-colors outline-none ${isHeaderScrolled
+                <button
+                  onClick={() => setAuthModal('login')}
+                  className={`text-sm font-medium tracking-wide transition-colors outline-none cursor-pointer bg-transparent border-none ${isHeaderScrolled
                     ? "text-gray-600 hover:text-gray-900"
                     : "text-white/80 hover:text-white"
                     }`}
                 >
                   Sign In
-                </Link>
-                <Link
-                  to="/signup"
-                  className={`text-sm font-medium px-6 py-2.5 rounded-full transition-all shadow-lg hover:shadow-xl outline-none ${isHeaderScrolled
+                </button>
+                <button
+                  onClick={() => setAuthModal('register')}
+                  className={`text-sm font-medium px-6 py-2.5 rounded-full transition-all shadow-lg hover:shadow-xl outline-none cursor-pointer ${isHeaderScrolled
                     ? "bg-gray-900 text-white hover:bg-gray-800"
                     : "bg-white text-gray-900 hover:bg-gray-100"
                     }`}
                 >
                   Book Now
-                </Link>
+                </button>
               </div>
             )}
           </div>
@@ -674,18 +683,18 @@ const Navbar = () => {
                   </div>
                 ) : (
                   <div className="space-y-3 bg-white rounded-[24px] p-4 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)] border border-gray-100/50">
-                    <Link
-                      to="/login"
-                      className="flex items-center justify-center w-full py-3.5 rounded-[16px] text-[15px] text-gray-700 font-medium border border-gray-200 hover:bg-gray-50 transition-all tracking-wide outline-none"
+                    <button
+                      onClick={() => { setAuthModal('login'); setMenuOpen(false); }}
+                      className="flex items-center justify-center w-full py-3.5 rounded-[16px] text-[15px] text-gray-700 font-medium border border-gray-200 hover:bg-gray-50 transition-all tracking-wide outline-none cursor-pointer bg-white"
                     >
                       Sign In
-                    </Link>
-                    <Link
-                      to="/signup"
-                      className="flex items-center justify-center w-full py-3.5 rounded-[16px] bg-[#0f172a] text-white text-[15px] font-medium shadow-md hover:shadow-lg hover:bg-gray-800 transition-all tracking-wide outline-none"
+                    </button>
+                    <button
+                      onClick={() => { setAuthModal('register'); setMenuOpen(false); }}
+                      className="flex items-center justify-center w-full py-3.5 rounded-[16px] bg-[#0f172a] text-white text-[15px] font-medium shadow-md hover:shadow-lg hover:bg-gray-800 transition-all tracking-wide outline-none cursor-pointer border-none"
                     >
                       Book a Room
-                    </Link>
+                    </button>
                   </div>
                 )}
               </div>

@@ -76,6 +76,7 @@ const HeroSection = () => {
 
   // Desktop Guest Popover State
   const [isGuestDropdownOpen, setIsGuestDropdownOpen] = useState(false);
+  const checkinPickerRef = useRef(null);
   const guestDropdownRef = useRef(null);
   const checkoutPickerRef = useRef(null);
   const mobileCheckoutPickerRef = useRef(null);
@@ -301,13 +302,17 @@ const HeroSection = () => {
             <div className="bg-white rounded-[2.5rem] p-2 w-full shadow-2xl flex flex-row items-center gap-2 divide-x divide-gray-100 animate-reveal [animation-delay:600ms] opacity-0 relative z-40">
               
               {/* Check-In */}
-              <div className="flex-[1.2] flex items-center gap-2 px-3 py-2 w-full group">
+              <div 
+                className="flex-[1.2] flex items-center gap-2 px-3 py-2 w-full group cursor-pointer"
+                onClick={() => checkinPickerRef.current?.setOpen(true)}
+              >
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                   <CalendarDays className="w-4 h-4 text-gray-500" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Check‑In</p>
                   <DatePicker
+                    ref={checkinPickerRef}
                     selected={startDate}
                     onChange={(date) => {
                       setDateRange([date, null]);
@@ -331,7 +336,10 @@ const HeroSection = () => {
               </div>
 
               {/* Check-Out */}
-              <div className="flex-[1.2] flex items-center gap-2 px-3 py-2 w-full group">
+              <div 
+                className="flex-[1.2] flex items-center gap-2 px-3 py-2 w-full group cursor-pointer"
+                onClick={() => checkoutPickerRef.current?.setOpen(true)}
+              >
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                   <CalendarDays className="w-4 h-4 text-gray-500" />
                 </div>
@@ -355,17 +363,15 @@ const HeroSection = () => {
               </div>
 
               {/* Guests & Rooms */}
-              <div className="flex-[1.4] flex items-center gap-2 px-3 py-2 w-full group relative" ref={guestDropdownRef}>
-                <div 
-                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform cursor-pointer"
-                  onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
-                >
+              <div 
+                className="flex-[1.4] flex items-center gap-2 px-3 py-2 w-full group relative cursor-pointer" 
+                ref={guestDropdownRef}
+                onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
+              >
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                   <Users className="w-4 h-4 text-gray-500" />
                 </div>
-                <div 
-                  className="flex-1 text-left cursor-pointer"
-                  onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
-                >
+                <div className="flex-1 text-left">
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Guests & Rooms</p>
                   <div className="w-full text-xs font-bold text-gray-900 outline-none bg-transparent flex items-center justify-between">
                     <span>{adults} Adult{adults > 1 ? 's' : ''}{children > 0 ? `, ${children} Child${children > 1 ? 'ren' : ''}` : ''}{infants > 0 ? `, ${infants} Infant${infants > 1 ? 's' : ''}` : ''}, {roomsCount} Room{roomsCount > 1 ? 's' : ''}</span>
@@ -374,7 +380,10 @@ const HeroSection = () => {
                 </div>
 
                 {isGuestDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-4 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50">
+                  <div 
+                    className="absolute top-full right-0 mt-4 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50 cursor-default"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <div className="space-y-4">
                       {/* Adults */}
                       <div className="flex items-center justify-between">

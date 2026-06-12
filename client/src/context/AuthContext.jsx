@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }) => {
   const toggleUserWishlist = async (roomId) => {
     if (!user) {
       toast.error('Please log in to manage your wishlist');
+      setAuthModal('login');
       return false;
     }
     
@@ -71,8 +72,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const [authModal, setAuthModal] = useState(null); // null, 'login', 'register'
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUserData, toggleUserWishlist, isAdmin: user?.role === 'admin' }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUserData, toggleUserWishlist, isAdmin: user?.role === 'admin', authModal, setAuthModal }}>
       {children}
     </AuthContext.Provider>
   );

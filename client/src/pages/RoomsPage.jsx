@@ -247,6 +247,7 @@ const RoomsPage = () => {
   const [tickerIndex, setTickerIndex] = useState(0);
 
   const [isGuestDropdownOpen, setIsGuestDropdownOpen] = useState(false);
+  const checkinPickerRef = useRef(null);
   const guestDropdownRef = useRef(null);
   const checkoutPickerRef = useRef(null);
   const mobileCheckoutPickerRef = useRef(null);
@@ -291,7 +292,7 @@ const RoomsPage = () => {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   // Wishlist Heart toggles (from global Auth state)
-  const { user, toggleUserWishlist } = useAuth();
+  const { user, toggleUserWishlist, setAuthModal } = useAuth();
   const wishlist = user?.wishlist || [];
 
   // Pagination states
@@ -354,7 +355,7 @@ const RoomsPage = () => {
   // Toggle wishlist state
   const toggleWishlist = async (id) => {
     if (!user) {
-      navigate('/login');
+      setAuthModal('login');
       return;
     }
     await toggleUserWishlist(id);
@@ -855,13 +856,17 @@ const RoomsPage = () => {
               <div className="bg-white rounded-[2.5rem] p-2 w-full shadow-2xl flex flex-row items-center gap-2 divide-x divide-gray-100 rooms-reveal-d3 relative z-40">
 
               {/* Check-In */}
-              <div className="flex-1 flex items-center gap-3 px-4 py-2 group">
+              <div 
+                className="flex-1 flex items-center gap-3 px-4 py-2 group cursor-pointer"
+                onClick={() => checkinPickerRef.current?.setOpen(true)}
+              >
                 <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                   <CalendarDays className="w-5 h-5 text-gray-500" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check In</p>
                   <DatePicker
+                    ref={checkinPickerRef}
                     selected={checkInInput}
                     onChange={(date) => {
                       setCheckInInput(date);
@@ -887,7 +892,10 @@ const RoomsPage = () => {
               </div>
 
               {/* Check-Out */}
-              <div className="flex-1 flex items-center gap-3 px-4 py-2 group">
+              <div 
+                className="flex-1 flex items-center gap-3 px-4 py-2 group cursor-pointer"
+                onClick={() => checkoutPickerRef.current?.setOpen(true)}
+              >
                 <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                   <CalendarDays className="w-5 h-5 text-gray-500" />
                 </div>
@@ -912,17 +920,15 @@ const RoomsPage = () => {
               </div>
 
               {/* Guests & Rooms */}
-              <div className="flex-[1.4] flex items-center gap-3 px-4 py-2 group relative" ref={guestDropdownRef}>
-                <div
-                  className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform cursor-pointer"
-                  onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
-                >
+              <div 
+                className="flex-[1.4] flex items-center gap-3 px-4 py-2 group relative cursor-pointer" 
+                ref={guestDropdownRef}
+                onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
+              >
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                   <Users className="w-5 h-5 text-gray-500" />
                 </div>
-                <div
-                  className="flex-1 text-left cursor-pointer"
-                  onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
-                >
+                <div className="flex-1 text-left">
                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guests & Rooms</p>
                   <div className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent flex items-center justify-between">
                      <span>{adultsInput} Adult{adultsInput > 1 ? 's' : ''}{childrenInput > 0 ? `, ${childrenInput} Child${childrenInput > 1 ? 'ren' : ''}` : ''}{infantsInput > 0 ? `, ${infantsInput} Infant${infantsInput > 1 ? 's' : ''}` : ''}, {roomsCountInput} Room{roomsCountInput > 1 ? 's' : ''}</span>
@@ -931,7 +937,10 @@ const RoomsPage = () => {
                 </div>
 
                 {isGuestDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-4 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50">
+                  <div 
+                    className="absolute top-full right-0 mt-4 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50 cursor-default"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <div className="space-y-4">
                       {/* Adults */}
                       <div className="flex items-center justify-between">
