@@ -169,7 +169,13 @@ const HeroSection = () => {
       const timer = setTimeout(() => setShowError(false), 3000);
       return () => clearTimeout(timer);
     }
-    if (endDate <= startDate) {
+    if (formatDateLocal(startDate) === formatDateLocal(endDate)) {
+      setErrorMsg("Minimum stay is 1 night.");
+      setShowError(true);
+      const timer = setTimeout(() => setShowError(false), 3000);
+      return () => clearTimeout(timer);
+    }
+    if (endDate < startDate) {
       setErrorMsg("Check-out date must be after check-in date!");
       setShowError(true);
       const timer = setTimeout(() => setShowError(false), 3000);

@@ -70,7 +70,7 @@ const Header = ({ onMenuClick }) => {
             <div className="w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-600 font-bold text-sm">
               {(user?.name?.[0] || 'A').toUpperCase()}
             </div>
-            <span className="hidden sm:block text-sm font-medium text-gray-700">
+            <span className="hidden sm:block text-sm font-medium text-gray-700 truncate max-w-[120px]">
               {user?.name || 'Admin'}
             </span>
             <ChevronDown className={`hidden sm:block w-4 h-4 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
@@ -79,7 +79,7 @@ const Header = ({ onMenuClick }) => {
           {dropdownOpen && (
             <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50">
               <div className="px-4 py-2.5 border-b border-gray-100">
-                <p className="text-sm font-semibold text-gray-800">{user?.name || 'Administrator'}</p>
+                <p className="text-sm font-semibold text-gray-800 truncate">{user?.name || 'Administrator'}</p>
                 <p className="text-xs text-gray-500">{user?.email || 'admin@jhon.com'}</p>
               </div>
               <button

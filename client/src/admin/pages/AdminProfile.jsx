@@ -71,7 +71,7 @@ const AdminProfile = () => {
               {name ? name.charAt(0) : 'A'}
             </div>
             <div className="text-center sm:text-left mt-1">
-              <h2 className="text-xl font-semibold text-gray-900">{name || 'Admin User'}</h2>
+              <h2 className="text-xl font-semibold text-gray-900 truncate max-w-[280px] sm:max-w-[450px]">{name || 'Admin User'}</h2>
               <p className="text-sm text-gray-500 mt-0.5">{email || 'admin@example.com'}</p>
               <span className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-emerald-100">
                 <Shield className="w-3.5 h-3.5" /> System Administrator

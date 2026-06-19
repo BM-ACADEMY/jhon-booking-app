@@ -9,7 +9,8 @@ import {
   deleteRoom,
   recordVisit,
   getAdminVisitorsStats,
-  getAdminRoomVisits
+  getAdminRoomVisits,
+  resolveMapLink
 } from '../controllers/room.controller.js';
 import { protect, adminOnly } from '../middleware/auth.middleware.js';
 import upload from '../middleware/upload.middleware.js';
@@ -21,6 +22,7 @@ router.get('/admin/all', protect, adminOnly, getAllRoomsAdmin);
 router.get('/admin/draft', protect, adminOnly, getLatestDraft);
 router.get('/admin/visitors-stats', protect, adminOnly, getAdminVisitorsStats);
 router.get('/admin/visits/:id', protect, adminOnly, getAdminRoomVisits);
+router.get('/admin/resolve-map', protect, adminOnly, resolveMapLink);
 
 // ── Public ───────────────────────────────────────────────────────────────────
 router.get('/', getRooms);

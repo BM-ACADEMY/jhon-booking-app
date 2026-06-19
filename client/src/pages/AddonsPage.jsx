@@ -379,8 +379,8 @@ const AddonsPage = () => {
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Nights</p>
-                    <p className="text-sm font-bold text-gray-700">{nights} Night(s)</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Duration</p>
+                    <p className="text-sm font-bold text-gray-700">{nights} Night{nights !== 1 ? 's' : ''}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -415,7 +415,7 @@ const AddonsPage = () => {
                   </div>
                   <div className="h-px bg-gray-200/60 my-2" />
                   <div className="flex justify-between items-center text-xs font-semibold text-gray-600">
-                    <span>Stay Subtotal ({nights} nights)</span>
+                    <span>Stay Subtotal ({nights} Night{nights !== 1 ? 's' : ''})</span>
                     <span>₹{staySubtotal.toLocaleString('en-IN')}</span>
                   </div>
                   {stayTax > 0 && (

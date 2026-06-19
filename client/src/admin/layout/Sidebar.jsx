@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import api from '../../api';
+import { useAuth } from '../../context/AuthContext';
+import logoImg from '../../assets/LogoBalified.png';
 import {
   LayoutDashboard,
   BedDouble,
@@ -35,6 +37,7 @@ const navItems = [
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -77,8 +80,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-5 border-b border-white/10 flex-shrink-0">
           <Link to="/" className="flex items-center gap-3 no-underline group">
-            <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-              <Hotel className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-white flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+              <img src={logoImg} className="w-full h-full object-cover" alt="" />
             </div>
             <div>
               <p className="text-white font-bold text-sm leading-tight group-hover:text-primary-400 transition-colors">The Balified Villa</p>
@@ -141,11 +144,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div className="p-4 border-t border-white/10 flex-shrink-0">
           <div className="flex items-center gap-3 px-2">
             <div className="w-8 h-8 rounded-full bg-primary-500/30 flex items-center justify-center text-primary-400 font-bold text-sm">
-              A
+              {(user?.name?.[0] || 'A').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-medium truncate">Administrator</p>
-              <p className="text-gray-500 text-xs truncate">admin@jhon.com</p>
+              <p className="text-white text-sm font-medium truncate">{user?.name || 'Administrator'}</p>
+              <p className="text-gray-500 text-xs truncate">{user?.email || 'admin@jhon.com'}</p>
             </div>
           </div>
         </div>

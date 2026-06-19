@@ -287,7 +287,7 @@ const MyBookings = () => {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-3 border-y border-gray-50">
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 py-3 border-y border-gray-50">
                           <div>
                             <div className="flex items-center gap-2 text-gray-400 mb-1">
                               <Calendar className="w-3.5 h-3.5" />
@@ -301,6 +301,18 @@ const MyBookings = () => {
                               <span className="text-[10px] font-black uppercase tracking-widest">Check-Out</span>
                             </div>
                             <p className="text-sm font-bold text-gray-800">{new Date(booking.checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 text-gray-400 mb-1">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span className="text-[10px] font-black uppercase tracking-widest">Nights</span>
+                            </div>
+                            <p className="text-sm font-bold text-gray-800">
+                              {(() => {
+                                const nights = Math.max(1, Math.ceil((new Date(booking.checkOut) - new Date(booking.checkIn)) / (1000 * 60 * 60 * 24)));
+                                return `${nights} Night${nights !== 1 ? 's' : ''}`;
+                              })()}
+                            </p>
                           </div>
                           <div>
                             <div className="flex items-center gap-2 text-gray-400 mb-1">

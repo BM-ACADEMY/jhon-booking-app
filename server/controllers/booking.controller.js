@@ -31,7 +31,7 @@ const getDatesInRange = (startDate, endDate) => {
   const end = new Date(endDate);
   const date = new Date(start.getTime());
   const dates = [];
-  while (date <= end) {
+  while (date < end) {
     dates.push(new Date(date.getTime()));
     date.setDate(date.getDate() + 1);
   }

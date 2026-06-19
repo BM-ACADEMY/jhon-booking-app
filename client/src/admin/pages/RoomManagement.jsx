@@ -14,6 +14,30 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 const PAGE_SIZE = 6;
+
+const parseGoogleMapLink = (link) => {
+  if (!link) return '';
+  const trimmed = link.trim();
+  const iframeMatch = trimmed.match(/src="([^"]+)"/);
+  if (iframeMatch) return iframeMatch[1];
+  if (trimmed.includes('/maps/embed') || trimmed.includes('output=embed')) return trimmed;
+  const placeMatch = trimmed.match(/\/maps\/place\/([^/]+)/);
+  if (placeMatch) {
+    const query = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+    return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  }
+  const coordMatch = trimmed.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (coordMatch) {
+    return `https://maps.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  }
+  try {
+    const urlObj = new URL(trimmed);
+    const q = urlObj.searchParams.get('q');
+    if (q) return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  } catch (_) {}
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  return `https://maps.google.com/maps?q=${encodeURIComponent(trimmed)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+};
 const DEFAULT_ROOM_FORM = {
   name: '',
   category: '',
@@ -33,6 +57,7 @@ const DEFAULT_ROOM_FORM = {
   city: '',
   state: '',
   country: 'India',
+  mapLink: '',
   amenities: [], // [{ name, icon }]
   highlights: [], // [{ icon, text, subtext }]
   images: [], // [{ url, label }]
@@ -303,6 +328,7 @@ const RoomManagement = () => {
       city: draft.city || '',
       state: draft.state || '',
       country: draft.country || 'India',
+      mapLink: draft.mapLink || '',
       amenities: draft.amenities || [],
       highlights: draft.highlights || [],
       images: draft.images || [],
@@ -348,6 +374,7 @@ const RoomManagement = () => {
       city: r.city || '',
       state: r.state || '',
       country: r.country || 'India',
+      mapLink: r.mapLink || '',
       amenities: r.amenities || [],
       highlights: r.highlights || [],
       images: r.images || [],
@@ -359,6 +386,21 @@ const RoomManagement = () => {
     setSelectedPricingDate(null);
     setCustomPriceInput('');
     setShowRoomModal(true);
+  };
+
+  const handleMapLinkChange = async (val) => {
+    setRoomForm(p => ({ ...p, mapLink: val }));
+    const trimmed = val.trim();
+    if (trimmed.startsWith('http') && (trimmed.includes('goo.gl') || trimmed.includes('maps.app.goo.gl'))) {
+      try {
+        const res = await api.get(`/rooms/admin/resolve-map?url=${encodeURIComponent(trimmed)}`);
+        if (res.data?.resolvedUrl) {
+          setRoomForm(p => ({ ...p, mapLink: res.data.resolvedUrl }));
+        }
+      } catch (err) {
+        console.error('Failed to resolve map redirect', err);
+      }
+    }
   };
 
   const buildFormData = (status) => {
@@ -1177,19 +1219,32 @@ const cat = categories.find(c => c.name === catName);
               {/* Location Tab */}
               {activeTab === 'location' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div className="sm:col-span-2">
-                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Street Address</label>
-                        <input type="text" value={roomForm.address} onChange={(e) => setRoomForm(p => ({ ...p, address: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-gray-50 focus:bg-white" placeholder="e.g. 123 Serenity Beach Rd" />
-                      </div>
+                   <div className="space-y-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">City</label>
-                        <input type="text" value={roomForm.city} onChange={(e) => setRoomForm(p => ({ ...p, city: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-gray-50 focus:bg-white" placeholder="Puducherry" />
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Google Map Link / URL</label>
+                        <textarea
+                          rows="3"
+                          value={roomForm.mapLink || ''}
+                          onChange={(e) => handleMapLinkChange(e.target.value)}
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-gray-50 focus:bg-white resize-none"
+                          placeholder='Paste coordinates, place URL, or maps.app.goo.gl short link'
+                        />
                       </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Country</label>
-                        <input type="text" value={roomForm.country} onChange={(e) => setRoomForm(p => ({ ...p, country: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 bg-gray-50 focus:bg-white" placeholder="India" />
-                      </div>
+                      {roomForm.mapLink && (
+                        <div className="space-y-2">
+                          <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Map Preview</span>
+                          <div className="w-full h-48 rounded-2xl overflow-hidden border border-gray-200 shadow-inner bg-gray-50">
+                            <iframe
+                              src={parseGoogleMapLink(roomForm.mapLink)}
+                              width="100%"
+                              height="100%"
+                              style={{ border: 0 }}
+                              allowFullScreen=""
+                              loading="lazy"
+                            ></iframe>
+                          </div>
+                        </div>
+                      )}
                    </div>
                    <div className="p-6 bg-primary-50 border border-primary-100 rounded-3xl flex items-center gap-4">
                       <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-primary-600 shadow-sm shadow-primary-500/10">

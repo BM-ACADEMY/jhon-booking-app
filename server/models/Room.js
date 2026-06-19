@@ -45,6 +45,7 @@ const roomSchema = new mongoose.Schema({
   city: { type: String },
   state: { type: String },
   country: { type: String },
+  mapLink: { type: String },
 
   unavailableDates: [{ type: Date }],
 

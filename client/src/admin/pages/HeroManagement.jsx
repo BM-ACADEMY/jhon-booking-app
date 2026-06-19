@@ -466,8 +466,8 @@ const HeroManagement = () => {
                       onChange={e => {
                         const file = e.target.files[0];
                         if (file) {
-                          if (file.size > 10 * 1024 * 1024) {
-                            toast.error('Video file size exceeds 10MB limit');
+                          if (file.size > 20 * 1024 * 1024) {
+                            toast.error('Video file size exceeds 20MB limit');
                             return;
                           }
                           setVideoFile(file);
@@ -484,7 +484,7 @@ const HeroManagement = () => {
                     >
                       <Upload className="w-6 h-6 mx-auto mb-1.5 text-gray-400" />
                       <p className="text-xs font-bold text-gray-700">{videoFile ? videoFile.name : 'Click to select Video File'}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">MP4, WebM up to 10MB</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">MP4, WebM up to 20MB</p>
                     </div>
                   </div>
 
@@ -518,8 +518,8 @@ const HeroManagement = () => {
                         onChange={e => {
                           const file = e.target.files[0];
                           if (file) {
-                            if (file.size > 5 * 1024 * 1024) {
-                              toast.error('Image size exceeds 5MB');
+                            if (file.size > 10 * 1024 * 1024) {
+                              toast.error('Image size exceeds 10MB');
                               return;
                             }
                             setDesktopImageFile(file);
@@ -536,7 +536,7 @@ const HeroManagement = () => {
                       >
                         <Upload className="w-5 h-5 mx-auto mb-1 text-gray-400" />
                         <p className="text-[11px] font-bold text-gray-700 truncate">{desktopImageFile ? desktopImageFile.name : 'Upload Desktop WebP/JPG/PNG'}</p>
-                        <p className="text-[9px] text-gray-400">Desktop View, up to 5MB</p>
+                        <p className="text-[9px] text-gray-400">Desktop View, up to 10MB</p>
                       </div>
 
                       {/* Desktop Preview */}
@@ -566,8 +566,8 @@ const HeroManagement = () => {
                         onChange={e => {
                           const file = e.target.files[0];
                           if (file) {
-                            if (file.size > 5 * 1024 * 1024) {
-                              toast.error('Image size exceeds 5MB');
+                            if (file.size > 10 * 1024 * 1024) {
+                              toast.error('Image size exceeds 10MB');
                               return;
                             }
                             setMobileImageFile(file);
@@ -584,7 +584,7 @@ const HeroManagement = () => {
                       >
                         <Upload className="w-5 h-5 mx-auto mb-1 text-gray-400" />
                         <p className="text-[11px] font-bold text-gray-700 truncate">{mobileImageFile ? mobileImageFile.name : 'Upload Mobile WebP/JPG/PNG'}</p>
-                        <p className="text-[9px] text-gray-400">Mobile/Tablet View, up to 5MB</p>
+                        <p className="text-[9px] text-gray-400">Mobile/Tablet View, up to 10MB</p>
                       </div>
 
                       {/* Mobile Preview */}

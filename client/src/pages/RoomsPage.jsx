@@ -10,6 +10,7 @@ import {
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import api, { getRoomSlug } from '../api';
+import toast from 'react-hot-toast';
 
 import RoomCardSkeleton from '../components/RoomCardSkeleton';
 const SERVER_URL = import.meta.env.VITE_BASE_URL ;
@@ -364,6 +365,10 @@ const RoomsPage = () => {
   // Update URL Search Parameters on form submit
   const handleUpdateSearch = (e) => {
     if (e) e.preventDefault();
+    if (checkInInput && checkOutInput && formatDateLocal(checkInInput) === formatDateLocal(checkOutInput)) {
+      toast.error("Minimum stay is 1 night.");
+      return;
+    }
     const params = {};
     if (checkInInput) params.checkIn = formatDateLocal(checkInInput);
     if (checkOutInput) params.checkOut = formatDateLocal(checkOutInput);
@@ -410,7 +415,7 @@ const RoomsPage = () => {
       const end = parseLocalDate(queryCheckOut);
       if (start && end && start <= end) {
         const diff = end - start;
-        return Math.round(diff / (1000 * 60 * 60 * 24)) + 1;
+        return Math.round(diff / (1000 * 60 * 60 * 24));
       }
     }
     return 0;
@@ -455,7 +460,7 @@ const RoomsPage = () => {
         let total = 0;
         let nightsCount = 0;
         const curr = new Date(start.getTime());
-        while (curr <= end) {
+        while (curr < end) {
           const yyyy = curr.getFullYear();
           const mm = String(curr.getMonth() + 1).padStart(2, '0');
           const dd = String(curr.getDate()).padStart(2, '0');
@@ -533,7 +538,7 @@ const RoomsPage = () => {
 
     let total = 0;
     const curr = new Date(start.getTime());
-    while (curr <= end) {
+    while (curr < end) {
       const yyyy = curr.getFullYear();
       const mm = String(curr.getMonth() + 1).padStart(2, '0');
       const dd = String(curr.getDate()).padStart(2, '0');

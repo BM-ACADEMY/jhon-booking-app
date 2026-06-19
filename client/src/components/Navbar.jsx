@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import logoImg from "../assets/LogoBalified.png";
 
 const navLinks = [
   { label: "Home", to: "/" },
@@ -174,40 +175,21 @@ const Navbar = () => {
     <header className="fixed top-0 left-0 right-0 z-50 p-4 sm:p-6 pointer-events-none outline-none border-none">
       <div
         className={`pointer-events-auto max-w-7xl mx-auto transition-all duration-500 ease-out border rounded-full ${isHeaderScrolled
-          ? "bg-white/90 backdrop-blur-[4px] backdrop-saturate-150 border-gray-300/80 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.8)] py-3 px-6 lg:px-8"
-          : "bg-transparent border-transparent py-2 px-4 lg:px-6 shadow-none"
+          ? "bg-white/90 backdrop-blur-[4px] backdrop-saturate-150 border-gray-300/80 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.8)] py-3 pl-8 pr-6 lg:pl-10 lg:pr-8"
+          : "bg-white/60 backdrop-blur-md border-white/30 shadow-[0_4px_30px_rgba(0,0,0,0.03)] py-2 pl-6 pr-4 lg:pl-8 lg:pr-6"
           }`}
       >
-        <div className="flex items-center justify-between h-12 lg:h-14">
+        <div className="flex items-center justify-between h-14 lg:h-16">
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-3 flex-shrink-0 z-50 group outline-none border-none"
+            className="flex items-center flex-shrink-0 z-50 outline-none border-none"
           >
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${isHeaderScrolled
-                ? "bg-gray-900 shadow-md"
-                : "bg-white/20 backdrop-blur-md group-hover:bg-white/30"
-                }`}
-            >
-              <Hotel
-                className={`w-5 h-5 transition-colors ${isHeaderScrolled ? "text-white" : "text-white"}`}
-              />
-            </div>
-            <div className="leading-tight flex-shrink-0 whitespace-nowrap">
-              <p
-                className={`font-bold text-[15px] tracking-wide transition-colors whitespace-nowrap ${isHeaderScrolled ? "text-gray-900" : "text-white"
-                  }`}
-              >
-                The Balified Villa
-              </p>
-              <p
-                className={`text-[10px] uppercase tracking-[0.2em] transition-colors whitespace-nowrap ${isHeaderScrolled ? "text-gray-500" : "text-white/70"
-                  }`}
-              >
-                Luxury Hotel
-              </p>
-            </div>
+            <img
+              src={logoImg}
+              alt="Logo"
+              className="h-12 lg:h-15 w-auto object-contain transition-all duration-300"
+            />
           </Link>
 
           {/* Desktop Nav Links / Compact Search Bar */}
@@ -405,13 +387,10 @@ const Navbar = () => {
                   <Link
                     key={to}
                     to={to}
-                    className={`text-sm font-medium transition-all relative group tracking-wider outline-none ${isHeaderScrolled
-                      ? active
+                    className={`text-sm font-medium transition-all relative group tracking-wider outline-none ${
+                      active
                         ? "text-gray-900"
                         : "text-gray-600 hover:text-gray-900"
-                      : active
-                        ? "text-white"
-                        : "text-white/70 hover:text-white"
                       }`}
                   >
                     {label}
@@ -438,28 +417,15 @@ const Navbar = () => {
               >
                 <button
                   onClick={() => setUserDropdown(!userDropdown)}
-                  className={`flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full border outline-none transition-all duration-300 ${isHeaderScrolled
-                    ? "border-gray-200/80 hover:border-gray-300 bg-white/60 hover:bg-white"
-                    : "border-white/20 hover:border-white/40 bg-white/10 backdrop-blur-md"
-                    }`}
+                  className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full border outline-none transition-all duration-300 border-gray-200/80 hover:border-gray-300 bg-white/60 hover:bg-white"
                 >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${isHeaderScrolled
-                      ? "bg-gray-900 text-white"
-                      : "bg-white text-gray-900"
-                      }`}
-                  >
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm bg-gray-900 text-white">
                     {user.name?.[0]?.toUpperCase() ?? "U"}
                   </div>
-                  <span
-                    className={`text-sm font-medium ${isHeaderScrolled ? "text-gray-800" : "text-white"}`}
-                  >
+                  <span className="text-sm font-medium truncate max-w-[70px] inline-block text-gray-800">
                     {user.name?.split(" ")[0]}
                   </span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-300 ${userDropdown ? "rotate-180" : ""
-                      } ${isHeaderScrolled ? "text-gray-500" : "text-white/60"}`}
-                  />
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${userDropdown ? "rotate-180" : ""} text-gray-500`} />
                 </button>
 
                 <div className="absolute top-full left-0 w-full h-6 bg-transparent" />
@@ -474,7 +440,7 @@ const Navbar = () => {
                       className="absolute right-0 top-[calc(100%+1.25rem)] w-64 bg-white/95 backdrop-blur-3xl rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] border border-gray-100 py-2 z-50 overflow-hidden"
                     >
                       <div className="px-6 py-4 border-b border-gray-100/80 bg-gray-50/50">
-                        <p className="text-sm font-bold text-gray-900">
+                        <p className="text-sm font-bold text-gray-900 truncate">
                           {user.name}
                         </p>
                         <p className="text-xs text-gray-500 truncate mt-1">
@@ -514,7 +480,7 @@ const Navbar = () => {
                       </div>
                       <div className="border-t border-gray-100/80 pt-2 px-2 pb-2">
                         <button
-                          onClick={handleLogout}
+                           onClick={handleLogout}
                           className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm text-red-500 hover:text-red-700 hover:bg-red-50 transition-all outline-none"
                         >
                           <LogOut className="w-4 h-4" /> Sign Out
@@ -528,19 +494,13 @@ const Navbar = () => {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setAuthModal('login')}
-                  className={`text-sm font-medium tracking-wide transition-colors outline-none cursor-pointer bg-transparent border-none ${isHeaderScrolled
-                    ? "text-gray-600 hover:text-gray-900"
-                    : "text-white/80 hover:text-white"
-                    }`}
+                  className="text-sm font-medium tracking-wide transition-colors outline-none cursor-pointer bg-transparent border-none text-gray-600 hover:text-gray-900"
                 >
                   Sign In
                 </button>
                 <button
                   onClick={() => setAuthModal('register')}
-                  className={`text-sm font-medium px-6 py-2.5 rounded-full transition-all shadow-lg hover:shadow-xl outline-none cursor-pointer ${isHeaderScrolled
-                    ? "bg-gray-900 text-white hover:bg-gray-800"
-                    : "bg-white text-gray-900 hover:bg-gray-100"
-                    }`}
+                  className="text-sm font-medium px-6 py-2.5 rounded-full transition-all shadow-lg hover:shadow-xl outline-none cursor-pointer bg-gray-900 text-white hover:bg-gray-800"
                 >
                   Book Now
                 </button>
@@ -551,10 +511,7 @@ const Navbar = () => {
           {/* MAIN HEADER HAMBURGER */}
           <button
             onClick={() => setMenuOpen(true)}
-            className={`lg:hidden p-2.5 rounded-full outline-none transition-all relative ${isHeaderScrolled
-              ? "bg-gray-100 text-gray-900 hover:bg-gray-200"
-              : "bg-white/10 text-white backdrop-blur-md hover:bg-white/20"
-              }`}
+            className="lg:hidden p-2.5 rounded-full outline-none transition-all relative bg-gray-100 text-gray-900 hover:bg-gray-200"
           >
             <Menu className="w-5 h-5" />
           </button>

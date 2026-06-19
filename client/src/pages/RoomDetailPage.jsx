@@ -24,6 +24,30 @@ const getImageUrl = (img) => {
 
 const getIcon = (name) => Icons[name] || Icons.Check;
 
+const parseGoogleMapLink = (link) => {
+  if (!link) return '';
+  const trimmed = link.trim();
+  const iframeMatch = trimmed.match(/src="([^"]+)"/);
+  if (iframeMatch) return iframeMatch[1];
+  if (trimmed.includes('/maps/embed') || trimmed.includes('output=embed')) return trimmed;
+  const placeMatch = trimmed.match(/\/maps\/place\/([^/]+)/);
+  if (placeMatch) {
+    const query = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+    return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  }
+  const coordMatch = trimmed.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (coordMatch) {
+    return `https://maps.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  }
+  try {
+    const urlObj = new URL(trimmed);
+    const q = urlObj.searchParams.get('q');
+    if (q) return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  } catch (_) {}
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  return `https://maps.google.com/maps?q=${encodeURIComponent(trimmed)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+};
+
 const RoomSelectDropdown = ({ value, onChange, options, getImageUrl, placeholder = "Choose a room..." }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -277,7 +301,8 @@ const RoomDetailPage = () => {
       } else if (dateStr < checkIn) {
         setCheckIn(dateStr);
         setCheckOut('');
-        setActiveSelectType('checkOut');
+      } else if (dateStr === checkIn) {
+        toast.error("Minimum stay is 1 night.");
       } else {
         const localCheckInDate = parseLocalDate(checkIn);
         const datesInRange = getDatesInRangeList(localCheckInDate, date);
@@ -769,7 +794,7 @@ const RoomDetailPage = () => {
     const breakdown = [];
     const curr = new Date(start.getTime());
 
-    while (curr <= end) {
+    while (curr < end) {
       const yyyy = curr.getFullYear();
       const mm = String(curr.getMonth() + 1).padStart(2, '0');
       const dd = String(curr.getDate()).padStart(2, '0');
@@ -825,6 +850,10 @@ const RoomDetailPage = () => {
     }
     if (!checkIn || !checkOut) {
       toast.error('Please select check-in and check-out dates');
+      return;
+    }
+    if (checkIn === checkOut) {
+      toast.error('Minimum stay is 1 night.');
       return;
     }
     if (nights <= 0) {
@@ -1183,6 +1212,36 @@ const RoomDetailPage = () => {
                     </div>
                   </div>
                 </>
+              )}
+              {/* Google Map Section */}
+              {room.mapLink && (
+                <div className="space-y-4 mt-8 lg:mt-12">
+                  <hr className="border-gray-200 mb-6 lg:mb-8" />
+                  <h2 className="text-xl lg:text-2xl font-bold text-gray-900">Location</h2>
+                  <div className="w-full h-80 sm:h-96 rounded-3xl overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
+                    <iframe
+                      src={parseGoogleMapLink(room.mapLink)}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen=""
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    ></iframe>
+                  </div>
+                  {room.mapLink.startsWith('http') && (
+                    <div className="mt-2 text-right">
+                      <a
+                        href={room.mapLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-semibold text-primary-600 hover:text-primary-700 underline inline-flex items-center gap-1"
+                      >
+                        Open in Google Maps ↗
+                      </a>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 

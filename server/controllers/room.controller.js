@@ -1,6 +1,24 @@
 import mongoose from 'mongoose';
 import Room from '../models/Room.js';
 import RoomVisit from '../models/RoomVisit.js';
+import https from 'https';
+
+const resolveRedirect = (url, depth = 0) => {
+  return new Promise((resolve) => {
+    if (depth > 5 || !url || typeof url !== 'string') return resolve(url);
+    if (!url.startsWith('http://') && !url.startsWith('https://')) return resolve(url);
+    
+    https.get(url, (res) => {
+      if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
+        resolve(resolveRedirect(res.headers.location, depth + 1));
+      } else {
+        resolve(url);
+      }
+    }).on('error', () => {
+      resolve(url);
+    });
+  });
+};
 
 // Helper to count unique visitors using mongo aggregation
 const getVisitorCounts = async (roomIds) => {
@@ -144,6 +162,10 @@ export const createRoom = async (req, res) => {
       }));
     }
 
+    if (roomData.mapLink) {
+      roomData.mapLink = await resolveRedirect(roomData.mapLink);
+    }
+
     const room = await Room.create(roomData);
     res.status(201).json(room);
   } catch (err) {
@@ -173,6 +195,10 @@ export const updateRoom = async (req, res) => {
       roomData.images = [...existingImages, ...newImages];
     } else {
       roomData.images = existingImages;
+    }
+
+    if (roomData.mapLink) {
+      roomData.mapLink = await resolveRedirect(roomData.mapLink);
     }
 
     const room = await Room.findByIdAndUpdate(req.params.id, roomData, {
@@ -282,6 +308,17 @@ export const getAdminRoomVisits = async (req, res) => {
     res.json(visits);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+export const resolveMapLink = async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) return res.status(450).json({ message: 'URL is required' });
+    const resolvedUrl = await resolveRedirect(url);
+    res.json({ resolvedUrl });
+  } catch (err) {
+    res.status(550).json({ message: err.message });
   }
 };
 
