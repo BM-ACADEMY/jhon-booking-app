@@ -17,6 +17,14 @@ const settingSchema = new mongoose.Schema({
   advancePercent4Day: { type: Number, default: 30 },
   advancePercent5To7Days: { type: Number, default: 25 },
   advancePercentAbove7Days: { type: Number, default: 20 },
+  taxRules: {
+    type: [{
+      minAmount: { type: Number, required: true },
+      maxAmount: { type: Number, required: true },
+      taxPercent: { type: Number, required: true }
+    }],
+    default: []
+  }
 }, { timestamps: true });
 
 export default mongoose.model('Setting', settingSchema);

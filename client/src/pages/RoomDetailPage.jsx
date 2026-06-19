@@ -181,6 +181,7 @@ const RoomDetailPage = () => {
 
   const [allRooms, setAllRooms] = useState([]);
   const [selectedAdditionalRooms, setSelectedAdditionalRooms] = useState([]);
+  const [taxRules, setTaxRules] = useState([]);
 
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -316,15 +317,17 @@ const RoomDetailPage = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const [roomRes, reviewsRes, allRoomsRes] = await Promise.all([
+        const [roomRes, reviewsRes, allRoomsRes, settingsRes] = await Promise.all([
           api.get(`/rooms/${id}`),
           api.get(`/reviews/room/${id}`),
-          api.get('/rooms')
+          api.get('/rooms'),
+          api.get('/settings')
         ]);
         const fetchedRoom = roomRes.data;
         setRoom(fetchedRoom);
         setReviews(reviewsRes.data);
         setAllRooms(allRoomsRes.data || []);
+        setTaxRules(settingsRes.data?.taxRules || []);
 
         // Record room visit
         let visitorId = localStorage.getItem('room_visitor_id');
@@ -798,6 +801,21 @@ const RoomDetailPage = () => {
   };
 
   const { total, average, nights, breakdown } = getBookingPriceBreakdown(room, checkIn, checkOut, selectedAdditionalRooms);
+
+  const getAppliedTax = (amount) => {
+    if (!taxRules || taxRules.length === 0) return 0;
+    const matchedRule = taxRules.find(r => amount >= r.minAmount && amount <= r.maxAmount);
+    if (matchedRule) {
+      return Math.round(amount * (matchedRule.taxPercent / 100));
+    }
+    return 0;
+  };
+
+  const getAppliedTaxPercent = (amount) => {
+    if (!taxRules || taxRules.length === 0) return 0;
+    const matchedRule = taxRules.find(r => amount >= r.minAmount && amount <= r.maxAmount);
+    return matchedRule ? matchedRule.taxPercent : 0;
+  };
 
   const handleBooking = async () => {
     if (!user) {
@@ -1285,10 +1303,17 @@ const RoomDetailPage = () => {
                       ))}
                     </div>
 
+                     {getAppliedTaxPercent(total) > 0 && (
+                      <div className="flex justify-between text-sm text-gray-550 font-semibold">
+                        <span>Tax ({getAppliedTaxPercent(total)}%)</span>
+                        <span>₹{getAppliedTax(total).toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+
                     <hr className="border-gray-200 my-4" />
                     <div className="flex justify-between font-bold text-gray-900 text-lg">
                       <span>Total</span>
-                      <span>₹{(total).toLocaleString('en-IN')}</span>
+                      <span>₹{(total + getAppliedTax(total)).toLocaleString('en-IN')}</span>
                     </div>
                   </div>
                 )}
@@ -1490,9 +1515,16 @@ const RoomDetailPage = () => {
                   ))}
                 </div>
 
+                {getAppliedTaxPercent(total) > 0 && (
+                  <div className="flex justify-between text-sm text-gray-550 font-semibold">
+                    <span>Tax ({getAppliedTaxPercent(total)}%)</span>
+                    <span>₹{getAppliedTax(total).toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center pt-2 text-gray-900 font-bold text-lg border-t border-gray-100">
                   <span>Total</span>
-                  <span>₹{total.toLocaleString('en-IN')}</span>
+                  <span>₹{(total + getAppliedTax(total)).toLocaleString('en-IN')}</span>
                 </div>
               </div>
             )}

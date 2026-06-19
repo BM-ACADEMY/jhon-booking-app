@@ -1,6 +1,5 @@
 import React from 'react';
 import { Hotel, Award, ShieldCheck, Coffee, MapPin, ArrowRight } from 'lucide-react';
-// import aboutHero from '../assets/about-hero.png'; // Make sure your path is correct
 
 const AboutPage = () => {
   const stats = [

@@ -31,6 +31,7 @@ const AddonsPage = () => {
   const [paymentState, setPaymentState] = useState('idle'); // 'idle' | 'verifying' | 'success' | 'error'
   const [advancePercent, setAdvancePercent] = useState(100);
   const [paymentType, setPaymentType] = useState('full'); // 'full' | 'advance'
+  const [taxRules, setTaxRules] = useState([]);
 
   // If redirect direct without state
   useEffect(() => {
@@ -68,6 +69,7 @@ const AddonsPage = () => {
         setAddons(addonsRes.data);
         const percent = getAdvancePercent(settingsRes.data, nights || 1);
         setAdvancePercent(percent);
+        setTaxRules(settingsRes.data?.taxRules || []);
       } catch (err) {
         toast.error('Failed to load details');
         navigate('/rooms');
@@ -80,9 +82,25 @@ const AddonsPage = () => {
 
   if (!state || !state.roomId) return null;
 
+  const getAppliedTax = (amount) => {
+    if (!taxRules || taxRules.length === 0) return 0;
+    const matchedRule = taxRules.find(r => amount >= r.minAmount && amount <= r.maxAmount);
+    if (matchedRule) {
+      return Math.round(amount * (matchedRule.taxPercent / 100));
+    }
+    return 0;
+  };
+
+  const getAppliedTaxPercent = (amount) => {
+    if (!taxRules || taxRules.length === 0) return 0;
+    const matchedRule = taxRules.find(r => amount >= r.minAmount && amount <= r.maxAmount);
+    return matchedRule ? matchedRule.taxPercent : 0;
+  };
+
   // Calculate bill totals
   const addonsTotal = selectedAddons.reduce((acc, curr) => acc + curr.price, 0);
-  const finalTotal = staySubtotal + addonsTotal;
+  const stayTax = getAppliedTax(staySubtotal);
+  const finalTotal = staySubtotal + stayTax + addonsTotal;
 
   const handleAddonClick = (addon) => {
     setSelectedAddons((prev) => {
@@ -111,7 +129,8 @@ const AddonsPage = () => {
         iconType: a.iconType
       }));
 
-      const finalAmount = isSkipping ? staySubtotal : finalTotal;
+      const stayTax = getAppliedTax(staySubtotal);
+      const finalAmount = isSkipping ? (staySubtotal + stayTax) : finalTotal;
       const actualAmount = paymentType === 'advance' ? Math.round(finalAmount * (advancePercent / 100)) : finalAmount;
 
       const orderRes = await api.post('/bookings/razorpay-order', {
@@ -338,19 +357,7 @@ const AddonsPage = () => {
                     })}
                   </div>
 
-                  {/* Skip Option Footer */}
-                  <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-end sm:justify-between gap-4">
-                    <div className="hidden sm:block">
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">No Addons Needed?</p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">Skip these extras and proceed directly to room checkout.</p>
-                    </div>
-                    <div
-                      onClick={() => initiatePayment(true)}
-                      className="text-gray-500 hover:text-[#f35757] bg-transparent border-none p-0 text-xs font-black tracking-wider transition-all cursor-pointer underline decoration-dotted decoration-2 underline-offset-4"
-                    >
-                      Skip
-                    </div>
-                  </div>
+
                 </div>
               )}
             </div>
@@ -407,9 +414,20 @@ const AddonsPage = () => {
                     ))}
                   </div>
                   <div className="h-px bg-gray-200/60 my-2" />
-                  <div className="flex justify-between items-center text-sm font-bold">
-                    <span className="text-gray-600">Stay Subtotal ({nights} nights)</span>
-                    <span className="text-gray-900">₹{staySubtotal.toLocaleString('en-IN')}</span>
+                  <div className="flex justify-between items-center text-xs font-semibold text-gray-600">
+                    <span>Stay Subtotal ({nights} nights)</span>
+                    <span>₹{staySubtotal.toLocaleString('en-IN')}</span>
+                  </div>
+                  {stayTax > 0 && (
+                    <div className="flex justify-between items-center text-xs font-semibold text-gray-600 mt-1">
+                      <span>Stay Tax ({getAppliedTaxPercent(staySubtotal)}%)</span>
+                      <span>₹{stayTax.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+                  <div className="h-px bg-gray-200/60 my-2" />
+                  <div className="flex justify-between items-center text-sm font-bold text-gray-900">
+                    <span>Stay Total</span>
+                    <span>₹{(staySubtotal + stayTax).toLocaleString('en-IN')}</span>
                   </div>
                 </div>
               </div>

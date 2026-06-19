@@ -47,6 +47,7 @@ const Settings = () => {
   const [advancePercent4Day, setAdvancePercent4Day] = useState(30);
   const [advancePercent5To7Days, setAdvancePercent5To7Days] = useState(25);
   const [advancePercentAbove7Days, setAdvancePercentAbove7Days] = useState(20);
+  const [taxRules, setTaxRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -81,6 +82,7 @@ const Settings = () => {
         setAdvancePercent4Day(d.advancePercent4Day !== undefined ? d.advancePercent4Day : 30);
         setAdvancePercent5To7Days(d.advancePercent5To7Days !== undefined ? d.advancePercent5To7Days : 25);
         setAdvancePercentAbove7Days(d.advancePercentAbove7Days !== undefined ? d.advancePercentAbove7Days : 20);
+        setTaxRules(d.taxRules || []);
       } catch (err) {
         toast.error('Failed to load settings');
         console.error(err);
@@ -98,6 +100,12 @@ const Settings = () => {
       const checkInTime = convertTo24h(checkInHour, checkInMinute, checkInAmPm);
       const checkOutTime = convertTo24h(checkOutHour, checkOutMinute, checkOutAmPm);
 
+      const cleanedTaxRules = taxRules.map(r => ({
+        minAmount: r.minAmount === '' ? 0 : Number(r.minAmount),
+        maxAmount: r.maxAmount === '' ? 0 : Number(r.maxAmount),
+        taxPercent: r.taxPercent === '' ? 0 : Number(r.taxPercent)
+      }));
+
       await api.put('/settings', {
         email,
         phone,
@@ -108,13 +116,14 @@ const Settings = () => {
         instagram,
         twitter,
         linkedin,
-        cancelDurationHrs,
-        advancePercent1Day,
-        advancePercent2Day,
-        advancePercent3Day,
-        advancePercent4Day,
-        advancePercent5To7Days,
-        advancePercentAbove7Days
+        cancelDurationHrs: cancelDurationHrs === '' ? 24 : Number(cancelDurationHrs),
+        advancePercent1Day: advancePercent1Day === '' ? 100 : Number(advancePercent1Day),
+        advancePercent2Day: advancePercent2Day === '' ? 50 : Number(advancePercent2Day),
+        advancePercent3Day: advancePercent3Day === '' ? 40 : Number(advancePercent3Day),
+        advancePercent4Day: advancePercent4Day === '' ? 30 : Number(advancePercent4Day),
+        advancePercent5To7Days: advancePercent5To7Days === '' ? 25 : Number(advancePercent5To7Days),
+        advancePercentAbove7Days: advancePercentAbove7Days === '' ? 20 : Number(advancePercentAbove7Days),
+        taxRules: cleanedTaxRules
       });
       toast.success('Settings saved successfully');
     } catch (err) {
@@ -296,7 +305,10 @@ const Settings = () => {
                     min="1"
                     required
                     value={cancelDurationHrs}
-                    onChange={(e) => setCancelDurationHrs(Math.max(1, parseInt(e.target.value, 10) || 0))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCancelDurationHrs(val === '' ? '' : Math.max(1, parseInt(val, 10) || 1));
+                    }}
                     className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-[#4F46E5] transition-all"
                   />
                   <p className="text-xs text-gray-400 mt-2">Specify the minimum number of hours before check-in time that a guest can cancel their booking for a full refund.</p>
@@ -324,7 +336,10 @@ const Settings = () => {
                     max="100"
                     required
                     value={advancePercent1Day}
-                    onChange={(e) => setAdvancePercent1Day(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAdvancePercent1Day(val === '' ? '' : Math.min(100, Math.max(0, parseInt(val, 10) || 0)));
+                    }}
                     className={inputClass}
                   />
                 </div>
@@ -336,7 +351,10 @@ const Settings = () => {
                     max="100"
                     required
                     value={advancePercent2Day}
-                    onChange={(e) => setAdvancePercent2Day(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAdvancePercent2Day(val === '' ? '' : Math.min(100, Math.max(0, parseInt(val, 10) || 0)));
+                    }}
                     className={inputClass}
                   />
                 </div>
@@ -348,7 +366,10 @@ const Settings = () => {
                     max="100"
                     required
                     value={advancePercent3Day}
-                    onChange={(e) => setAdvancePercent3Day(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAdvancePercent3Day(val === '' ? '' : Math.min(100, Math.max(0, parseInt(val, 10) || 0)));
+                    }}
                     className={inputClass}
                   />
                 </div>
@@ -360,7 +381,10 @@ const Settings = () => {
                     max="100"
                     required
                     value={advancePercent4Day}
-                    onChange={(e) => setAdvancePercent4Day(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAdvancePercent4Day(val === '' ? '' : Math.min(100, Math.max(0, parseInt(val, 10) || 0)));
+                    }}
                     className={inputClass}
                   />
                 </div>
@@ -372,7 +396,10 @@ const Settings = () => {
                     max="100"
                     required
                     value={advancePercent5To7Days}
-                    onChange={(e) => setAdvancePercent5To7Days(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAdvancePercent5To7Days(val === '' ? '' : Math.min(100, Math.max(0, parseInt(val, 10) || 0)));
+                    }}
                     className={inputClass}
                   />
                 </div>
@@ -384,10 +411,111 @@ const Settings = () => {
                     max="100"
                     required
                     value={advancePercentAbove7Days}
-                    onChange={(e) => setAdvancePercentAbove7Days(Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAdvancePercentAbove7Days(val === '' ? '' : Math.min(100, Math.max(0, parseInt(val, 10) || 0)));
+                    }}
                     className={inputClass}
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Tax Slabs Configuration Card */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                <div className="p-2.5 bg-indigo-50 rounded-xl">
+                  <Percent className="w-5 h-5 text-[#4F46E5]" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">Tax Slabs Configuration</h2>
+              </div>
+
+              <p className="text-xs text-gray-400 mb-6 font-medium">Define slab-based tax percentages. The tax percent will apply to the total booking amount based on where the amount falls in the min/max range.</p>
+
+              {/* Dynamic tax rule builder */}
+              <div className="space-y-4">
+                {taxRules.map((rule, idx) => (
+                  <div key={idx} className="flex flex-col sm:flex-row items-center gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100 relative">
+                    <div className="flex-1 w-full">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Min Amount (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={rule.minAmount}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const updated = [...taxRules];
+                          updated[idx].minAmount = val === '' ? '' : Number(val);
+                          setTaxRules(updated);
+                        }}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-950 outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                        placeholder="0"
+                        required
+                      />
+                    </div>
+                    <div className="flex-1 w-full">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Max Amount (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={rule.maxAmount}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const updated = [...taxRules];
+                          updated[idx].maxAmount = val === '' ? '' : Number(val);
+                          setTaxRules(updated);
+                        }}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-950 outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                        placeholder="10000"
+                        required
+                      />
+                    </div>
+                    <div className="flex-1 w-full">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tax Percent (%)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={rule.taxPercent}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const updated = [...taxRules];
+                          updated[idx].taxPercent = val === '' ? '' : Number(val);
+                          setTaxRules(updated);
+                        }}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-950 outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                        placeholder="18"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTaxRules(taxRules.filter((_, i) => i !== idx));
+                      }}
+                      className="mt-5 px-3 py-2 text-xs font-semibold text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer border-none bg-transparent"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
+
+                {taxRules.length === 0 && (
+                  <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                    <p className="text-xs text-gray-400 font-semibold">No tax slabs configured yet. 0% tax will be applied by default.</p>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTaxRules([...taxRules, { minAmount: 0, maxAmount: 999999, taxPercent: 18 }]);
+                  }}
+                  className="w-full py-2.5 border border-dashed border-[#4F46E5] text-[#4F46E5] hover:bg-indigo-50/50 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer bg-transparent"
+                >
+                  + Add New Tax Slab
+                </button>
               </div>
             </div>
 

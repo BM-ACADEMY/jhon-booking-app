@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -50,6 +50,48 @@ const formatDateLocal = (date) => {
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 };
+
+const MainDateRangeInput = forwardRef(({ value, onClick, startDate, endDate }, ref) => {
+  const formatDateDisplay = (date) => {
+    if (!date) return 'Add Date';
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  return (
+    <div 
+      ref={ref} 
+      onClick={onClick} 
+      className="flex-1 flex flex-row items-center divide-x divide-gray-100 cursor-pointer w-full"
+    >
+      {/* Check-In Column */}
+      <div className="flex-1 flex items-center gap-3 px-4 py-2 group">
+        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+          <CalendarDays className="w-5 h-5 text-gray-500" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 font-sans">Check In</p>
+          <p className="text-xs font-semibold text-gray-900 font-sans whitespace-nowrap">
+            {startDate ? formatDateDisplay(startDate) : "Add Date"}
+          </p>
+        </div>
+      </div>
+
+      {/* Check-Out Column */}
+      <div className="flex-1 flex items-center gap-3 px-4 py-2 group">
+        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+          <CalendarDays className="w-5 h-5 text-gray-500" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 font-sans">Check Out</p>
+          <p className="text-xs font-semibold text-gray-900 font-sans whitespace-nowrap">
+            {endDate ? formatDateDisplay(endDate) : "Add Date"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+});
+MainDateRangeInput.displayName = 'MainDateRangeInput';
 
 // Sub-component for individual card image carousel
 const ImageCarousel = ({ images, roomName }) => {
@@ -645,12 +687,22 @@ const RoomsPage = () => {
   const paginatedRooms = sortedRooms.slice(indexOfFirstItem, indexOfLastItem);
 
   // Hero derived values
-  const heroVideoSrc = hero?.videoUrl
-    ? (hero.videoUrl.startsWith('http') ? hero.videoUrl : `${SERVER_URL}${hero.videoUrl}`)
+  const firstSlide = hero?.slides?.[0];
+  const heroVideoSrc = firstSlide?.videoUrl
+    ? (firstSlide.videoUrl.startsWith('http') ? firstSlide.videoUrl : `${SERVER_URL}${firstSlide.videoUrl}`)
+    : (hero?.videoUrl
+        ? (hero.videoUrl.startsWith('http') ? hero.videoUrl : `${SERVER_URL}${hero.videoUrl}`)
+        : null);
+
+  const heroImageSrc = firstSlide?.backgroundImage
+    ? (firstSlide.backgroundImage.startsWith('http') ? firstSlide.backgroundImage : `${SERVER_URL}${firstSlide.backgroundImage}`)
+    : (hero?.backgroundImage
+        ? (hero.backgroundImage.startsWith('http') ? hero.backgroundImage : `${SERVER_URL}${hero.backgroundImage}`)
+        : 'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop');
+
+  const heroMobileImageSrc = firstSlide?.mobileImage
+    ? (firstSlide.mobileImage.startsWith('http') ? firstSlide.mobileImage : `${SERVER_URL}${firstSlide.mobileImage}`)
     : null;
-  const heroImageSrc = hero?.backgroundImage
-    ? (hero.backgroundImage.startsWith('http') ? hero.backgroundImage : `${SERVER_URL}${hero.backgroundImage}`)
-    : 'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop';
 
   const dateText = checkInInput && checkOutInput
     ? `${checkInInput.getDate()} ${checkInInput.toLocaleString('default', { month: 'short' })} – ${checkOutInput.getDate()} ${checkOutInput.toLocaleString('default', { month: 'short' })}`
@@ -822,7 +874,61 @@ const RoomsPage = () => {
             .animate-slide-in-right {
               animation: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             }
+
+            /* Custom DatePicker Styling */
+            .react-datepicker-wrapper { width: 100%; }
+            .react-datepicker-popper { z-index: 9999 !important; }
+            .react-datepicker {
+              font-family: inherit;
+              background-color: #ffffff !important;
+              border: 1px solid #e2e8f0;
+              border-radius: 1rem;
+              box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+              color: #1e293b;
+              padding: 0.5rem;
+            }
+            .react-datepicker__header {
+              background-color: transparent;
+              border-bottom: 1px solid #f1f5f9;
+            }
+            .react-datepicker__current-month { color: #1e293b; font-weight: 700; }
+            .react-datepicker__day-name { color: #64748b; font-weight: 600; }
+            .react-datepicker__day { color: #334155; border-radius: 0.5rem; }
+            .react-datepicker__day:hover { background-color: #f1f5f9; }
+            .react-datepicker__day--today {
+              border: none !important;
+              outline: none !important;
+              font-weight: bold !important;
+            }
+            .react-datepicker__day--selected,
+            .react-datepicker__day--range-start,
+            .react-datepicker__day--range-end,
+            .react-datepicker__day--selecting-range-start,
+            .react-datepicker__day--selecting-range-end {
+              background-color: #beeb15 !important;
+              color: #000000 !important;
+              font-weight: 800 !important;
+              border-radius: 0.5rem !important;
+            }
+            .react-datepicker__day--in-range,
+            .react-datepicker__day--in-selecting-range {
+              background-color: #e6f7a8 !important;
+              color: #000000 !important;
+              font-weight: 700 !important;
+              border-radius: 0 !important;
+            }
+            .react-datepicker__day--range-start,
+            .react-datepicker__day--selecting-range-start {
+              border-top-left-radius: 0.5rem !important;
+              border-bottom-left-radius: 0.5rem !important;
+            }
+            .react-datepicker__day--range-end,
+            .react-datepicker__day--selecting-range-end {
+              border-top-right-radius: 0.5rem !important;
+              border-bottom-right-radius: 0.5rem !important;
+            }
           `}</style>
+
 
           {/* Background — overflow-hidden + matching radius so image clips to curved bottom */}
           <div className="absolute inset-0 z-0 overflow-hidden rounded-b-[2.5rem] lg:rounded-b-none">
@@ -831,7 +937,16 @@ const RoomsPage = () => {
                 <source src={heroVideoSrc} />
               </video>
             ) : (
-              <img src={heroImageSrc} alt="Rooms hero" className="w-full h-full object-cover" />
+              <>
+                {heroMobileImageSrc ? (
+                  <>
+                    <img src={heroImageSrc} alt="Rooms hero desktop" className="hidden md:block w-full h-full object-cover" />
+                    <img src={heroMobileImageSrc} alt="Rooms hero mobile" className="block md:hidden w-full h-full object-cover" />
+                  </>
+                ) : (
+                  <img src={heroImageSrc} alt="Rooms hero" className="w-full h-full object-cover" />
+                )}
+              </>
             )}
             <div className="absolute inset-0 bg-black/45" />
           </div>
@@ -855,69 +970,31 @@ const RoomsPage = () => {
             <div className={`hidden lg:block lg:absolute lg:bottom-0 lg:left-1/2 lg:-translate-x-1/2 lg:translate-y-1/2 lg:z-40 w-full max-w-4xl px-4 lg:px-0 transition-all duration-300 ${scrolledPastThreshold ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
               <div className="bg-white rounded-[2.5rem] p-2 w-full shadow-2xl flex flex-row items-center gap-2 divide-x divide-gray-100 rooms-reveal-d3 relative z-40">
 
-              {/* Check-In */}
-              <div 
-                className="flex-1 flex items-center gap-3 px-4 py-2 group cursor-pointer"
-                onClick={() => checkinPickerRef.current?.setOpen(true)}
-              >
-                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <CalendarDays className="w-5 h-5 text-gray-500" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check In</p>
-                  <DatePicker
-                    ref={checkinPickerRef}
-                    selected={checkInInput}
-                    onChange={(date) => {
-                      setCheckInInput(date);
-                      setCheckOutInput(null);
-                      setTimeout(() => {
-                        if (checkoutPickerRef.current) {
-                          checkoutPickerRef.current.setOpen(true);
-                        }
-                      }, 100);
-                    }}
-                    selectsStart
-                    startDate={checkInInput}
-                    endDate={checkOutInput}
-                    minDate={new Date()}
-                    dateFormat="dd MMM yyyy"
-                    placeholderText="Add Date"
-                    className="w-full text-xs font-semibold text-gray-900 bg-transparent outline-none cursor-pointer placeholder-gray-400"
-                    popperPlacement="bottom-start"
-                    popperProps={{ strategy: 'fixed', modifiers: [{ name: 'flip', enabled: false }, { name: 'preventOverflow', options: { mainAxis: false } }] }}
-                    popperClassName="z-[200]"
-                  />
-                </div>
+              {/* Date Range Picker containing both Check-In and Check-Out columns */}
+              <div className="flex-[2] flex items-center">
+                <DatePicker
+                  selectsRange={true}
+                  startDate={checkInInput}
+                  endDate={checkOutInput}
+                  onChange={(update) => {
+                    const [start, end] = update;
+                    setCheckInInput(start);
+                    setCheckOutInput(end);
+                  }}
+                  minDate={new Date()}
+                  monthsShown={2}
+                  customInput={
+                    <MainDateRangeInput 
+                      startDate={checkInInput} 
+                      endDate={checkOutInput} 
+                    />
+                  }
+                  popperPlacement="bottom-start"
+                  popperProps={{ strategy: 'fixed', modifiers: [{ name: 'flip', enabled: false }, { name: 'preventOverflow', options: { mainAxis: false } }] }}
+                  popperClassName="z-[200]"
+                />
               </div>
 
-              {/* Check-Out */}
-              <div 
-                className="flex-1 flex items-center gap-3 px-4 py-2 group cursor-pointer"
-                onClick={() => checkoutPickerRef.current?.setOpen(true)}
-              >
-                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <CalendarDays className="w-5 h-5 text-gray-500" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check Out</p>
-                  <DatePicker
-                    ref={checkoutPickerRef}
-                    selected={checkOutInput}
-                    onChange={(date) => setCheckOutInput(date)}
-                    selectsEnd
-                    startDate={checkInInput}
-                    endDate={checkOutInput}
-                    minDate={checkInInput || new Date()}
-                    dateFormat="dd MMM yyyy"
-                    placeholderText="Add Date"
-                    className="w-full text-xs font-semibold text-gray-900 bg-transparent outline-none cursor-pointer placeholder-gray-400"
-                    popperPlacement="bottom-start"
-                    popperProps={{ strategy: 'fixed', modifiers: [{ name: 'flip', enabled: false }, { name: 'preventOverflow', options: { mainAxis: false } }] }}
-                    popperClassName="z-[200]"
-                  />
-                </div>
-              </div>
 
               {/* Guests & Rooms */}
               <div 

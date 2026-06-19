@@ -1,14 +1,57 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CalendarDays, Users, Search, Navigation, ChevronDown, Bell, X, AlertTriangle } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import api from '../api';
 
+const MainDateRangeInput = forwardRef(({ value, onClick, startDate, endDate }, ref) => {
+  const formatDateDisplay = (date) => {
+    if (!date) return 'Select date';
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  return (
+    <div 
+      ref={ref} 
+      onClick={onClick} 
+      className="flex-1 flex flex-row items-center divide-x divide-gray-100 cursor-pointer w-full"
+    >
+      {/* Check-In Column */}
+      <div className="flex-1 flex items-center gap-3 px-4 py-2 group">
+        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+          <CalendarDays className="w-5 h-5 text-gray-500" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 font-sans">Check‑In</p>
+          <p className="text-xs font-semibold text-gray-900 font-sans whitespace-nowrap">
+            {startDate ? formatDateDisplay(startDate) : "Select date"}
+          </p>
+        </div>
+      </div>
+
+      {/* Check-Out Column */}
+      <div className="flex-1 flex items-center gap-3 px-4 py-2 group">
+        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+          <CalendarDays className="w-5 h-5 text-gray-500" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 font-sans">Check‑Out</p>
+          <p className="text-xs font-semibold text-gray-900 font-sans whitespace-nowrap">
+            {endDate ? formatDateDisplay(endDate) : "Select date"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+});
+MainDateRangeInput.displayName = 'MainDateRangeInput';
+
 const HeroSection = () => {
   const navigate = useNavigate();
   const [hero, setHero] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   // Unified Search State
   const [location, setLocation] = useState(() => sessionStorage.getItem('booking_location') || '');
@@ -166,15 +209,15 @@ const HeroSection = () => {
     fetchHero();
   }, []);
 
-
+  useEffect(() => {
+    if (!hero?.slides || hero.slides.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlideIndex((prev) => (prev + 1) % hero.slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [hero?.slides]);
 
   const baseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:5000';
-  const videoSrc = hero?.videoUrl
-    ? (hero.videoUrl.startsWith('http') ? hero.videoUrl : `${baseUrl}${hero.videoUrl}`)
-    : null;
-  const imageSrc = hero?.backgroundImage
-    ? (hero.backgroundImage.startsWith('http') ? hero.backgroundImage : `${baseUrl}${hero.backgroundImage}`)
-    : 'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop';
 
   // Dynamic texts for the animated pill
   const dateText = startDate && endDate 
@@ -185,7 +228,7 @@ const HeroSection = () => {
 
   return (
     <>
-      <section className="relative h-[420px] md:h-[480px] lg:h-[520px] rounded-b-[2.5rem] lg:rounded-b-none font-sans flex flex-col overflow-hidden lg:overflow-visible bg-gray-100 shadow-xl">
+      <section className="relative h-[420px] md:h-[480px] lg:h-[520px] rounded-b-[2.5rem] lg:rounded-b-none font-sans flex flex-col overflow-hidden lg:overflow-visible bg-gray-100 shadow-xl z-20">
         <style>{`
           @keyframes reveal {
             from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
@@ -213,35 +256,111 @@ const HeroSection = () => {
           .react-datepicker__day-name { color: #64748b; font-weight: 600; }
           .react-datepicker__day { color: #334155; border-radius: 0.5rem; }
           .react-datepicker__day:hover { background-color: #f1f5f9; }
-          .react-datepicker__day--selected, .react-datepicker__day--in-range {
-            background-color: #d9f969 !important;
-            color: #000;
-            font-weight: 600;
+          .react-datepicker__day--today {
+            border: none !important;
+            outline: none !important;
+            font-weight: bold !important;
           }
-          .react-datepicker__day--in-selecting-range { background-color: #ecfccb !important; }
+          .react-datepicker__day--selected,
+          .react-datepicker__day--range-start,
+          .react-datepicker__day--range-end,
+          .react-datepicker__day--selecting-range-start,
+          .react-datepicker__day--selecting-range-end {
+            background-color: #beeb15 !important;
+            color: #000000 !important;
+            font-weight: 800 !important;
+            border-radius: 0.5rem !important;
+          }
+          .react-datepicker__day--in-range,
+          .react-datepicker__day--in-selecting-range {
+            background-color: #e6f7a8 !important;
+            color: #000000 !important;
+            font-weight: 700 !important;
+            border-radius: 0 !important;
+          }
+          .react-datepicker__day--range-start,
+          .react-datepicker__day--selecting-range-start {
+            border-top-left-radius: 0.5rem !important;
+            border-bottom-left-radius: 0.5rem !important;
+          }
+          .react-datepicker__day--range-end,
+          .react-datepicker__day--selecting-range-end {
+            border-top-right-radius: 0.5rem !important;
+            border-bottom-right-radius: 0.5rem !important;
+          }
         `}</style>
 
-        {/* Dynamic Background */}
+
+        {/* Dynamic Background Slideshow */}
         <div className="absolute inset-0 z-0 overflow-hidden rounded-b-[2.5rem] lg:rounded-b-none">
-          {videoSrc ? (
-            <video
-              key={videoSrc}
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="w-full h-full object-cover opacity-90 scale-105"
-            >
-              <source src={videoSrc} />
-            </video>
+          {hero?.slides && hero.slides.length > 0 ? (
+            hero.slides.map((slide, index) => {
+              const isCurrent = index === currentSlideIndex;
+              const slideVidSrc = slide.videoUrl
+                ? (slide.videoUrl.startsWith('http') ? slide.videoUrl : `${baseUrl}${slide.videoUrl}`)
+                : null;
+              const slideImgSrc = slide.backgroundImage
+                ? (slide.backgroundImage.startsWith('http') ? slide.backgroundImage : `${baseUrl}${slide.backgroundImage}`)
+                : 'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop';
+              const slideMobileImgSrc = slide.mobileImage
+                ? (slide.mobileImage.startsWith('http') ? slide.mobileImage : `${baseUrl}${slide.mobileImage}`)
+                : null;
+
+              return (
+                <div
+                  key={slide._id || index}
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isCurrent ? 'opacity-100 z-0' : 'opacity-0 z-[-1]'}`}
+                >
+                  {slideVidSrc ? (
+                    <video
+                      key={slideVidSrc}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="w-full h-full object-cover opacity-90 scale-105"
+                    >
+                      <source src={slideVidSrc} />
+                    </video>
+                  ) : (
+                    <>
+                      {slideMobileImgSrc ? (
+                        <>
+                          <img
+                            src={slideImgSrc}
+                            alt="Hero background"
+                            className="hidden md:block w-full h-full object-cover scale-105 animate-fade-in"
+                          />
+                          <img
+                            src={slideMobileImgSrc}
+                            alt="Hero mobile background"
+                            className="block md:hidden w-full h-full object-cover scale-105 animate-fade-in"
+                          />
+                        </>
+                      ) : (
+                        <img
+                          src={slideImgSrc}
+                          alt="Hero background"
+                          className="w-full h-full object-cover scale-105 animate-fade-in"
+                        />
+                      )}
+                    </>
+                  )}
+                  <div className="absolute inset-0 bg-black/40" />
+                </div>
+              );
+            })
           ) : (
-            <img
-              src={imageSrc}
-              alt="Hero background"
-              className="w-full h-full object-cover scale-105"
-            />
+            // Fallback default background if slides are empty
+            <>
+              <img
+                src="https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop"
+                alt="Hero background"
+                className="w-full h-full object-cover scale-105"
+              />
+              <div className="absolute inset-0 bg-black/40" />
+            </>
           )}
-          <div className="absolute inset-0 bg-black/40" />
         </div>
 
         {/* Main Hero Content Container */}
@@ -251,20 +370,25 @@ const HeroSection = () => {
           {/* ========================================= */}
           {/* COMMON TITLE & SUBTITLE (Visible on ALL)  */}
           {/* ========================================= */}
-          <div className="flex flex-col items-center w-full mb-5 lg:mb-8">
+          <div 
+            key={currentSlideIndex} 
+            className="flex flex-col items-center w-full mb-5 lg:mb-8"
+          >
             <h1 className="text-[2rem] sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold text-white leading-[1.15] tracking-tight mb-2.5 lg:mb-3.5 drop-shadow-md animate-reveal [animation-delay:200ms] opacity-0 text-center">
               <span className="text-white inline-block cursor-default">
-                {hero?.titleLine1 || "Experience Luxury Like"}
+                {(hero?.slides?.[currentSlideIndex] || hero)?.titleLine1 || "Experience Luxury Like"}
               </span>
               <br />
               <span className="text-[#d9f969] inline-block cursor-default">
-                {hero?.titleLine2 || "Never Before"}
+                {(hero?.slides?.[currentSlideIndex] || hero)?.titleLine2 || "Never Before"}
               </span>
             </h1>
 
             <p className="text-white/90 text-xs sm:text-sm md:text-base max-w-xl lg:max-w-2xl mx-auto leading-relaxed font-medium tracking-wide drop-shadow-sm animate-reveal [animation-delay:400ms] opacity-0 text-center px-2">
-              {hero?.subtitle || "Discover our handpicked collection of world-class rooms and suites, designed for ultimate comfort and elegance."}
+              {(hero?.slides?.[currentSlideIndex] || hero)?.subtitle || "Discover our handpicked collection of world-class rooms and suites, designed for ultimate comfort and elegance."}
             </p>
+
+
           </div>
 
           {/* ========================================= */}
@@ -298,78 +422,38 @@ const HeroSection = () => {
           {/* ========================================= */}
           {/* DESKTOP BOOKING BAR (Visible lg+)         */}
           {/* ========================================= */}
-          <div className={`hidden lg:block lg:absolute lg:bottom-0 lg:left-1/2 lg:-translate-x-1/2 lg:translate-y-1/2 lg:z-40 w-full max-w-5xl px-4 lg:px-0 transition-all duration-300 ${scrolledPastThreshold ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
+          <div className={`hidden lg:block lg:absolute lg:bottom-0 lg:left-1/2 lg:-translate-x-1/2 lg:translate-y-1/2 lg:z-40 w-full max-w-4xl px-4 lg:px-0 transition-all duration-300 ${scrolledPastThreshold ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
             <div className="bg-white rounded-[2.5rem] p-2 w-full shadow-2xl flex flex-row items-center gap-2 divide-x divide-gray-100 animate-reveal [animation-delay:600ms] opacity-0 relative z-40">
               
-              {/* Check-In */}
-              <div 
-                className="flex-[1.2] flex items-center gap-2 px-3 py-2 w-full group cursor-pointer"
-                onClick={() => checkinPickerRef.current?.setOpen(true)}
-              >
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <CalendarDays className="w-4 h-4 text-gray-500" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Check‑In</p>
-                  <DatePicker
-                    ref={checkinPickerRef}
-                    selected={startDate}
-                    onChange={(date) => {
-                      setDateRange([date, null]);
-                      setTimeout(() => {
-                        if (checkoutPickerRef.current) {
-                          checkoutPickerRef.current.setOpen(true);
-                        }
-                      }, 100);
-                    }}
-                    selectsStart
-                    startDate={startDate}
-                    endDate={endDate}
-                    minDate={new Date()}
-                    dateFormat="dd MMM yyyy"
-                    placeholderText="Select date"
-                    className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400"
-                    popperProps={{ strategy: "fixed" }}
-                    popperClassName="z-50"
-                  />
-                </div>
+              {/* Date Range Picker containing both Check-In and Check-Out columns */}
+              <div className="flex-[2] flex items-center">
+                <DatePicker
+                  selectsRange={true}
+                  startDate={startDate}
+                  endDate={endDate}
+                  onChange={(update) => setDateRange(update)}
+                  minDate={new Date()}
+                  monthsShown={2}
+                  customInput={
+                    <MainDateRangeInput 
+                      startDate={startDate} 
+                      endDate={endDate} 
+                    />
+                  }
+                  popperProps={{ strategy: "fixed" }}
+                  popperClassName="z-50"
+                />
               </div>
 
-              {/* Check-Out */}
-              <div 
-                className="flex-[1.2] flex items-center gap-2 px-3 py-2 w-full group cursor-pointer"
-                onClick={() => checkoutPickerRef.current?.setOpen(true)}
-              >
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <CalendarDays className="w-4 h-4 text-gray-500" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Check‑Out</p>
-                  <DatePicker
-                    ref={checkoutPickerRef}
-                    selected={endDate}
-                    onChange={(date) => setDateRange([startDate, date])}
-                    selectsEnd
-                    startDate={startDate}
-                    endDate={endDate}
-                    minDate={startDate || new Date()}
-                    dateFormat="dd MMM yyyy"
-                    placeholderText="Select date"
-                    className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400"
-                    popperProps={{ strategy: "fixed" }}
-                    popperClassName="z-50"
-                  />
-                </div>
-              </div>
 
               {/* Guests & Rooms */}
               <div 
-                className="flex-[1.4] flex items-center gap-2 px-3 py-2 w-full group relative cursor-pointer" 
+                className="flex-[1.4] flex items-center gap-3 px-4 py-2 group relative cursor-pointer" 
                 ref={guestDropdownRef}
                 onClick={() => setIsGuestDropdownOpen(!isGuestDropdownOpen)}
               >
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <Users className="w-4 h-4 text-gray-500" />
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <Users className="w-5 h-5 text-gray-500" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Guests & Rooms</p>
@@ -473,7 +557,7 @@ const HeroSection = () => {
               <div className="px-2 w-full md:w-auto mt-2 md:mt-0 flex self-stretch py-1">
                 <button
                   onClick={handleSearch}
-                  className="w-full md:w-auto bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-xs rounded-full px-6 py-3 flex items-center justify-center gap-2 transition-all hover:shadow-lg active:scale-95 group"
+                  className="w-full md:w-auto bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-xs rounded-full px-6 py-2.5 flex items-center justify-center gap-2 transition-all hover:shadow-lg active:scale-95 group cursor-pointer"
                 >
                   <Search className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
                   <span>SEARCH</span>
