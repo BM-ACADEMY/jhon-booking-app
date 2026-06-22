@@ -131,6 +131,13 @@ const RoomManagement = () => {
     const file = e.target.files?.[0];
     if (!file || !replacingTarget) return;
 
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size exceeds the 10MB limit.');
+      e.target.value = '';
+      setReplacingTarget(null);
+      return;
+    }
+
     if (replacingTarget.type === 'existing') {
       const imgToReplace = roomForm.images[replacingTarget.index];
       // Remove from existing
@@ -1313,9 +1320,23 @@ const cat = categories.find(c => c.name === catName);
                           <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform"><ImageIcon className="w-5 h-5" /></div>
                           <span className="text-[10px] font-black uppercase tracking-widest">Add Photo</span>
                           <input type="file" multiple accept="image/*" onChange={(e) => {
-                            const files = Array.from(e.target.files).map(f => ({ file: f, label: '' }));
-                            setRoomImages(p => [...p, ...files]);
-                          }} className="hidden" />
+                             const filesArray = Array.from(e.target.files || []);
+                             const validFiles = [];
+                             let hasTooLarge = false;
+                             for (const f of filesArray) {
+                               if (f.size > 10 * 1024 * 1024) {
+                                 hasTooLarge = true;
+                               } else {
+                                 validFiles.push({ file: f, label: '' });
+                               }
+                             }
+                             if (hasTooLarge) {
+                               toast.error('Some files exceed the 10MB limit and were not added.');
+                             }
+                             if (validFiles.length > 0) {
+                               setRoomImages(p => [...p, ...validFiles]);
+                             }
+                           }} className="hidden" />
                        </label>
                      )}
                   </div>

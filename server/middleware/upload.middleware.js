@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedExts = ['.jpeg', '.jpg', '.png', '.gif', '.mp4', '.webm', '.ogg', '.mov', '.m4v', '.webp'];
+  const allowedExts = ['.jpeg', '.jpg', '.png', '.gif', '.mp4', '.webm', '.ogg', '.mov', '.m4v', '.webp', '.avif', '.heic', '.heif', '.svg', '.bmp', '.tiff'];
   const ext = path.extname(file.originalname).toLowerCase();
   
   // Allow if it's a known extension OR if the mimetype starts with image/ or video/
