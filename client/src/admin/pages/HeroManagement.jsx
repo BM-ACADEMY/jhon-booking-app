@@ -41,10 +41,10 @@ const HeroManagement = () => {
   const desktopImgInputRef = useRef(null);
   const mobileImgInputRef = useRef(null);
 
-  const baseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:5000';
+  const baseUrl = import.meta.env.VITE_BASE_URL && import.meta.env.VITE_BASE_URL !== 'undefined' ? import.meta.env.VITE_BASE_URL : '';
 
   const fetchHeroData = async () => {
-    try {
+    try { 
       setLoading(true);
       const res = await api.get('/hero');
       if (res.data) {
@@ -191,7 +191,7 @@ const HeroManagement = () => {
     const imgSrc = previewViewport === 'mobile' && slide.mobileImage ? slide.mobileImage : slide.backgroundImage;
     return {
       type: 'image',
-      src: imgSrc ? (imgSrc.startsWith('http') ? imgSrc : `${baseUrl}${imgSrc}`) : 'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop'
+      src: imgSrc ? (imgSrc.startsWith('http') ? imgSrc : `${baseUrl}${imgSrc}`) : ''
     };
   };
 

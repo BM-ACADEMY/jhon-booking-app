@@ -703,7 +703,7 @@ const RoomsPage = () => {
     ? (firstSlide.backgroundImage.startsWith('http') ? firstSlide.backgroundImage : `${SERVER_URL}${firstSlide.backgroundImage}`)
     : (hero?.backgroundImage
         ? (hero.backgroundImage.startsWith('http') ? hero.backgroundImage : `${SERVER_URL}${hero.backgroundImage}`)
-        : 'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop');
+        : '');
 
   const heroMobileImageSrc = firstSlide?.mobileImage
     ? (firstSlide.mobileImage.startsWith('http') ? firstSlide.mobileImage : `${SERVER_URL}${firstSlide.mobileImage}`)

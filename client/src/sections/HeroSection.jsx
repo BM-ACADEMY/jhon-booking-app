@@ -223,7 +223,7 @@ const HeroSection = () => {
     return () => clearInterval(timer);
   }, [hero?.slides]);
 
-  const baseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:5000';
+  const baseUrl = import.meta.env.VITE_BASE_URL && import.meta.env.VITE_BASE_URL !== 'undefined' ? import.meta.env.VITE_BASE_URL : '';
 
   // Dynamic texts for the animated pill
   const dateText = startDate && endDate 
@@ -307,7 +307,7 @@ const HeroSection = () => {
                 : null;
               const slideImgSrc = slide.backgroundImage
                 ? (slide.backgroundImage.startsWith('http') ? slide.backgroundImage : `${baseUrl}${slide.backgroundImage}`)
-                : 'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop';
+                : '';
               const slideMobileImgSrc = slide.mobileImage
                 ? (slide.mobileImage.startsWith('http') ? slide.mobileImage : `${baseUrl}${slide.mobileImage}`)
                 : null;
@@ -359,11 +359,6 @@ const HeroSection = () => {
           ) : (
             // Fallback default background if slides are empty
             <>
-              <img
-                src="https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop"
-                alt="Hero background"
-                className="w-full h-full object-cover scale-105"
-              />
               <div className="absolute inset-0 bg-black/40" />
             </>
           )}
