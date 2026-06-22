@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../api';
+import api, { loadRazorpay } from '../api';
 import toast from 'react-hot-toast';
 import Lottie from 'lottie-react';
 import tickAnimation from '../assets/tick.json';
@@ -122,6 +122,13 @@ const AddonsPage = () => {
 
     try {
       setBookingLoading(true);
+
+      const isLoaded = await loadRazorpay();
+      if (!isLoaded) {
+        toast.error('Failed to load Razorpay SDK. Please check your network connection.');
+        setBookingLoading(false);
+        return;
+      }
 
       const addonsPayload = isSkipping ? [] : selectedAddons.map(a => ({
         name: a.name,

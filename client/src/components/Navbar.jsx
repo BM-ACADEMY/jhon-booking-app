@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, forwardRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Hotel,
@@ -26,6 +26,48 @@ const navLinks = [
   { label: "About", to: "/about" },
   { label: "Contact", to: "/contact" },
 ];
+
+const HeaderDateRangeInput = forwardRef(({ value, onClick, startDate, endDate }, ref) => {
+  const formatDateDisplay = (date) => {
+    if (!date) return 'Select date';
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  return (
+    <div 
+      ref={ref} 
+      onClick={onClick} 
+      className="flex items-center divide-x divide-gray-200/50 w-full cursor-pointer"
+    >
+      {/* Check-In */}
+      <div className="flex-[1.2] flex items-center gap-2 px-3 py-1.5 w-full group">
+        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+          <CalendarDays className="w-4 h-4 text-gray-500" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Check‑In</p>
+          <p className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400 leading-tight whitespace-nowrap">
+            {startDate ? formatDateDisplay(startDate) : "Select date"}
+          </p>
+        </div>
+      </div>
+
+      {/* Check-Out */}
+      <div className="flex-[1.2] flex items-center gap-2 px-3 py-1.5 w-full group">
+        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+          <CalendarDays className="w-4 h-4 text-gray-500" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Check‑Out</p>
+          <p className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400 leading-tight whitespace-nowrap">
+            {endDate ? formatDateDisplay(endDate) : "Select date"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+});
+HeaderDateRangeInput.displayName = 'HeaderDateRangeInput';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -59,8 +101,6 @@ const Navbar = () => {
   const [showSearchInHeader, setShowSearchInHeader] = useState(false);
 
   const navGuestDropdownRef = useRef(null);
-  const navCheckinPickerRef = useRef(null);
-  const navCheckoutPickerRef = useRef(null);
 
   // Sync state changes with sessionStorage and broadcast to other components
   useEffect(() => {
@@ -200,65 +240,24 @@ const Navbar = () => {
               transition={{ duration: 0.25, ease: "easeOut" }}
               className="hidden lg:flex bg-transparent max-w-3xl w-full items-center gap-1.5 divide-x divide-gray-200/50"
             >
-              {/* Check-In */}
-              <div 
-                className="flex-[1.2] flex items-center gap-2 px-3 py-1.5 w-full group cursor-pointer"
-                onClick={() => navCheckinPickerRef.current?.setOpen(true)}
-              >
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <CalendarDays className="w-4 h-4 text-gray-500" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Check‑In</p>
-                  <DatePicker
-                    ref={navCheckinPickerRef}
-                    selected={startDate}
-                    onChange={(date) => {
-                      setDateRange([date, null]);
-                      setTimeout(() => {
-                        if (navCheckoutPickerRef.current) {
-                          navCheckoutPickerRef.current.setOpen(true);
-                        }
-                      }, 100);
-                    }}
-                    selectsStart
-                    startDate={startDate}
-                    endDate={endDate}
-                    minDate={new Date()}
-                    dateFormat="dd MMM yyyy"
-                    placeholderText="Select date"
-                    className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400 leading-tight"
-                    popperProps={{ strategy: "fixed" }}
-                    popperClassName="z-50"
-                  />
-                </div>
-              </div>
-
-              {/* Check-Out */}
-              <div 
-                className="flex-[1.2] flex items-center gap-2 px-3 py-1.5 w-full group cursor-pointer"
-                onClick={() => navCheckoutPickerRef.current?.setOpen(true)}
-              >
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <CalendarDays className="w-4 h-4 text-gray-500" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Check‑Out</p>
-                  <DatePicker
-                    ref={navCheckoutPickerRef}
-                    selected={endDate}
-                    onChange={(date) => setDateRange([startDate, date])}
-                    selectsEnd
-                    startDate={startDate}
-                    endDate={endDate}
-                    minDate={startDate || new Date()}
-                    dateFormat="dd MMM yyyy"
-                    placeholderText="Select date"
-                    className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400 leading-tight"
-                    popperProps={{ strategy: "fixed" }}
-                    popperClassName="z-50"
-                  />
-                </div>
+              {/* Date Range Picker containing both Check-In and Check-Out columns */}
+              <div className="flex-[2.4] flex items-center">
+                <DatePicker
+                  selectsRange={true}
+                  startDate={startDate}
+                  endDate={endDate}
+                  onChange={(update) => setDateRange(update)}
+                  minDate={new Date()}
+                  monthsShown={2}
+                  customInput={
+                    <HeaderDateRangeInput 
+                      startDate={startDate} 
+                      endDate={endDate} 
+                    />
+                  }
+                  popperProps={{ strategy: "fixed" }}
+                  popperClassName="z-50"
+                />
               </div>
 
               {/* Guests & Rooms */}

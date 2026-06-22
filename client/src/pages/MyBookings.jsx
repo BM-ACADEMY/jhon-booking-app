@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Clock, CreditCard, ChevronLeft, ChevronRight, Loader2, BedDouble, Star, X, Users, Check, Bath } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import api from '../api';
+import api, { loadRazorpay } from '../api';
 import BookingCardSkeleton from '../components/BookingCardSkeleton';
 
 const SERVER_URL = import.meta.env.VITE_BASE_URL;
@@ -146,6 +146,11 @@ const MyBookings = () => {
 
   const handlePayBalance = async (booking) => {
     try {
+      const isLoaded = await loadRazorpay();
+      if (!isLoaded) {
+        toast.error('Failed to load Razorpay SDK. Please check your network connection.');
+        return;
+      }
       const orderRes = await api.post(`/bookings/${booking._id}/balance-razorpay-order`);
       const order = orderRes.data;
 
