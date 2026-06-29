@@ -19,6 +19,12 @@ const AdminLogin = () => {
       } else {
         navigate('/', { replace: true });
       }
+    } else {
+      const reason = sessionStorage.getItem('logout_reason');
+      if (reason) {
+        setError(reason);
+        sessionStorage.removeItem('logout_reason');
+      }
     }
   }, [user, isAdmin, navigate]);
 

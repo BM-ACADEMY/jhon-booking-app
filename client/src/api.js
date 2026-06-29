@@ -12,6 +12,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_user');
+      const isAdminPath = window.location.pathname.startsWith('/admin');
+      if (isAdminPath) {
+        sessionStorage.setItem('logout_reason', 'Your session has expired. Please log in again.');
+        window.location.href = '/admin/login';
+      } else {
+        window.location.href = '/';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const getRoomSlug = (name) => {
   if (!name) return '';
   return name

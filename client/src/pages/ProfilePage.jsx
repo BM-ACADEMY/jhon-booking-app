@@ -70,13 +70,13 @@ const ProfilePage = () => {
 
             {/* Avatar & Summary Card */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border border-gray-200 rounded-xl p-5 mb-6 gap-4">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 min-w-0 w-full">
                 <div className="w-16 h-16 rounded-full bg-[#E8E8FF] text-[#4F46E5] flex items-center justify-center text-2xl font-semibold flex-shrink-0">
                   {name ? name.charAt(0).toUpperCase() : 'U'}
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{name || 'Your Name'}</h3>
-                  <p className="text-sm text-gray-500">{email || 'your.email@example.com'}</p>
+                <div className="min-w-0">
+                  <h3 className="text-lg font-semibold text-gray-900 truncate" title={name}>{name || 'Your Name'}</h3>
+                  <p className="text-sm text-gray-500 truncate" title={email}>{email || 'your.email@example.com'}</p>
                 </div>
               </div>
             </div>
