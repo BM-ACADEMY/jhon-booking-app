@@ -3,7 +3,7 @@ import {
   Plus, Search, Edit2, Trash2, BedDouble, Star, ChevronLeft, ChevronRight,
   Loader2, Folder, Tag, X, MapPin, Users, Home, Info, Image as ImageIcon,
   Calendar, Check, Shield, Wifi, Car, Utensils, Coffee, Tv, Wind, Waves,
-  Sparkles, Key, Zap, Heart, Layers
+  Sparkles, Key, Zap, Heart, Layers, ShowerHead, Bath
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
@@ -52,6 +52,7 @@ const DEFAULT_ROOM_FORM = {
   bedrooms: 1,
   beds: 1,
   bathrooms: 1,
+  showers: 0,
   size: '',
   address: '',
   city: '',
@@ -330,6 +331,7 @@ const RoomManagement = () => {
       bedrooms: draft.bedrooms || 1,
       beds: draft.beds || 1,
       bathrooms: draft.bathrooms || 1,
+      showers: draft.showers || 0,
       size: draft.size || '',
       address: draft.address || '',
       city: draft.city || '',
@@ -376,6 +378,7 @@ const RoomManagement = () => {
       bedrooms: r.bedrooms || 1,
       beds: r.beds || 1,
       bathrooms: r.bathrooms || 1,
+      showers: r.showers || 0,
       size: r.size || '',
       address: r.address || '',
       city: r.city || '',
@@ -1066,15 +1069,15 @@ const cat = categories.find(c => c.name === catName);
                       { id: 'maxAdults', label: 'Max Adults', icon: Users },
                       { id: 'maxChildren', label: 'Max Children', icon: Users },
                       { id: 'bedrooms', label: 'Bedrooms', icon: BedDouble },
-                      { id: 'beds', label: 'Total Beds', icon: BedDouble },
-                      { id: 'bathrooms', label: 'Bathrooms', icon: Sparkles },
+                      { id: 'bathrooms', label: 'Bathrooms', icon: Bath },
+                      { id: 'showers', label: 'Showers', icon: ShowerHead },
                     ].map(field => (
                       <div key={field.id} className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col items-center">
                         <field.icon className="w-5 h-5 text-primary-500 mb-3" />
                         <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">{field.label}</label>
                         <input
                           type="number"
-                          value={roomForm[field.id]}
+                          value={roomForm[field.id] !== undefined && roomForm[field.id] !== null ? roomForm[field.id] : 0}
                           onChange={(e) => setRoomForm(p => ({ ...p, [field.id]: e.target.value }))}
                           className="w-full bg-white border border-gray-200 rounded-lg px-2 py-2 text-center text-sm font-black outline-none focus:border-primary-500 transition-all"
                         />
@@ -1637,7 +1640,7 @@ const cat = categories.find(c => c.name === catName);
                 {/* Left: Main Details */}
                 <div className="md:col-span-2 space-y-8">
                   {/* Stats Bar */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 bg-gray-50 rounded-2xl p-4 sm:p-5 border border-gray-100">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 bg-gray-50 rounded-2xl p-4 sm:p-5 border border-gray-100">
                     <div className="text-center">
                       <Users className="w-4 h-4 text-primary-500 mx-auto mb-1" />
                       <p className="text-sm font-black text-gray-900">{viewRoomTarget.guests || viewRoomTarget.capacity}</p>
@@ -1646,12 +1649,17 @@ const cat = categories.find(c => c.name === catName);
                     <div className="text-center">
                       <BedDouble className="w-4 h-4 text-primary-500 mx-auto mb-1" />
                       <p className="text-sm font-black text-gray-900">{viewRoomTarget.bedrooms}</p>
-                      <p className="text-[9px] text-gray-400 font-bold uppercase">Beds</p>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase">Bedrooms</p>
                     </div>
                     <div className="text-center">
-                      <Sparkles className="w-4 h-4 text-primary-500 mx-auto mb-1" />
+                      <Bath className="w-4 h-4 text-primary-500 mx-auto mb-1" />
                       <p className="text-sm font-black text-gray-900">{viewRoomTarget.bathrooms}</p>
-                      <p className="text-[9px] text-gray-400 font-bold uppercase">Baths</p>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase">Bathrooms</p>
+                    </div>
+                    <div className="text-center">
+                      <ShowerHead className="w-4 h-4 text-primary-500 mx-auto mb-1" />
+                      <p className="text-sm font-black text-gray-900">{viewRoomTarget.showers || 0}</p>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase">Showers</p>
                     </div>
                     <div className="text-center">
                       <Star className="w-4 h-4 text-amber-500 mx-auto mb-1" />

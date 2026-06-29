@@ -5,7 +5,7 @@ import {
   Search, BedDouble, Star, Users, Bath, ArrowRight, Loader2,
   MapPin, CalendarDays, Heart, ChevronLeft, ChevronRight, ChevronDown,
   Home, Trees, Tent, Warehouse, Compass, Building2, Waves,
-  SlidersHorizontal, Check, X, Building, Hotel, Info, Maximize
+  SlidersHorizontal, Check, X, Building, Hotel, Info, Maximize, ShowerHead
 } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -1399,12 +1399,20 @@ const RoomsPage = () => {
                             </div>
                             <div className="flex items-center gap-1.5">
                               <BedDouble className="w-3.5 h-3.5 text-gray-400" />
-                              <span>{room.bedrooms || 1} Bed{room.bedrooms > 1 ? 's' : ''}</span>
+                              <span>{room.bedrooms || 1} Bedroom{room.bedrooms > 1 ? 's' : ''}</span>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              <Bath className="w-3.5 h-3.5 text-gray-400" />
-                              <span>{room.bathrooms || 1} Bath{room.bathrooms > 1 ? 's' : ''}</span>
-                            </div>
+                            {room.bathrooms > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <Bath className="w-3.5 h-3.5 text-gray-400" />
+                                <span>{room.bathrooms} Bath{room.bathrooms > 1 ? 's' : ''}</span>
+                              </div>
+                            )}
+                            {room.showers > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <ShowerHead className="w-3.5 h-3.5 text-gray-400" />
+                                <span>{room.showers} Shower{room.showers > 1 ? 's' : ''}</span>
+                              </div>
+                            )}
                             {room.size && (
                               <div className="flex items-center gap-1.5">
                                 <Maximize className="w-3.5 h-3.5 text-gray-400" />

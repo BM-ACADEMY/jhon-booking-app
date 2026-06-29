@@ -18,6 +18,7 @@ const roomSchema = new mongoose.Schema({
   bedrooms: { type: Number, default: 1 },
   beds: { type: Number, default: 1 },
   bathrooms: { type: Number, default: 1 },
+  showers: { type: Number, default: 0 },
 
   size: { type: String }, 
 

@@ -4,7 +4,7 @@ import * as Icons from 'lucide-react';
 import {
   ArrowLeft, Star, Users, BedDouble, Bath, MapPin, Wifi, Check,
   ChevronLeft, ChevronRight, ChevronDown, Loader2, Calendar, Share2, Heart, Shield, Maximize,
-  MessageSquare, Sparkles, Wind, MoreVertical, X
+  MessageSquare, Sparkles, Wind, MoreVertical, X, ShowerHead
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -1070,8 +1070,9 @@ const RoomDetailPage = () => {
                     {[
                       room.size && { icon: Maximize, label: room.size },
                       (room.maxAdults || room.maxChildren) && { icon: Users, label: `Max: ${room.maxAdults || 2} Adults${(room.maxChildren || 0) > 0 ? ` · ${room.maxChildren} Children` : ''}` },
-                      room.bathrooms && { icon: Bath, label: `${room.bathrooms} bath` },
-                      room.beds && { icon: BedDouble, label: `${room.beds} beds` }
+                      room.bedrooms && { icon: BedDouble, label: `${room.bedrooms} Bedroom${room.bedrooms > 1 ? 's' : ''}` },
+                      room.bathrooms > 0 && { icon: Bath, label: `${room.bathrooms} Bath${room.bathrooms > 1 ? 's' : ''}` },
+                      room.showers > 0 && { icon: ShowerHead, label: `${room.showers} Shower${room.showers > 1 ? 's' : ''}` }
                     ].filter(Boolean).map(({ icon: Icon, label }, idx) => (
                       <div key={idx} className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-3 py-1.5 lg:bg-gray-100/80 lg:border-gray-200/50 lg:px-4 lg:py-2 lg:rounded-lg shadow-sm lg:shadow-none">
                         <Icon className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" strokeWidth={2} />

@@ -131,7 +131,7 @@ export const getLatestDraft = async (req, res) => {
 
 const parseRoomData = (roomData, req) => {
   // Parse numeric fields
-  ['price', 'originalPrice', 'guests', 'bedrooms', 'beds', 'bathrooms', 'maxAdults', 'maxChildren'].forEach(field => {
+  ['price', 'originalPrice', 'guests', 'bedrooms', 'beds', 'bathrooms', 'showers', 'maxAdults', 'maxChildren'].forEach(field => {
     if (roomData[field] !== undefined && roomData[field] !== '') {
       roomData[field] = Number(roomData[field]);
     }

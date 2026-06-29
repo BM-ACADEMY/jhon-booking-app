@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Loader2, BedDouble, Star, Heart, Users, Bath, Maximize, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Loader2, BedDouble, Star, Heart, Users, Bath, Maximize, ChevronLeft, ChevronRight, ShowerHead } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api, { getRoomSlug } from '../api';
 import RoomCardSkeleton from '../components/RoomCardSkeleton';
@@ -230,12 +230,20 @@ const RoomsSection = () => {
             </div>
             <div className="flex items-center gap-1.5">
               <BedDouble className="w-3.5 h-3.5 text-gray-400" />
-              <span>{room.bedrooms || 1} Bed{room.bedrooms > 1 ? 's' : ''}</span>
+              <span>{room.bedrooms || 1} Bedroom{room.bedrooms > 1 ? 's' : ''}</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Bath className="w-3.5 h-3.5 text-gray-400" />
-              <span>{room.bathrooms || 1} Bath{room.bathrooms > 1 ? 's' : ''}</span>
-            </div>
+            {room.bathrooms > 0 && (
+              <div className="flex items-center gap-1.5">
+                <Bath className="w-3.5 h-3.5 text-gray-400" />
+                <span>{room.bathrooms} Bath{room.bathrooms > 1 ? 's' : ''}</span>
+              </div>
+            )}
+            {room.showers > 0 && (
+              <div className="flex items-center gap-1.5">
+                <ShowerHead className="w-3.5 h-3.5 text-gray-400" />
+                <span>{room.showers} Shower{room.showers > 1 ? 's' : ''}</span>
+              </div>
+            )}
             {room.size && (
               <div className="flex items-center gap-1.5">
                 <Maximize className="w-3.5 h-3.5 text-gray-400" />
