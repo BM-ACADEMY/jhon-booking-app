@@ -430,7 +430,7 @@ const Settings = () => {
                 <h2 className="text-lg font-semibold text-gray-900">Tax Slabs Configuration</h2>
               </div>
 
-              <p className="text-xs text-gray-400 mb-6 font-medium">Define slab-based tax percentages. The tax percent will apply to the total booking amount based on where the amount falls in the min/max range.</p>
+              <p className="text-xs text-gray-400 mb-6 font-medium">Define slab-based tax percentages. The tax percent will apply to the total booking amount based on where the per-day average room amount falls in the min/max range.</p>
 
               {/* Dynamic tax rule builder */}
               <div className="space-y-4">

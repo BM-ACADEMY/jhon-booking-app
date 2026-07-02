@@ -43,6 +43,7 @@ const ImageCarousel = ({ images, roomName }) => {
       onMouseLeave={() => setHovered(false)}
     >
       <img
+        key={current}
         src={getImageUrl(images[current])}
         alt={`${roomName} - View ${current + 1}`}
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
@@ -68,7 +69,12 @@ const ImageCarousel = ({ images, roomName }) => {
           {images.map((_, idx) => (
             <span
               key={idx}
-              className={`w-1.5 h-1.5 rounded-full transition-all ${current === idx ? 'bg-white scale-125' : 'bg-white/50'}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setCurrent(idx);
+              }}
+              className={`w-1.5 h-1.5 rounded-full transition-all cursor-pointer ${current === idx ? 'bg-white scale-125' : 'bg-white/50'}`}
             />
           ))}
         </div>

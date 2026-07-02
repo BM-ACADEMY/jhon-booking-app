@@ -244,10 +244,10 @@ const MyBookings = () => {
                   <div className="flex flex-col md:flex-row md:min-h-[280px]">
                     {/* Room Preview */}
                     <div className="w-full md:w-72 h-48 md:min-h-[280px] relative bg-gray-100 flex-shrink-0">
-                      {booking.room.images?.[0] ? (
+                      {booking.room?.images?.[0] ? (
                         <img
                           src={getImageUrl(booking.room.images[0])}
-                          alt={booking.room.name}
+                          alt={booking.room.name || 'Room'}
                           className={`w-full h-full object-cover transition-all duration-500 ${isPast ? 'grayscale opacity-75' : ''}`}
                         />
                       ) : (
@@ -259,7 +259,7 @@ const MyBookings = () => {
                         <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
                           isPast ? 'bg-gray-100 text-gray-500 border-gray-200' :
                           booking.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                          booking.status === 'cancelled' ? 'bg-red-50 text-red-600 border-red-100' :
+                          booking.status === 'cancelled' ? 'bg-red-50 text-red-650 border-red-100' :
                           'bg-amber-50 text-amber-600 border-amber-100'
                         }`}>
                           {isPast ? 'completed' : booking.status}
@@ -272,11 +272,11 @@ const MyBookings = () => {
                       <div>
                         <div className="flex justify-between items-start mb-3">
                           <div>
-                            <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mb-1">{booking.room.category}</p>
+                            <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mb-1">{booking.room?.category || 'Deleted'}</p>
                             <h2 className="text-xl font-black text-gray-900 line-clamp-2">
                               {booking.rooms && booking.rooms.length > 0
-                                ? booking.rooms.map(r => r.name).join(', ')
-                                : booking.room.name}
+                                ? booking.rooms.map(r => r?.name || 'Deleted Room').join(', ')
+                                : booking.room?.name || 'Deleted Room'}
                             </h2>
                           </div>
                           <div className="text-right">
@@ -415,7 +415,7 @@ const MyBookings = () => {
                               Cancel Stay
                             </button>
                           )}
-                          <Link to={`/rooms/${booking.room._id}`} className="p-2 hover:bg-gray-50 rounded-xl transition-all">
+                          <Link to={booking.room ? `/rooms/${booking.room._id}` : '#'} className="p-2 hover:bg-gray-50 rounded-xl transition-all">
                             <ChevronRight className="w-5 h-5 text-gray-300" />
                           </Link>
                         </div>
@@ -575,9 +575,9 @@ const MyBookings = () => {
           <div className="bg-white rounded-2xl w-full max-w-lg p-6 sm:p-8 relative z-10 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mb-1">{selectedBooking.room.category}</p>
+                <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mb-1">{selectedBooking.room?.category || 'Deleted'}</p>
                 <h2 className="text-xl font-black text-gray-900 leading-snug">
-                  {selectedBooking.isReviewed ? 'Edit Review for' : 'Review'} {selectedBooking.room.name}
+                  {selectedBooking.isReviewed ? 'Edit Review for' : 'Review'} {selectedBooking.room?.name || 'Deleted Room'}
                 </h2>
               </div>
               <button

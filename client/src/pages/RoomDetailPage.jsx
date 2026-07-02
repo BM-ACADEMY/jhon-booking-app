@@ -829,7 +829,8 @@ const RoomDetailPage = () => {
 
   const getAppliedTax = (amount) => {
     if (!taxRules || taxRules.length === 0) return 0;
-    const matchedRule = taxRules.find(r => amount >= r.minAmount && amount <= r.maxAmount);
+    const perDayAmount = (nights && nights > 0) ? (amount / nights) : amount;
+    const matchedRule = taxRules.find(r => perDayAmount >= r.minAmount && perDayAmount <= r.maxAmount);
     if (matchedRule) {
       return Math.round(amount * (matchedRule.taxPercent / 100));
     }
@@ -838,7 +839,8 @@ const RoomDetailPage = () => {
 
   const getAppliedTaxPercent = (amount) => {
     if (!taxRules || taxRules.length === 0) return 0;
-    const matchedRule = taxRules.find(r => amount >= r.minAmount && amount <= r.maxAmount);
+    const perDayAmount = (nights && nights > 0) ? (amount / nights) : amount;
+    const matchedRule = taxRules.find(r => perDayAmount >= r.minAmount && perDayAmount <= r.maxAmount);
     return matchedRule ? matchedRule.taxPercent : 0;
   };
 
