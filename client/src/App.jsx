@@ -94,8 +94,11 @@ import { Toaster } from 'react-hot-toast';
 import ScrollToTop from './components/ScrollToTop';
 import { useState, useEffect } from 'react';
 import AuthModal from './components/AuthModal';
+import { AnimatePresence } from 'framer-motion';
+import InitialLoader from './components/InitialLoader';
 
 const App = () => {
+  const [showLoader, setShowLoader] = useState(true);
   const [toastPosition, setToastPosition] = useState(
     typeof window !== 'undefined' && window.innerWidth >= 640 ? 'top-right' : 'top-center'
   );
@@ -104,11 +107,22 @@ const App = () => {
     const handler = () =>
       setToastPosition(window.innerWidth >= 640 ? 'top-right' : 'top-center');
     window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
+    
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 1800);
+
+    return () => {
+      window.removeEventListener('resize', handler);
+      clearTimeout(timer);
+    };
   }, []);
 
   return (
     <BrowserRouter>
+      <AnimatePresence mode="wait">
+        {showLoader && <InitialLoader />}
+      </AnimatePresence>
       <ScrollToTop />
       <AuthProvider>
         <Toaster

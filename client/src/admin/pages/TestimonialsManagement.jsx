@@ -79,8 +79,8 @@ const TestimonialsManagement = () => {
       toast.error('Name and message are required.');
       return;
     }
-    if (form.message.length > 160) {
-      toast.error('Message must be 160 characters or less.');
+    if (form.message.length > 200) {
+      toast.error('Message must be 200 characters or less.');
       return;
     }
     try {
@@ -411,16 +411,16 @@ const TestimonialsManagement = () => {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <label className="block text-xs font-semibold text-gray-600">Review Message *</label>
-                    <span className={`text-xs font-medium ${form.message.length > 150 ? 'text-rose-500' : 'text-gray-400'}`}>
-                      {form.message.length} / 160
+                    <span className={`text-xs font-medium ${form.message.length > 190 ? 'text-rose-500' : 'text-gray-400'}`}>
+                      {form.message.length} / 200
                     </span>
                   </div>
                   <textarea
                     value={form.message}
                     onChange={(e) => setForm(p => ({ ...p, message: e.target.value }))}
                     rows={4}
-                    maxLength={160}
-                    placeholder="Guest review text..."
+                    maxLength={200}
+                    placeholder="Guest review text (max 200 characters)..."
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#4F46E5] focus:border-transparent transition-all resize-none"
                   />
                 </div>

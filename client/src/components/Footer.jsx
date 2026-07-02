@@ -114,8 +114,8 @@ const Footer = () => {
       toast.error('Please fill in your name, review, and leave a star rating.');
       return;
     }
-    if (form.message.length > 160) {
-      toast.error('Review must be 160 characters or less.');
+    if (form.message.length > 200) {
+      toast.error('Review must be 200 characters or less.');
       return;
     }
     try {
@@ -378,16 +378,16 @@ const Footer = () => {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-semibold text-gray-800">Describe your experience</label>
-                <span className={`text-[10px] font-bold ${form.message.length > 150 ? 'text-red-500 font-extrabold' : 'text-gray-400'}`}>
-                  {form.message.length} / 160
+                <span className={`text-[10px] font-bold ${form.message.length > 190 ? 'text-red-500 font-extrabold' : 'text-gray-400'}`}>
+                  {form.message.length} / 200
                 </span>
               </div>
               <textarea
                 value={form.message}
                 onChange={(e) => setForm(p => ({ ...p, message: e.target.value }))}
                 rows={3}
-                maxLength={160}
-                placeholder="Describe your experience (max 160 characters)..."
+                maxLength={200}
+                placeholder="Describe your experience (max 200 characters)..."
                 className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none transition-all placeholder:text-gray-300"
                 required
               />
