@@ -50,6 +50,12 @@ const roomSchema = new mongoose.Schema({
 
   unavailableDates: [{ type: Date }],
 
+  blockedDates: [{
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    reason: { type: String, default: 'Maintenance' }
+  }],
+
   // Dynamic daily pricing calendar
   datePrices: [{
     date: { type: String, required: true },

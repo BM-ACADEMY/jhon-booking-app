@@ -13,24 +13,24 @@ const features = [
     title: "Free Fast Wi-Fi",
     desc: "Reliable high-speed internet in all dorms and common areas.",
   },
-  {
-    image: socialIcon,
-    title: "Social Atmosphere",
-    desc: "Daily events, game nights, and vibrant common rooms.",
-  },
+  // {
+  //   image: socialIcon,
+  //   title: "Social Atmosphere",
+  //   desc: "Daily events, game nights, and vibrant common rooms.",
+  // },
   {
     image: kitchenIcon,
     title: "Shared Kitchen",
     desc: "Fully equipped communal kitchen to cook your own meals and save money.",
   },
-  {
-    image: lockerIcon,
-    title: "Secure Lockers",
-    desc: "Free large lockers in every room to keep your backpack and valuables safe.",
-  },
+  // {
+  //   image: lockerIcon,
+  //   title: "Secure Lockers",
+  //   desc: "Free large lockers in every room to keep your backpack and valuables safe.",
+  // },
   {
     image: locationIcon,
-    title: "Prime Location",
+    title: "Location",
     desc: "Right in the city center, just steps away from major sights and public transit.",
   },
   {
@@ -64,7 +64,7 @@ const FeaturesSection = () => (
       </div>
 
       {/* Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-16">
         {features.map(({ image, title, desc }, index) => (
           <div
             key={index}

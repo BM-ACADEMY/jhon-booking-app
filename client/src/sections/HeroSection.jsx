@@ -49,8 +49,15 @@ MainDateRangeInput.displayName = 'MainDateRangeInput';
 
 const HeroSection = () => {
   const navigate = useNavigate();
-  const [hero, setHero] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [hero, setHero] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_hero');
+      return cached ? JSON.parse(cached) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(!hero);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   // Unified Search State
@@ -206,6 +213,7 @@ const HeroSection = () => {
       try {
         const res = await api.get('/hero');
         setHero(res.data);
+        localStorage.setItem('cached_hero', JSON.stringify(res.data));
       } catch (err) {
         console.error('Error fetching hero:', err);
       } finally {
@@ -336,11 +344,15 @@ const HeroSection = () => {
                             src={slideImgSrc}
                             alt="Hero background"
                             className="hidden md:block w-full h-full object-cover scale-105 animate-fade-in"
+                            loading={index === 0 ? "eager" : "lazy"}
+                            fetchPriority={index === 0 ? "high" : "auto"}
                           />
                           <img
                             src={slideMobileImgSrc}
                             alt="Hero mobile background"
                             className="block md:hidden w-full h-full object-cover scale-105 animate-fade-in"
+                            loading={index === 0 ? "eager" : "lazy"}
+                            fetchPriority={index === 0 ? "high" : "auto"}
                           />
                         </>
                       ) : (
@@ -348,6 +360,8 @@ const HeroSection = () => {
                           src={slideImgSrc}
                           alt="Hero background"
                           className="w-full h-full object-cover scale-105 animate-fade-in"
+                          loading={index === 0 ? "eager" : "lazy"}
+                          fetchPriority={index === 0 ? "high" : "auto"}
                         />
                       )}
                     </>

@@ -88,8 +88,17 @@ const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children
       return requestedDates.some(reqDate => uDate.toDateString() === reqDate.toDateString());
     });
 
-    if (hasOverlap) {
-      return { isAvailable: false, message: 'Primary room is already booked for the selected dates!' };
+    const hasBlockedOverlap = primaryRoom.blockedDates && primaryRoom.blockedDates.some(block => {
+      const bStart = new Date(block.startDate);
+      // Set hours to cover the whole day
+      bStart.setHours(0, 0, 0, 0);
+      const bEnd = new Date(block.endDate);
+      bEnd.setHours(23, 59, 59, 999);
+      return requestedDates.some(reqDate => reqDate >= bStart && reqDate <= bEnd);
+    });
+
+    if (hasOverlap || hasBlockedOverlap) {
+      return { isAvailable: false, message: 'Primary room is already booked or blocked for the selected dates!' };
     }
   }
 
@@ -114,8 +123,15 @@ const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children
           const uDate = new Date(unDate);
           return requestedDates.some(reqDate => uDate.toDateString() === reqDate.toDateString());
         });
-        if (hasOverlap) {
-          return { isAvailable: false, message: `Room "${r.name}" is already booked for the selected dates.` };
+        const hasBlockedOverlap = r.blockedDates && r.blockedDates.some(block => {
+          const bStart = new Date(block.startDate);
+          bStart.setHours(0, 0, 0, 0);
+          const bEnd = new Date(block.endDate);
+          bEnd.setHours(23, 59, 59, 999);
+          return requestedDates.some(reqDate => reqDate >= bStart && reqDate <= bEnd);
+        });
+        if (hasOverlap || hasBlockedOverlap) {
+          return { isAvailable: false, message: `Room "${r.name}" is already booked or blocked for the selected dates.` };
         }
       }
     }
@@ -153,7 +169,14 @@ const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children
         const uDate = new Date(unDate);
         return requestedDates.some(reqDate => uDate.toDateString() === reqDate.toDateString());
       });
-      if (!hasOverlap) {
+      const hasBlockedOverlap = r.blockedDates && r.blockedDates.some(block => {
+        const bStart = new Date(block.startDate);
+        bStart.setHours(0, 0, 0, 0);
+        const bEnd = new Date(block.endDate);
+        bEnd.setHours(23, 59, 59, 999);
+        return requestedDates.some(reqDate => reqDate >= bStart && reqDate <= bEnd);
+      });
+      if (!hasOverlap && !hasBlockedOverlap) {
         availableOtherRooms.push(r);
       }
     }

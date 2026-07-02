@@ -455,7 +455,7 @@ export const getAdminBookingEmailTemplate = (user, booking, primaryRoomDetails) 
               <!-- Footer Band -->
               <tr>
                 <td style="background-color: #1a1d20; padding: 30px 40px; text-align: center; border-top: 1px solid #2e343b;">
-                  <p style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; letter-spacing: 1px;">THE BALIFIED VILLA - ADMIN ALERTS</p>
+                  <p style="margin: 0 0 10px 0; font-size: 13px; color: #94a3b8; letter-spacing: 1px;">THE BALIFIED VILLA</p>
                   <p style="margin: 0; font-size: 11px; color: #475569;">This is an automated operational email. Please do not reply directly to this message.</p>
                 </td>
               </tr>

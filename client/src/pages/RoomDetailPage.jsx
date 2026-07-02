@@ -253,7 +253,14 @@ const RoomDetailPage = () => {
         const uDate = new Date(unDate);
         return requestedDates.some(reqDate => uDate.toDateString() === reqDate.toDateString());
       });
-      return !hasOverlap;
+      const hasBlockedOverlap = r.blockedDates && r.blockedDates.some(block => {
+        const bStart = new Date(block.startDate);
+        bStart.setHours(0, 0, 0, 0);
+        const bEnd = new Date(block.endDate);
+        bEnd.setHours(23, 59, 59, 999);
+        return requestedDates.some(reqDate => reqDate >= bStart && reqDate <= bEnd);
+      });
+      return !hasOverlap && !hasBlockedOverlap;
     });
   };
 
@@ -272,13 +279,23 @@ const RoomDetailPage = () => {
   }, [roomsCount, room]);
 
   const isDateBooked = (date) => {
-    if (!room || !room.unavailableDates) return false;
-    return room.unavailableDates.some(d => {
+    if (!room) return false;
+    const isBooked = room.unavailableDates && room.unavailableDates.some(d => {
       const unDate = new Date(d);
       return unDate.getFullYear() === date.getFullYear() &&
              unDate.getMonth() === date.getMonth() &&
              unDate.getDate() === date.getDate();
     });
+    if (isBooked) return true;
+
+    const isBlocked = room.blockedDates && room.blockedDates.some(block => {
+      const bStart = new Date(block.startDate);
+      bStart.setHours(0, 0, 0, 0);
+      const bEnd = new Date(block.endDate);
+      bEnd.setHours(23, 59, 59, 999);
+      return date >= bStart && date <= bEnd;
+    });
+    return isBlocked;
   };
 
   const isDateInPast = (date) => {

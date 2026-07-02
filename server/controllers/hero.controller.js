@@ -46,8 +46,14 @@ const processImageFile = async (file) => {
   return `/uploads/${webpFilename}`;
 };
 
+let heroCache = null;
+
 export const getHero = async (req, res) => {
   try {
+    if (heroCache) {
+      return res.json(heroCache);
+    }
+
     let hero = await Hero.findOne({ isActive: true }).sort({ createdAt: -1 });
     
     // Auto-migrate legacy data into slides if slides are empty
@@ -106,11 +112,13 @@ export const getHero = async (req, res) => {
         await hero.save();
       }
     }
-    res.json(hero || {});
+    heroCache = hero || {};
+    res.json(heroCache);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 export const updateHero = async (req, res) => {
   try {
@@ -203,6 +211,7 @@ export const updateHero = async (req, res) => {
       hero = await Hero.create(heroData);
     }
 
+    heroCache = null;
     res.json(hero);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -218,6 +227,7 @@ export const deleteHeroVideo = async (req, res) => {
       hero.videoUrl = '';
       await hero.save();
     }
+    heroCache = null;
     res.json({ message: 'Video deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -277,6 +287,7 @@ export const addHeroSlide = async (req, res) => {
     });
 
     await hero.save();
+    heroCache = null;
     res.json(hero);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -347,6 +358,7 @@ export const updateHeroSlide = async (req, res) => {
     slide.mobileImage = finalMobileImg;
 
     await hero.save();
+    heroCache = null;
     res.json(hero);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -373,6 +385,7 @@ export const deleteHeroSlide = async (req, res) => {
 
     slide.deleteOne();
     await hero.save();
+    heroCache = null;
     res.json(hero);
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -63,7 +63,8 @@ const DEFAULT_ROOM_FORM = {
   highlights: [], // [{ icon, text, subtext }]
   images: [], // [{ url, label }]
   isAvailable: true,
-  datePrices: []
+  datePrices: [],
+  blockedDates: []
 };
 
 const ICON_LIST = [
@@ -114,6 +115,9 @@ const RoomManagement = () => {
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [editRoomTarget, setEditRoomTarget] = useState(null);
   const [roomForm, setRoomForm] = useState(DEFAULT_ROOM_FORM);
+  const [blockStartDate, setBlockStartDate] = useState('');
+  const [blockEndDate, setBlockEndDate] = useState('');
+  const [blockReason, setBlockReason] = useState('Maintenance');
   const [roomImages, setRoomImages] = useState([]); // File objects
   const [replacingTarget, setReplacingTarget] = useState(null); // { type: 'existing' | 'new', index: number }
   const replaceInputRef = useRef(null);
@@ -342,7 +346,8 @@ const RoomManagement = () => {
       highlights: draft.highlights || [],
       images: draft.images || [],
       isAvailable: draft.isAvailable ?? true,
-      datePrices: draft.datePrices || []
+      datePrices: draft.datePrices || [],
+      blockedDates: draft.blockedDates || []
     });
     setRoomImages([]);
     setActiveTab('general');
@@ -389,7 +394,8 @@ const RoomManagement = () => {
       highlights: r.highlights || [],
       images: r.images || [],
       isAvailable: r.isAvailable,
-      datePrices: r.datePrices || []
+      datePrices: r.datePrices || [],
+      blockedDates: r.blockedDates || []
     });
     setRoomImages([]);
     setActiveTab('general');
@@ -416,7 +422,7 @@ const RoomManagement = () => {
   const buildFormData = (status) => {
     const formData = new FormData();
     Object.keys(roomForm).forEach(key => {
-      if (['amenities', 'highlights', 'datePrices'].includes(key)) {
+      if (['amenities', 'highlights', 'datePrices', 'blockedDates'].includes(key)) {
         formData.append(key, JSON.stringify(roomForm[key] || []));
       } else if (key === 'images') {
         formData.append('existingImages', JSON.stringify(roomForm[key] || []));
@@ -990,6 +996,7 @@ const cat = categories.find(c => c.name === catName);
                 { id: 'location', label: 'Location', icon: MapPin },
                 { id: 'photos', label: 'Photos', icon: ImageIcon },
                 { id: 'pricing', label: 'Calendar Pricing', icon: Calendar },
+                { id: 'blocking', label: 'Date Blocking', icon: Shield },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -1458,6 +1465,134 @@ const cat = categories.find(c => c.name === catName);
                   
                   <div>
                     {renderPricingCalendar()}
+                  </div>
+                </div>
+              )}
+
+              {/* Date Blocking Tab */}
+              {activeTab === 'blocking' && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="bg-amber-50/60 border border-amber-100 p-5 rounded-2xl space-y-2">
+                    <h4 className="text-amber-800 text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                      <Shield className="w-4 h-4" /> Date Blocking Policy
+                    </h4>
+                    <p className="text-[11px] text-amber-700 font-bold leading-normal uppercase">
+                      Block dates to prevent bookings during maintenance, renovation, or owner use. Blocked rooms will not show up in searches or be bookable for the selected dates.
+                    </p>
+                  </div>
+
+                  {/* Add Block Form */}
+                  <div className="bg-gray-50/50 border border-gray-100 p-5 rounded-2xl space-y-4">
+                    <h4 className="text-gray-900 text-xs font-black uppercase tracking-widest">
+                      Create New Date Block
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Start Date</label>
+                        <input
+                          type="date"
+                          value={blockStartDate}
+                          onChange={(e) => setBlockStartDate(e.target.value)}
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-xs outline-none bg-white font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">End Date</label>
+                        <input
+                          type="date"
+                          value={blockEndDate}
+                          onChange={(e) => setBlockEndDate(e.target.value)}
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-xs outline-none bg-white font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Reason / Note</label>
+                        <input
+                          type="text"
+                          value={blockReason}
+                          onChange={(e) => setBlockReason(e.target.value)}
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-xs outline-none bg-white font-bold"
+                          placeholder="e.g. Maintenance"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!blockStartDate || !blockEndDate) {
+                            toast.error('Please select both start and end dates');
+                            return;
+                          }
+                          if (new Date(blockStartDate) > new Date(blockEndDate)) {
+                            toast.error('Start date cannot be after end date');
+                            return;
+                          }
+                          const newBlock = {
+                            startDate: new Date(blockStartDate).toISOString(),
+                            endDate: new Date(blockEndDate).toISOString(),
+                            reason: blockReason || 'Maintenance'
+                          };
+                          setRoomForm(p => ({
+                            ...p,
+                            blockedDates: [...(p.blockedDates || []), newBlock]
+                          }));
+                          toast.success('Date block added to form');
+                          setBlockStartDate('');
+                          setBlockEndDate('');
+                          setBlockReason('Maintenance');
+                        }}
+                        className="bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
+                      >
+                        Add Block Range
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* List of Blocks */}
+                  <div className="space-y-3">
+                    <h4 className="text-gray-900 text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-primary-500" /> Active Date Blocks
+                    </h4>
+                    {(!roomForm.blockedDates || roomForm.blockedDates.length === 0) ? (
+                      <div className="text-center py-8 bg-gray-50 rounded-2xl border border-gray-100 text-xs text-gray-400 font-bold uppercase tracking-widest">
+                        No active date blocks configured.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-2 max-h-[250px] overflow-y-auto pr-1">
+                        {roomForm.blockedDates.map((block, idx) => {
+                          const startStr = new Date(block.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                          const endStr = new Date(block.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                          return (
+                            <div key={idx} className="flex items-center justify-between p-3.5 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100/50 transition-colors">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                                  <Shield className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <span className="text-xs font-black text-gray-800">{startStr} – {endStr}</span>
+                                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-0.5">{block.reason || 'Maintenance'}</p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRoomForm(p => ({
+                                    ...p,
+                                    blockedDates: p.blockedDates.filter((_, i) => i !== idx)
+                                  }));
+                                  toast.success('Date block removed');
+                                }}
+                                className="p-1.5 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                                title="Remove Block"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

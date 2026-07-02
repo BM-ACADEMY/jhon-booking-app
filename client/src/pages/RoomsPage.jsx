@@ -566,12 +566,32 @@ const RoomsPage = () => {
     if (checkInStr && checkOutStr) {
       const start = parseLocalDate(checkInStr);
       const end = parseLocalDate(checkOutStr);
+      
+      // Generate request dates (exclusive of end date)
+      const requestedDates = [];
+      const curr = new Date(start.getTime());
+      while (curr < end) {
+        requestedDates.push(new Date(curr.getTime()));
+        curr.setDate(curr.getDate() + 1);
+      }
+
       if (roomObj.unavailableDates && roomObj.unavailableDates.length > 0) {
         const hasOverlap = roomObj.unavailableDates.some(dateStr => {
-          const unavailableDate = new Date(dateStr);
-          return unavailableDate >= start && unavailableDate <= end;
+          const uDate = new Date(dateStr);
+          return requestedDates.some(reqDate => uDate.toDateString() === reqDate.toDateString());
         });
         if (hasOverlap) return 0;
+      }
+
+      if (roomObj.blockedDates && roomObj.blockedDates.length > 0) {
+        const hasBlockedOverlap = roomObj.blockedDates.some(block => {
+          const bStart = new Date(block.startDate);
+          bStart.setHours(0, 0, 0, 0);
+          const bEnd = new Date(block.endDate);
+          bEnd.setHours(23, 59, 59, 999);
+          return requestedDates.some(reqDate => reqDate >= bStart && reqDate <= bEnd);
+        });
+        if (hasBlockedOverlap) return 0;
       }
     }
     return 1; // Each Room in database is a single villa/unit
