@@ -97,11 +97,11 @@ const ContactPage = () => {
   ];
 
   const socialLinks = [
-    { name: 'Facebook', url: settings.facebook || 'https://facebook.com', icon: <Facebook className="w-5 h-5" /> },
-    { name: 'Twitter', url: settings.twitter || 'https://twitter.com', icon: <Twitter className="w-5 h-5" /> },
-    { name: 'Instagram', url: settings.instagram || 'https://instagram.com', icon: <Instagram className="w-5 h-5" /> },
-    { name: 'LinkedIn', url: settings.linkedin || 'https://linkedin.com', icon: <Linkedin className="w-5 h-5" /> },
-  ];
+    { name: 'Facebook', url: settings.facebook, icon: <Facebook className="w-5 h-5" /> },
+    { name: 'Twitter', url: settings.twitter, icon: <Twitter className="w-5 h-5" /> },
+    { name: 'Instagram', url: settings.instagram, icon: <Instagram className="w-5 h-5" /> },
+    { name: 'LinkedIn', url: settings.linkedin, icon: <Linkedin className="w-5 h-5" /> },
+  ].filter(link => link.url && link.url !== '#' && link.url.trim() !== '');
 
   return (
     <div className="bg-stone-50 min-h-screen font-sans text-stone-800">
@@ -156,23 +156,25 @@ const ContactPage = () => {
             </div>
 
             {/* Social Media Links */}
-            <div className="pt-10 border-t border-stone-200">
-              <p className="text-sm font-semibold text-stone-400 uppercase tracking-widest mb-6">Follow Us</p>
-              <div className="flex gap-4">
-                {socialLinks.map((social) => (
-                  <a
-                    key={social.name}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={social.name}
-                    className="w-12 h-12 border border-stone-200 bg-white flex items-center justify-center text-stone-600 hover:bg-amber-600 hover:text-white hover:border-amber-600 transition-all duration-300 rounded-sm"
-                  >
-                    {social.icon}
-                  </a>
-                ))}
+            {socialLinks.length > 0 && (
+              <div className="pt-10 border-t border-stone-200">
+                <p className="text-sm font-semibold text-stone-400 uppercase tracking-widest mb-6">Follow Us</p>
+                <div className="flex gap-4">
+                  {socialLinks.map((social) => (
+                    <a
+                      key={social.name}
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={social.name}
+                      className="w-12 h-12 border border-stone-200 bg-white flex items-center justify-center text-stone-600 hover:bg-amber-600 hover:text-white hover:border-amber-600 transition-all duration-300 rounded-sm"
+                    >
+                      {social.icon}
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Contact Form */}

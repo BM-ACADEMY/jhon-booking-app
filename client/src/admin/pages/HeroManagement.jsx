@@ -389,21 +389,29 @@ const HeroManagement = () => {
               {/* Titles */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Title Line 1 *</label>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 flex justify-between">
+                    <span>Title Line 1 *</span>
+                    <span className="text-gray-400 font-medium">{(slideForm.titleLine1 || '').length}/30</span>
+                  </label>
                   <input
                     type="text"
                     value={slideForm.titleLine1}
                     onChange={e => setSlideForm(p => ({ ...p, titleLine1: e.target.value }))}
+                    maxLength={30}
                     placeholder="e.g. Experience Luxury Like"
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-all font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Title Line 2 (Colored/Optional)</label>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 flex justify-between">
+                    <span>Title Line 2 (Colored/Optional)</span>
+                    <span className="text-gray-400 font-medium">{(slideForm.titleLine2 || '').length}/30</span>
+                  </label>
                   <input
                     type="text"
                     value={slideForm.titleLine2}
                     onChange={e => setSlideForm(p => ({ ...p, titleLine2: e.target.value }))}
+                    maxLength={30}
                     placeholder="e.g. Never Before"
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-all font-semibold text-[#849a21]"
                   />
@@ -412,10 +420,14 @@ const HeroManagement = () => {
 
               {/* Subtitle */}
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Subtitle / Description</label>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 flex justify-between">
+                  <span>Subtitle / Description</span>
+                  <span className="text-gray-400 font-medium">{(slideForm.subtitle || '').length}/150</span>
+                </label>
                 <textarea
                   value={slideForm.subtitle}
                   onChange={e => setSlideForm(p => ({ ...p, subtitle: e.target.value }))}
+                  maxLength={150}
                   rows={2}
                   placeholder="e.g. Discover our handpicked collection of world-class villas..."
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-all resize-none font-medium"

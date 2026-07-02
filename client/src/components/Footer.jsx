@@ -10,6 +10,8 @@ import gpayIcon from '../assets/icons/gpay.svg?url';
 import ruPayIcon from '../assets/icons/payment.svg?url';
 import visaIcon from '../assets/icons/visa.svg?url';
 import mastercardIcon from '../assets/icons/mastercard.svg?url';
+import logoImg from '../assets/LogoBalified.png';
+import techxLogo from '../assets/copy-techx.png';
 
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
@@ -76,7 +78,7 @@ const Footer = () => {
   const [subscribed, setSubscribed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState([]);
-    const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
 
   // Fetch categories for Room Types section
@@ -156,11 +158,11 @@ const Footer = () => {
   };
 
   const socialLinks = [
-    { Icon: Facebook, href: settings.facebook || '#', name: 'Facebook' },
-    { Icon: Instagram, href: settings.instagram || '#', name: 'Instagram' },
-    { Icon: Twitter, href: settings.twitter || '#', name: 'Twitter' },
-    { Icon: Linkedin, href: settings.linkedin || '#', name: 'LinkedIn' },
-  ];
+    { Icon: Facebook, href: settings.facebook, name: 'Facebook' },
+    { Icon: Instagram, href: settings.instagram, name: 'Instagram' },
+    { Icon: Twitter, href: settings.twitter, name: 'Twitter' },
+    { Icon: Linkedin, href: settings.linkedin, name: 'LinkedIn' },
+  ].filter(link => link.href && link.href !== '#' && link.href.trim() !== '');
 
   return (
     <footer className="relative bg-gradient-to-b from-gray-900 via-gray-950 to-black text-gray-400 overflow-hidden">
@@ -178,35 +180,35 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 mb-16">
           {/* Brand Col */}
           <div className="lg:col-span-4">
-            <Link to="/" className="inline-flex items-center gap-3 mb-6 group">
-              <div className="w-10 h-10 rounded-xl bg-white text-gray-950 flex items-center justify-center shadow-md transition-all duration-300 group-hover:scale-105">
-                <Hotel className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-white font-bold text-base tracking-wide uppercase">The Balified Villa</p>
-                <p className="text-slate-500 text-xs tracking-wider">Luxury Hotel & Resort</p>
-              </div>
+            <Link to="/" className="bg-white rounded-xl inline-flex items-center mb-6 outline-none border-none">
+              <img
+                src={logoImg}
+                alt="Logo"
+                className="h-14 w-auto object-contain"
+              />
             </Link>
             <p className="text-sm leading-relaxed mb-6 text-slate-400 max-w-sm">
               Your premier destination for luxury accommodation. Experience world-class hospitality, custom amenities, and a home-away-from-home at the heart of the city.
             </p>
             {/* Social Links with hover states */}
-            <div className="flex gap-3">
-              {socialLinks.map(({ Icon, href, name }) => (
-                <motion.a
-                  key={name}
-                  href={href}
-                  target={href !== '#' ? '_blank' : undefined}
-                  rel={href !== '#' ? 'noopener noreferrer' : undefined}
-                  whileHover={{ y: -3, scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                  className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:border-white/10 hover:text-white flex items-center justify-center transition-colors shadow-sm"
-                  aria-label={`Follow us on ${name}`}
-                >
-                  <Icon className="w-4 h-4" />
-                </motion.a>
-              ))}
-            </div>
+            {socialLinks.length > 0 && (
+              <div className="flex gap-3">
+                {socialLinks.map(({ Icon, href, name }) => (
+                  <motion.a
+                    key={name}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ y: -3, scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:border-white/10 hover:text-white flex items-center justify-center transition-colors shadow-sm"
+                    aria-label={`Follow us on ${name}`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </motion.a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Links */}
@@ -298,9 +300,20 @@ const Footer = () => {
           <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
             <p>© {new Date().getFullYear()} The Balified Villa. All rights reserved.</p>
             <span className="hidden sm:inline text-slate-800">|</span>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
               <a href="#" className="hover:text-slate-300 transition-colors duration-300">Privacy Policy</a>
+              <span className="text-slate-800">|</span>
               <a href="#" className="hover:text-slate-300 transition-colors duration-300">Terms of Service</a>
+              <span className="text-slate-800">|</span>
+              <a
+                href="https://bmtechx.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-slate-300 transition-all duration-300 flex items-center gap-1.5"
+              >
+                <span>Designed & Developed by</span>
+                <img src={techxLogo} alt="BM TechX" className="h-6 w-auto object-contain inline-block" />
+              </a>
             </div>
           </div>
 

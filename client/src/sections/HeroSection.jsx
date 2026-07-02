@@ -234,7 +234,7 @@ const HeroSection = () => {
 
   return (
     <>
-      <section className="relative h-[420px] md:h-[480px] lg:h-[520px] rounded-b-[2.5rem] lg:rounded-b-none font-sans flex flex-col overflow-hidden lg:overflow-visible bg-gray-100 shadow-xl z-20">
+      <section className="relative min-h-[520px] sm:min-h-[580px] lg:min-h-0 lg:h-[520px] rounded-b-[2.5rem] lg:rounded-b-none font-sans flex flex-col overflow-hidden lg:overflow-visible bg-gray-100 shadow-xl z-20">
         <style>{`
           @keyframes reveal {
             from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
