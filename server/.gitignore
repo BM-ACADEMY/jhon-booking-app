@@ -52,3 +52,9 @@ Thumbs.db
 # Misc
 *.tgz
 *.bak
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.*
