@@ -2,6 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
+import heicConvert from 'heic-convert';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -77,12 +78,25 @@ const convertImagesToWebp = async (files) => {
 
     if (isImage && !isSvg && !isWebpAlready) {
       const originalPath = file.path;
-      const ext = path.extname(originalPath);
+      const ext = path.extname(originalPath).toLowerCase();
       const webpFilename = file.filename.replace(ext, '.webp');
       const webpPath = path.join(path.dirname(originalPath), webpFilename);
 
       try {
-        await sharp(originalPath)
+        let inputBuffer;
+        if (ext === '.heic' || ext === '.heif' || file.mimetype === 'image/heic' || file.mimetype === 'image/heif') {
+          console.log(`HEIC file detected. Converting via heic-convert: ${file.filename}`);
+          const heicBuffer = fs.readFileSync(originalPath);
+          inputBuffer = await heicConvert({
+            buffer: heicBuffer,
+            format: 'JPEG',
+            quality: 1
+          });
+        } else {
+          inputBuffer = originalPath;
+        }
+
+        await sharp(inputBuffer)
           .webp({ quality: 80 })
           .toFile(webpPath);
 
