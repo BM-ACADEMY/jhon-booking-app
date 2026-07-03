@@ -29,6 +29,9 @@ const deleteLocalFile = (relativePath) => {
 const processImageFile = async (file) => {
   if (!file) return null;
   const originalPath = file.path;
+  if (originalPath.toLowerCase().endsWith('.webp') || file.mimetype === 'image/webp') {
+    return `/uploads/${path.basename(originalPath)}`;
+  }
   const parsedPath = path.parse(originalPath);
   const webpFilename = `${parsedPath.name}.webp`;
   const webpPath = path.join(parsedPath.dir, webpFilename);

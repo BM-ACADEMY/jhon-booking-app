@@ -530,8 +530,8 @@ const HeroManagement = () => {
                         onChange={e => {
                           const file = e.target.files[0];
                           if (file) {
-                            if (file.size > 10 * 1024 * 1024) {
-                              toast.error('Image size exceeds 10MB');
+                            if (file.size > 5 * 1024 * 1024) {
+                              toast.error('Image upload limit is 5MB only.');
                               return;
                             }
                             setDesktopImageFile(file);
@@ -548,7 +548,7 @@ const HeroManagement = () => {
                       >
                         <Upload className="w-5 h-5 mx-auto mb-1 text-gray-400" />
                         <p className="text-[11px] font-bold text-gray-700 truncate">{desktopImageFile ? desktopImageFile.name : 'Upload Desktop WebP/JPG/PNG'}</p>
-                        <p className="text-[9px] text-gray-400">Desktop View, up to 10MB</p>
+                        <p className="text-[9px] text-gray-400">Desktop View, up to 5MB</p>
                       </div>
 
                       {/* Desktop Preview */}
@@ -578,8 +578,8 @@ const HeroManagement = () => {
                         onChange={e => {
                           const file = e.target.files[0];
                           if (file) {
-                            if (file.size > 10 * 1024 * 1024) {
-                              toast.error('Image size exceeds 10MB');
+                            if (file.size > 5 * 1024 * 1024) {
+                              toast.error('Image upload limit is 5MB only.');
                               return;
                             }
                             setMobileImageFile(file);
@@ -596,7 +596,7 @@ const HeroManagement = () => {
                       >
                         <Upload className="w-5 h-5 mx-auto mb-1 text-gray-400" />
                         <p className="text-[11px] font-bold text-gray-700 truncate">{mobileImageFile ? mobileImageFile.name : 'Upload Mobile WebP/JPG/PNG'}</p>
-                        <p className="text-[9px] text-gray-400">Mobile/Tablet View, up to 10MB</p>
+                        <p className="text-[9px] text-gray-400">Mobile/Tablet View, up to 5MB</p>
                       </div>
 
                       {/* Mobile Preview */}

@@ -136,8 +136,8 @@ const RoomManagement = () => {
     const file = e.target.files?.[0];
     if (!file || !replacingTarget) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('File size exceeds the 10MB limit.');
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image upload limit is 5MB only.');
       e.target.value = '';
       setReplacingTarget(null);
       return;
@@ -1458,14 +1458,14 @@ const cat = categories.find(c => c.name === catName);
                              const validFiles = [];
                              let hasTooLarge = false;
                              for (const f of filesArray) {
-                               if (f.size > 10 * 1024 * 1024) {
+                               if (f.size > 5 * 1024 * 1024) {
                                  hasTooLarge = true;
                                } else {
                                  validFiles.push({ file: f, label: '' });
                                }
                              }
                              if (hasTooLarge) {
-                               toast.error('Some files exceed the 10MB limit and were not added.');
+                               toast.error('Image upload limit is 5MB only.');
                              }
                              if (validFiles.length > 0) {
                                setRoomImages(p => [...p, ...validFiles]);
