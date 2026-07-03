@@ -38,16 +38,20 @@ const ImageCarousel = ({ images, roomName }) => {
 
   return (
     <div
-      className="relative w-full h-full group"
+      className="relative w-full h-full group overflow-hidden"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <img
-        key={current}
-        src={getImageUrl(images[current])}
-        alt={`${roomName} - View ${current + 1}`}
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-      />
+      {images.map((img, idx) => (
+        <img
+          key={idx}
+          src={getImageUrl(img)}
+          alt={`${roomName} - View ${idx + 1}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300  ${
+            idx === current ? 'opacity-100 z-0' : 'opacity-0 pointer-events-none'
+          }`}
+        />
+      ))}
       {images.length > 1 && hovered && (
         <>
           <button
