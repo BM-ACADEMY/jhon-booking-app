@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import Room from '../models/Room.js';
 import RoomVisit from '../models/RoomVisit.js';
 import https from 'https';
+import fs from 'fs';
+import path from 'path';
 
 const resolveRedirect = (url, depth = 0) => {
   return new Promise((resolve) => {
@@ -173,9 +175,26 @@ export const createRoom = async (req, res) => {
   }
 };
 
+// Helper to delete local files
+const deleteLocalFile = (relativePath) => {
+  if (!relativePath || !relativePath.startsWith('/uploads/')) return;
+  const fullPath = path.join(process.cwd(), relativePath);
+  if (fs.existsSync(fullPath)) {
+    try {
+      fs.unlinkSync(fullPath);
+    } catch (e) {
+      console.error(`Error deleting file: ${fullPath}`, e);
+    }
+  }
+};
+
 export const updateRoom = async (req, res) => {
   try {
     const roomData = parseRoomData({ ...req.body }, req);
+
+    // Fetch the room before updating to identify removed images
+    const oldRoom = await Room.findById(req.params.id);
+    if (!oldRoom) return res.status(404).json({ message: 'Room not found' });
 
     // Handle existing images (objects with url+label)
     const existingImages = roomData.existingImages
@@ -206,6 +225,14 @@ export const updateRoom = async (req, res) => {
       runValidators: true,
     });
     if (!room) return res.status(404).json({ message: 'Room not found' });
+
+    // Identify and delete removed images from disk
+    const oldUrls = oldRoom.images ? oldRoom.images.map(img => img.url) : [];
+    const newUrls = new Set(roomData.images ? roomData.images.map(img => img.url) : []);
+    
+    const deletedUrls = oldUrls.filter(url => !newUrls.has(url));
+    deletedUrls.forEach(deleteLocalFile);
+
     res.json(room);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -214,7 +241,13 @@ export const updateRoom = async (req, res) => {
 
 export const deleteRoom = async (req, res) => {
   try {
-    await Room.findByIdAndDelete(req.params.id);
+    const room = await Room.findById(req.params.id);
+    if (room) {
+      if (room.images && room.images.length > 0) {
+        room.images.forEach(img => deleteLocalFile(img.url));
+      }
+      await Room.findByIdAndDelete(req.params.id);
+    }
     res.json({ message: 'Room deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });

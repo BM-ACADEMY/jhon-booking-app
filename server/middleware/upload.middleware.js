@@ -2,7 +2,6 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
-import heicConvert from 'heic-convert';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -19,8 +18,13 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedExts = ['.jpeg', '.jpg', '.png', '.gif', '.mp4', '.webm', '.ogg', '.mov', '.m4v', '.webp', '.avif', '.heic', '.heif', '.svg', '.bmp', '.tiff'];
   const ext = path.extname(file.originalname).toLowerCase();
+  
+  if (ext === '.heic' || ext === '.heif' || file.mimetype === 'image/heic' || file.mimetype === 'image/heif') {
+    return cb(new Error('HEIC format is not supported.'));
+  }
+
+  const allowedExts = ['.jpeg', '.jpg', '.png', '.gif', '.mp4', '.webm', '.ogg', '.mov', '.m4v', '.webp', '.avif', '.svg', '.bmp', '.tiff'];
   
   // Allow if it's a known extension OR if the mimetype starts with image/ or video/
   const isImage = file.mimetype.startsWith('image/');
@@ -83,20 +87,7 @@ const convertImagesToWebp = async (files) => {
       const webpPath = path.join(path.dirname(originalPath), webpFilename);
 
       try {
-        let inputBuffer;
-        if (ext === '.heic' || ext === '.heif' || file.mimetype === 'image/heic' || file.mimetype === 'image/heif') {
-          console.log(`HEIC file detected. Converting via heic-convert: ${file.filename}`);
-          const heicBuffer = fs.readFileSync(originalPath);
-          inputBuffer = await heicConvert({
-            buffer: heicBuffer,
-            format: 'JPEG',
-            quality: 1
-          });
-        } else {
-          inputBuffer = originalPath;
-        }
-
-        await sharp(inputBuffer)
+        await sharp(originalPath)
           .webp({ quality: 80 })
           .toFile(webpPath);
 

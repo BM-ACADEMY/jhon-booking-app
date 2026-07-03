@@ -530,6 +530,11 @@ const HeroManagement = () => {
                         onChange={e => {
                           const file = e.target.files[0];
                           if (file) {
+                            const fName = file.name.toLowerCase();
+                            if (fName.endsWith('.heic') || fName.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif') {
+                              toast.error('HEIC format is not supported.');
+                              return;
+                            }
                             if (file.size > 5 * 1024 * 1024) {
                               toast.error('Image upload limit is 5MB only.');
                               return;
@@ -578,6 +583,11 @@ const HeroManagement = () => {
                         onChange={e => {
                           const file = e.target.files[0];
                           if (file) {
+                            const fName = file.name.toLowerCase();
+                            if (fName.endsWith('.heic') || fName.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif') {
+                              toast.error('HEIC format is not supported.');
+                              return;
+                            }
                             if (file.size > 5 * 1024 * 1024) {
                               toast.error('Image upload limit is 5MB only.');
                               return;

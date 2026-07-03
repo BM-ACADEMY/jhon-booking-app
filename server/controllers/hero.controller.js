@@ -184,6 +184,17 @@ export const updateHero = async (req, res) => {
     }
 
     if (hero) {
+      // If image is explicitly set to empty (cleared)
+      if (backgroundImage === '' && !req.files?.image?.[0]) {
+        deleteLocalFile(hero.backgroundImage);
+        hero.backgroundImage = '';
+      }
+      // If video is explicitly set to empty (cleared)
+      if (videoUrl === '' && !req.files?.video?.[0]) {
+        deleteLocalFile(hero.videoUrl);
+        hero.videoUrl = '';
+      }
+
       hero.backgroundImage = sanitizeToRelativePath(hero.backgroundImage);
       hero.videoUrl = sanitizeToRelativePath(hero.videoUrl);
 
@@ -330,18 +341,27 @@ export const updateHeroSlide = async (req, res) => {
     if (req.files?.video?.[0]) {
       deleteLocalFile(slide.videoUrl);
       finalVideo = `/uploads/${req.files.video[0].filename}`;
+    } else if (videoUrl === '') {
+      deleteLocalFile(slide.videoUrl);
+      finalVideo = '';
     }
 
     let finalDesktopImg = backgroundImage !== undefined ? sanitizeToRelativePath(backgroundImage) : slide.backgroundImage;
     if (req.files?.image?.[0]) {
       deleteLocalFile(slide.backgroundImage);
       finalDesktopImg = await processImageFile(req.files.image[0]);
+    } else if (backgroundImage === '') {
+      deleteLocalFile(slide.backgroundImage);
+      finalDesktopImg = '';
     }
 
     let finalMobileImg = mobileImage !== undefined ? sanitizeToRelativePath(mobileImage) : slide.mobileImage;
     if (req.files?.mobileImage?.[0]) {
       deleteLocalFile(slide.mobileImage);
       finalMobileImg = await processImageFile(req.files.mobileImage[0]);
+    } else if (mobileImage === '') {
+      deleteLocalFile(slide.mobileImage);
+      finalMobileImg = '';
     }
 
     // Delete opposite assets based on input prioritizations

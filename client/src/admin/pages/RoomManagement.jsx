@@ -136,6 +136,14 @@ const RoomManagement = () => {
     const file = e.target.files?.[0];
     if (!file || !replacingTarget) return;
 
+    const fName = file.name.toLowerCase();
+    if (fName.endsWith('.heic') || fName.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif') {
+      toast.error('HEIC format is not supported.');
+      e.target.value = '';
+      setReplacingTarget(null);
+      return;
+    }
+
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Image upload limit is 5MB only.');
       e.target.value = '';
@@ -1457,12 +1465,21 @@ const cat = categories.find(c => c.name === catName);
                              const filesArray = Array.from(e.target.files || []);
                              const validFiles = [];
                              let hasTooLarge = false;
+                             let hasHeic = false;
                              for (const f of filesArray) {
+                               const fName = f.name.toLowerCase();
+                               if (fName.endsWith('.heic') || fName.endsWith('.heif') || f.type === 'image/heic' || f.type === 'image/heif') {
+                                 hasHeic = true;
+                                 continue;
+                               }
                                if (f.size > 5 * 1024 * 1024) {
                                  hasTooLarge = true;
                                } else {
                                  validFiles.push({ file: f, label: '' });
                                }
+                             }
+                             if (hasHeic) {
+                               toast.error('HEIC format is not supported.');
                              }
                              if (hasTooLarge) {
                                toast.error('Image upload limit is 5MB only.');
