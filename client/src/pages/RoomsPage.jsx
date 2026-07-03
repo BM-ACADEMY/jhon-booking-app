@@ -135,17 +135,17 @@ const ImageCarousel = ({ images, roomName }) => {
           }`}
         />
       ))}
-      {images.length > 1 && hovered && (
+      {images.length > 1 && (
         <>
           <button
             onClick={prev}
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 cursor-pointer"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 duration-200"
           >
             <ChevronLeft className="w-4 h-4 text-gray-700" />
           </button>
           <button
             onClick={next}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 cursor-pointer"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 duration-200"
           >
             <ChevronRight className="w-4 h-4 text-gray-700" />
           </button>
