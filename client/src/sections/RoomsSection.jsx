@@ -177,7 +177,7 @@ const RoomsSection = () => {
     const isWishlisted = wishlist.includes(room._id);
     return (
       <Link
-        to={`/rooms/${getRoomSlug(room.name)}`}
+        to={`/rooms/${getRoomSlug(room.name)}-${room._id}`}
         className="group bg-white rounded-[32px] border border-gray-100 p-3 flex flex-col shadow-xl hover:border-gray-200/80 transition-all duration-350"
       >
         {/* Image Container */}

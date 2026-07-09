@@ -1342,7 +1342,7 @@ const RoomsPage = () => {
                     const roomTotal = getRoomTotalForDates(room, queryCheckIn, queryCheckOut);
 
                     // Create search-preserving state/query for Room Detail redirection
-                    const detailLink = `/rooms/${getRoomSlug(room.name)}?checkIn=${queryCheckIn || ''}&checkOut=${queryCheckOut || ''}&adults=${queryAdults}&children=${queryChildren}&roomsCount=${queryRoomsCount}`;
+                    const detailLink = `/rooms/${getRoomSlug(room.name)}-${room._id}?checkIn=${queryCheckIn || ''}&checkOut=${queryCheckOut || ''}&adults=${queryAdults}&children=${queryChildren}&roomsCount=${queryRoomsCount}`;
 
                       return (
                       <Link

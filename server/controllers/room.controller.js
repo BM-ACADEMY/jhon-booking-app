@@ -90,9 +90,20 @@ export const getAllRoomsAdmin = async (req, res) => {
 export const getRoomById = async (req, res) => {
   try {
     let room;
+    let paramId = req.params.id;
+
+    // Check if paramId is a hybrid slug-id (e.g. name-slug-id) and extract the ID
+    if (paramId && paramId.includes('-')) {
+      const parts = paramId.split('-');
+      const lastPart = parts[parts.length - 1];
+      if (mongoose.isValidObjectId(lastPart)) {
+        paramId = lastPart;
+      }
+    }
+
     // Check if the id is a valid Mongo ObjectId
-    if (mongoose.isValidObjectId(req.params.id)) {
-      room = await Room.findById(req.params.id);
+    if (mongoose.isValidObjectId(paramId)) {
+      room = await Room.findById(paramId);
     }
     
     // If not found by ID, query by name-slug
