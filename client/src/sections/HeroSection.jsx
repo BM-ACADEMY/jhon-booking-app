@@ -47,6 +47,61 @@ const MainDateRangeInput = forwardRef(({ value, onClick, startDate, endDate }, r
 });
 MainDateRangeInput.displayName = 'MainDateRangeInput';
 
+const getFontFamilyStyle = (family) => {
+  switch (family) {
+    case 'serif': return { fontFamily: 'Georgia, serif' };
+    case 'playfair': return { fontFamily: "'Playfair Display', Georgia, serif" };
+    case 'cinzel': return { fontFamily: "'Cinzel', Trajan Pro, serif" };
+    case 'montserrat': return { fontFamily: "'Montserrat', sans-serif" };
+    case 'mono': return { fontFamily: 'monospace' };
+    case 'cursive': return { fontFamily: 'cursive' };
+    case 'sans':
+    default: return { fontFamily: 'ui-sans-serif, system-ui, sans-serif' };
+  }
+};
+
+const getTitleFontSizeClass = (sizeKey) => {
+  switch (sizeKey) {
+    case 'small': return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl';
+    case 'medium': return 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl';
+    case 'large': return 'text-3xl sm:text-5xl md:text-6xl lg:text-7xl';
+    case 'xlarge': return 'text-4xl sm:text-6xl md:text-7xl lg:text-8xl';
+    case '2xlarge': return 'text-5xl sm:text-7xl md:text-8xl lg:text-[6rem]';
+    case 'default':
+    default: return 'text-[2rem] sm:text-4xl md:text-5xl lg:text-[3.25rem]';
+  }
+};
+
+const getSubtitleFontSizeClass = (sizeKey) => {
+  switch (sizeKey) {
+    case 'small': return 'text-[10px] sm:text-xs md:text-sm';
+    case 'large': return 'text-sm sm:text-base md:text-lg lg:text-xl';
+    case 'xlarge': return 'text-base sm:text-lg md:text-xl lg:text-2xl';
+    case 'default':
+    default: return 'text-xs sm:text-sm md:text-base';
+  }
+};
+
+const getFontWeightClass = (weightKey) => {
+  switch (weightKey) {
+    case 'normal': return 'font-normal';
+    case 'medium': return 'font-medium';
+    case 'semibold': return 'font-semibold';
+    case 'extrabold': return 'font-extrabold';
+    case 'bold':
+    default: return 'font-bold';
+  }
+};
+
+const getTextAlignmentClass = (alignKey) => {
+  switch (alignKey) {
+    case 'left': return 'text-left items-start';
+    case 'right': return 'text-right items-end';
+    case 'center':
+    default: return 'text-center items-center';
+  }
+};
+
 const HeroSection = () => {
   const navigate = useNavigate();
   const [hero, setHero] = useState(() => {
@@ -385,26 +440,39 @@ const HeroSection = () => {
           {/* ========================================= */}
           {/* COMMON TITLE & SUBTITLE (Visible on ALL)  */}
           {/* ========================================= */}
-          <div 
-            key={currentSlideIndex} 
-            className="flex flex-col items-center w-full mb-5 lg:mb-8"
-          >
-            <h1 className="text-[2rem] sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold text-white leading-[1.15] tracking-tight mb-2.5 lg:mb-3.5 drop-shadow-md animate-reveal [animation-delay:200ms] opacity-0 text-center">
-              <span className="text-white inline-block cursor-default">
-                {(hero?.slides?.[currentSlideIndex] || hero)?.titleLine1 || "Experience Luxury Like"}
-              </span>
-              <br />
-              <span className="text-[#d9f969] inline-block cursor-default">
-                {(hero?.slides?.[currentSlideIndex] || hero)?.titleLine2 || "Never Before"}
-              </span>
-            </h1>
+          {(() => {
+            const activeSlide = hero?.slides?.[currentSlideIndex] || hero || {};
+            return (
+              <div 
+                key={currentSlideIndex} 
+                className={`flex flex-col w-full mb-5 lg:mb-8 ${getTextAlignmentClass(activeSlide.textAlignment)}`}
+                style={getFontFamilyStyle(activeSlide.fontFamily)}
+              >
+                <h1 className="leading-[1.15] tracking-tight mb-2.5 lg:mb-3.5 drop-shadow-md animate-reveal [animation-delay:200ms] opacity-0">
+                  <span 
+                    style={{ color: activeSlide.title1Color || '#ffffff' }}
+                    className={`inline-block cursor-default ${getTitleFontSizeClass(activeSlide.title1FontSize)} ${getFontWeightClass(activeSlide.title1FontWeight)}`}
+                  >
+                    {activeSlide.titleLine1 || "Experience Luxury Like"}
+                  </span>
+                  <br />
+                  <span 
+                    style={{ color: activeSlide.title2Color || '#d9f969' }}
+                    className={`inline-block cursor-default ${getTitleFontSizeClass(activeSlide.title2FontSize)} ${getFontWeightClass(activeSlide.title2FontWeight)}`}
+                  >
+                    {activeSlide.titleLine2 || "Never Before"}
+                  </span>
+                </h1>
 
-            <p className="text-white/90 text-xs sm:text-sm md:text-base max-w-xl lg:max-w-2xl mx-auto leading-relaxed font-medium tracking-wide drop-shadow-sm animate-reveal [animation-delay:400ms] opacity-0 text-center px-2">
-              {(hero?.slides?.[currentSlideIndex] || hero)?.subtitle || "Discover our handpicked collection of world-class rooms and suites, designed for ultimate comfort and elegance."}
-            </p>
-
-
-          </div>
+                <p 
+                  style={{ color: activeSlide.subtitleColor || '#ffffff' }}
+                  className={`max-w-xl lg:max-w-2xl leading-relaxed tracking-wide drop-shadow-sm animate-reveal [animation-delay:400ms] opacity-0 px-2 ${getSubtitleFontSizeClass(activeSlide.subtitleFontSize)} ${getFontWeightClass(activeSlide.subtitleFontWeight)}`}
+                >
+                  {activeSlide.subtitle || "Discover our handpicked collection of world-class rooms and suites, designed for ultimate comfort and elegance."}
+                </p>
+              </div>
+            );
+          })()}
 
           {/* ========================================= */}
           {/* MOBILE SEARCH PILL (Visible sm & md)      */}

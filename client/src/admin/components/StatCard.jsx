@@ -1,3 +1,5 @@
+import { Card } from '@/components/ui/card';
+
 const StatCard = ({ title, value, icon: Icon, change, changeType = 'up', color = 'blue' }) => {
   const colors = {
     blue: { bg: 'bg-blue-50', icon: 'text-blue-600', border: 'border-blue-100' },
@@ -10,20 +12,20 @@ const StatCard = ({ title, value, icon: Icon, change, changeType = 'up', color =
   const c = colors[color] || colors.blue;
 
   return (
-    <div className={`bg-white rounded-xl border ${c.border} p-5 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow`}>
+    <Card className={`${c.border} p-5 flex items-start gap-4 shadow-sm hover:shadow-md transition-all`}>
       <div className={`${c.bg} p-3 rounded-xl flex-shrink-0`}>
         <Icon className={`w-6 h-6 ${c.icon}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-gray-500 font-medium">{title}</p>
-        <p className="text-2xl font-bold text-gray-800 mt-0.5">{value}</p>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{title}</p>
+        <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
         {change && (
-          <p className={`text-xs mt-1 font-medium ${changeType === 'up' ? 'text-green-600' : 'text-red-500'}`}>
+          <p className={`text-xs mt-1 font-semibold ${changeType === 'up' ? 'text-green-600' : 'text-red-500'}`}>
             {changeType === 'up' ? '↑' : '↓'} {change} from last month
           </p>
         )}
       </div>
-    </div>
+    </Card>
   );
 };
 

@@ -1,7 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Bell, Search, ChevronDown, LogOut, User, Settings } from 'lucide-react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { LogOut, User, Settings, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const pageTitles = {
   '/admin': 'Dashboard',
@@ -15,24 +25,12 @@ const pageTitles = {
   '/admin/profile': 'Admin Profile',
 };
 
-const Header = ({ onMenuClick }) => {
+const Header = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
 
   const pageTitle = pageTitles[location.pathname] || 'Admin Profile';
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleLogout = () => {
     logout();
@@ -40,74 +38,59 @@ const Header = ({ onMenuClick }) => {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 flex-shrink-0">
-      {/* Left */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-        <div>
-          <h1 className="text-lg font-semibold text-gray-800">{pageTitle}</h1>
-          <p className="text-xs text-gray-400 hidden sm:block">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
+    <header className="h-16 bg-white border-b border-gray-200/80 flex items-center justify-between px-4 lg:px-6 shrink-0 rounded-t-xl">
+      {/* Left: Sidebar Trigger & Breadcrumb (shadcn sidebar-07 pattern) */}
+      <div className="flex items-center gap-3">
+        <SidebarTrigger />
+        <div className="h-4 w-[1px] bg-gray-200" />
+        
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1.5 text-sm">
+          <Link to="/admin" className="text-gray-400 hover:text-gray-700 font-medium transition-colors">
+            Admin Dashboard
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
+          <span className="font-bold text-gray-900">{pageTitle}</span>
+        </nav>
       </div>
 
-      {/* Right */}
+      {/* Right: User Dropdown */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Search */}
-
-        {/* User dropdown */}
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2 p-1.5 pr-3 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-600 font-bold text-sm">
-              {(user?.name?.[0] || 'A').toUpperCase()}
-            </div>
-            <span className="hidden sm:block text-sm font-medium text-gray-700 truncate max-w-[120px]">
-              {user?.name || 'Admin'}
-            </span>
-            <ChevronDown className={`hidden sm:block w-4 h-4 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50">
-              <div className="px-4 py-2.5 border-b border-gray-100">
-                <p className="text-sm font-semibold text-gray-800 truncate">{user?.name || 'Administrator'}</p>
-                <p className="text-xs text-gray-500">{user?.email || 'admin@jhon.com'}</p>
-              </div>
-              <button
-                onClick={() => { setDropdownOpen(false); navigate('/admin/profile'); }}
-                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-              >
-                <User className="w-4 h-4" />
-                Profile
-              </button>
-              <button
-                onClick={() => { setDropdownOpen(false); navigate('/admin/settings'); }}
-                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                Settings
-              </button>
-              <div className="border-t border-gray-100 mt-1 pt-1">
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="flex items-center gap-2.5 p-1.5 pr-3 h-auto rounded-xl hover:bg-slate-100">
+              <Avatar className="w-8 h-8">
+                <AvatarFallback className="bg-primary-500/20 text-primary-600 font-bold text-sm">
+                  {(user?.name?.[0] || 'A').toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="hidden sm:block text-sm font-semibold text-gray-700 truncate max-w-[120px]">
+                {user?.name || 'Admin'}
+              </span>
+              <ChevronDown className="hidden sm:block w-4 h-4 text-gray-400" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52 p-1.5">
+            <DropdownMenuLabel className="normal-case">
+              <p className="text-sm font-bold text-gray-800 truncate">{user?.name || 'Administrator'}</p>
+              <p className="text-xs font-medium text-gray-400">{user?.email || 'admin@jhon.com'}</p>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/admin/profile')} className="gap-2.5 cursor-pointer">
+              <User className="w-4 h-4 text-gray-500" />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/admin/settings')} className="gap-2.5 cursor-pointer">
+              <Settings className="w-4 h-4 text-gray-500" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="gap-2.5 text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer">
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

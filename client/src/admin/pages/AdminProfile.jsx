@@ -53,12 +53,12 @@ const AdminProfile = () => {
   const labelClass = "block text-xs font-semibold text-gray-600 mb-2";
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] p-4 sm:p-8 font-sans">
-      <div className="max-w-4xl space-y-8">
+    <div className="w-full max-w-5xl mx-auto space-y-6 font-sans">
+      <div className="space-y-6">
 
         {/* Header Section */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight">Administrator Profile</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Administrator Profile</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your account details and security credentials.</p>
         </div>
 

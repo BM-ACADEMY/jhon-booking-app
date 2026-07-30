@@ -252,7 +252,13 @@ export const deleteHeroVideo = async (req, res) => {
 
 export const addHeroSlide = async (req, res) => {
   try {
-    const { titleLine1, titleLine2, subtitle, videoUrl, backgroundImage, mobileImage } = req.body;
+    const { 
+      titleLine1, titleLine2, subtitle, videoUrl, backgroundImage, mobileImage,
+      title1Color, title1FontSize, title1FontWeight,
+      title2Color, title2FontSize, title2FontWeight,
+      subtitleColor, subtitleFontSize, subtitleFontWeight,
+      fontFamily, textAlignment
+    } = req.body;
     let hero = await Hero.findOne().sort({ createdAt: -1 });
     if (!hero) {
       hero = await Hero.create({ slides: [] });
@@ -298,6 +304,17 @@ export const addHeroSlide = async (req, res) => {
       videoUrl: finalVideo,
       backgroundImage: finalDesktopImg,
       mobileImage: finalMobileImg,
+      title1Color: title1Color || '#ffffff',
+      title1FontSize: title1FontSize || 'default',
+      title1FontWeight: title1FontWeight || 'bold',
+      title2Color: title2Color || '#d9f969',
+      title2FontSize: title2FontSize || 'default',
+      title2FontWeight: title2FontWeight || 'bold',
+      subtitleColor: subtitleColor || '#ffffff',
+      subtitleFontSize: subtitleFontSize || 'default',
+      subtitleFontWeight: subtitleFontWeight || 'medium',
+      fontFamily: fontFamily || 'sans',
+      textAlignment: textAlignment || 'center',
     });
 
     await hero.save();
@@ -311,7 +328,13 @@ export const addHeroSlide = async (req, res) => {
 export const updateHeroSlide = async (req, res) => {
   try {
     const { slideId } = req.params;
-    const { titleLine1, titleLine2, subtitle, videoUrl, backgroundImage, mobileImage } = req.body;
+    const { 
+      titleLine1, titleLine2, subtitle, videoUrl, backgroundImage, mobileImage,
+      title1Color, title1FontSize, title1FontWeight,
+      title2Color, title2FontSize, title2FontWeight,
+      subtitleColor, subtitleFontSize, subtitleFontWeight,
+      fontFamily, textAlignment
+    } = req.body;
     const hero = await Hero.findOne().sort({ createdAt: -1 });
     if (!hero) {
       return res.status(404).json({ message: 'Hero config not found' });
@@ -379,6 +402,21 @@ export const updateHeroSlide = async (req, res) => {
     slide.videoUrl = finalVideo;
     slide.backgroundImage = finalDesktopImg;
     slide.mobileImage = finalMobileImg;
+
+    if (title1Color !== undefined) slide.title1Color = title1Color;
+    if (title1FontSize !== undefined) slide.title1FontSize = title1FontSize;
+    if (title1FontWeight !== undefined) slide.title1FontWeight = title1FontWeight;
+
+    if (title2Color !== undefined) slide.title2Color = title2Color;
+    if (title2FontSize !== undefined) slide.title2FontSize = title2FontSize;
+    if (title2FontWeight !== undefined) slide.title2FontWeight = title2FontWeight;
+
+    if (subtitleColor !== undefined) slide.subtitleColor = subtitleColor;
+    if (subtitleFontSize !== undefined) slide.subtitleFontSize = subtitleFontSize;
+    if (subtitleFontWeight !== undefined) slide.subtitleFontWeight = subtitleFontWeight;
+
+    if (fontFamily !== undefined) slide.fontFamily = fontFamily;
+    if (textAlignment !== undefined) slide.textAlignment = textAlignment;
 
     await hero.save();
     heroCache = null;

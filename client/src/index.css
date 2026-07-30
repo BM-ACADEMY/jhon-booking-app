@@ -5,16 +5,31 @@
   --color-primary-100: #f3f4f6;
   --color-primary-200: #e5e7eb;
   --color-primary-300: #d1d5db;
-  --color-primary-400: #9ca3af;
-  --color-primary-500: #111827;
-  --color-primary-600: #1f2937;
-  --color-primary-700: #374151;
-  --color-primary-800: #4b5563;
-  --color-primary-900: #6b7280;
-  --color-primary-950: #030712;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #185adb;
+  --color-primary-600: #1449b8;
+  --color-primary-700: #113994;
+  --color-primary-800: #0f2c73;
+  --color-primary-900: #0c2054;
+  --color-primary-950: #06102e;
+  
   --color-sidebar: #1a1f2e;
+  --color-sidebar-foreground: #f8fafc;
+  --color-sidebar-primary: #185adb;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: #252b3d;
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: rgba(255, 255, 255, 0.1);
+  --color-sidebar-ring: #185adb;
   --color-sidebar-hover: #252b3d;
+
   --font-sans: Inter, system-ui, sans-serif;
+}
+
+:root {
+  --sidebar-width: 16rem;
+  --sidebar-width-icon: 4rem;
+  --sidebar-width-mobile: 18rem;
 }
 
 @layer base {
@@ -22,7 +37,7 @@
     box-sizing: border-box;
   }
   body {
-    @apply bg-gray-50 text-gray-900 font-sans antialiased;
+    @apply bg-slate-50 text-gray-900 font-sans antialiased;
   }
 }
 

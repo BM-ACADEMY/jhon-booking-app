@@ -20,7 +20,6 @@ api.interceptors.response.use(
       localStorage.removeItem('admin_user');
       const isAdminPath = window.location.pathname.startsWith('/admin');
       if (isAdminPath) {
-        sessionStorage.setItem('logout_reason', 'Your session has expired. Please log in again.');
         window.location.href = '/admin/login';
       } else {
         window.location.href = '/';

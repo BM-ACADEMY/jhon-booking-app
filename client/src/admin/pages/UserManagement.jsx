@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { Search, Shield, ShieldOff, UserX, UserCheck, Users, Plus, Edit2, Trash2, X, Loader2, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, History, Calendar, Clock, BedDouble } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../api';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Label } from '@/components/ui/label';
 
 const SERVER_URL = import.meta.env.VITE_BASE_URL;
 

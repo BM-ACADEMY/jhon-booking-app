@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import { CalendarCheck, Users, BedDouble, IndianRupee, TrendingUp, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import StatCard from '../components/StatCard';
 import api from '../../api';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 
 const statusConfig = {
   confirmed: { label: 'Confirmed', color: 'bg-green-100 text-green-700', icon: CheckCircle },
