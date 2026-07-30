@@ -41,6 +41,29 @@ const getVisitorCounts = async (roomIds) => {
   }
 };
 
+// Helper to count unique visitors for the current month
+const getMonthVisitorCounts = async (roomIds) => {
+  try {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const counts = await RoomVisit.aggregate([
+      { $match: { room: { $in: roomIds }, visitedAt: { $gte: startOfMonth } } },
+      { $group: { _id: '$room', uniqueVisitors: { $addToSet: '$visitorId' } } },
+      { $project: { _id: 1, count: { $size: '$uniqueVisitors' } } }
+    ]);
+    const countMap = {};
+    counts.forEach(c => {
+      countMap[c._id.toString()] = c.count;
+    });
+    return countMap;
+  } catch (err) {
+    console.error('Error getting month visitor counts:', err);
+    return {};
+  }
+};
+
 // Public: only return published rooms
 export const getRooms = async (req, res) => {
   try {
@@ -51,10 +74,14 @@ export const getRooms = async (req, res) => {
     const rooms = await Room.find(filter).sort({ createdAt: -1 });
 
     const roomIds = rooms.map(r => r._id);
-    const visitorCounts = await getVisitorCounts(roomIds);
+    const [visitorCounts, monthVisitorCounts] = await Promise.all([
+      getVisitorCounts(roomIds),
+      getMonthVisitorCounts(roomIds)
+    ]);
     const roomsWithVisitors = rooms.map(r => {
       const roomObj = r.toObject();
       roomObj.visitorsCount = visitorCounts[r._id.toString()] || 0;
+      roomObj.monthVisitorsCount = monthVisitorCounts[r._id.toString()] || 0;
       return roomObj;
     });
 
@@ -74,10 +101,14 @@ export const getAllRoomsAdmin = async (req, res) => {
     const rooms = await Room.find(filter).sort({ createdAt: -1 });
 
     const roomIds = rooms.map(r => r._id);
-    const visitorCounts = await getVisitorCounts(roomIds);
+    const [visitorCounts, monthVisitorCounts] = await Promise.all([
+      getVisitorCounts(roomIds),
+      getMonthVisitorCounts(roomIds)
+    ]);
     const roomsWithVisitors = rooms.map(r => {
       const roomObj = r.toObject();
       roomObj.visitorsCount = visitorCounts[r._id.toString()] || 0;
+      roomObj.monthVisitorsCount = monthVisitorCounts[r._id.toString()] || 0;
       return roomObj;
     });
 
@@ -121,9 +152,16 @@ export const getRoomById = async (req, res) => {
     if (!room) return res.status(404).json({ message: 'Room not found' });
 
     // Inject visitor count
-    const uniqueVisitors = await RoomVisit.distinct('visitorId', { room: room._id });
+    const [uniqueVisitors, thisMonthUniqueVisitors] = await Promise.all([
+      RoomVisit.distinct('visitorId', { room: room._id }),
+      RoomVisit.distinct('visitorId', {
+        room: room._id,
+        visitedAt: { $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
+      })
+    ]);
     const roomObj = room.toObject();
     roomObj.visitorsCount = uniqueVisitors.length;
+    roomObj.monthVisitorsCount = thisMonthUniqueVisitors.length;
 
     res.json(roomObj);
   } catch (err) {
@@ -310,9 +348,19 @@ export const recordVisit = async (req, res) => {
       });
     }
 
-    const uniqueVisitors = await RoomVisit.distinct('visitorId', { room: roomId });
+    const [uniqueVisitors, thisMonthUniqueVisitors] = await Promise.all([
+      RoomVisit.distinct('visitorId', { room: roomId }),
+      RoomVisit.distinct('visitorId', {
+        room: roomId,
+        visitedAt: { $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
+      })
+    ]);
 
-    res.json({ success: true, visitorsCount: uniqueVisitors.length });
+    res.json({
+      success: true,
+      visitorsCount: uniqueVisitors.length,
+      monthVisitorsCount: thisMonthUniqueVisitors.length
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -323,7 +371,10 @@ export const getAdminVisitorsStats = async (req, res) => {
   try {
     const rooms = await Room.find({});
     const roomIds = rooms.map(r => r._id);
-    const visitorCounts = await getVisitorCounts(roomIds);
+    const [visitorCounts, monthVisitorCounts] = await Promise.all([
+      getVisitorCounts(roomIds),
+      getMonthVisitorCounts(roomIds)
+    ]);
     
     const stats = rooms.map(r => ({
       _id: r._id,
@@ -331,7 +382,8 @@ export const getAdminVisitorsStats = async (req, res) => {
       category: r.category,
       price: r.price,
       guests: r.guests,
-      visitorsCount: visitorCounts[r._id.toString()] || 0
+      visitorsCount: visitorCounts[r._id.toString()] || 0,
+      monthVisitorsCount: monthVisitorCounts[r._id.toString()] || 0
     }));
 
     res.json(stats);

@@ -384,7 +384,11 @@ const RoomDetailPage = () => {
             userId: user?._id || null
           });
           if (visitRes.data?.success) {
-            setRoom(prev => prev ? { ...prev, visitorsCount: visitRes.data.visitorsCount } : null);
+            setRoom(prev => prev ? {
+              ...prev,
+              visitorsCount: visitRes.data.visitorsCount,
+              monthVisitorsCount: visitRes.data.monthVisitorsCount
+            } : null);
           }
         } catch (visitErr) {
           console.error('Failed to log room visit:', visitErr);
@@ -1137,7 +1141,7 @@ const RoomDetailPage = () => {
                   <span className="text-[17px] lg:text-2xl font-bold text-gray-900">{reviews.length > 0 && room.rating ? room.rating.toFixed(1) : '0.0'}</span>
                   <span className="text-gray-500 font-medium text-sm lg:text-base">({reviews.length} reviews)</span>
                   <span className="text-gray-300 font-normal select-none">•</span>
-                  <span className="text-gray-500 font-medium text-sm lg:text-base">({room.visitorsCount || 0} unique visitors)</span>
+                  <span className="text-gray-500 font-medium text-sm lg:text-base">({room.monthVisitorsCount || 0} month visitors)</span>
                 </div>
 
                 <div className="space-y-3.5 lg:space-y-4 max-w-lg">

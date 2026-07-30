@@ -208,7 +208,7 @@ const WishlistPage = () => {
                           ))}
                         </div>
                         <span className="text-xs text-gray-500 font-bold">
-                          ({room.visitorsCount || 0} Visitors)
+                          ({room.monthVisitorsCount || 0} Month Visitors)
                         </span>
                       </div>
 
