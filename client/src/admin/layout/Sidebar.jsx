@@ -42,9 +42,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const navItems = [
+import { ChevronDown, FileText } from 'lucide-react';
+
+const mainNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
-  { label: 'Hero Section', icon: Film, path: '/admin/hero' },
   { label: 'Rooms & Categories', icon: BedDouble, path: '/admin/rooms' },
   { label: 'Bookings', icon: CalendarCheck, path: '/admin/bookings' },
   { label: 'Room Visitors', icon: Eye, path: '/admin/visitors' },
@@ -57,11 +58,18 @@ const navItems = [
   { label: 'Profile', icon: User, path: '/admin/profile' },
 ];
 
+const pagesEditItems = [
+  { label: 'Hero Section', icon: Film, path: '/admin/hero' },
+  { label: 'About Page', icon: FileText, path: '/admin/about-page' },
+  { label: 'Contact Page', icon: FileText, path: '/admin/contact-page' },
+];
+
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const { state } = useSidebar();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pagesEditOpen, setPagesEditOpen] = useState(true);
 
   useEffect(() => {
     const fetchUnreadCount = async () => {
@@ -103,13 +111,62 @@ const Sidebar = () => {
       </SidebarHeader>
 
       {/* Main Navigation (sidebar-07) */}
-      <SidebarContent className="px-2 py-4">
+      <SidebarContent className="px-2 py-3 space-y-2">
+        
+        {/* PAGES EDIT COLLAPSIBLE SECTION */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-400 font-bold text-xs uppercase tracking-wider px-2 mb-2">
-            Main Menu
+          <SidebarGroupLabel className="text-gray-400 font-bold text-xs uppercase tracking-wider px-2 mb-1">
+            PAGES EDIT
           </SidebarGroupLabel>
           <SidebarMenu>
-            {navItems.map(({ label, icon: Icon, path }) => {
+            <SidebarMenuItem className="flex flex-col justify-center">
+              <SidebarMenuButton
+                onClick={() => setPagesEditOpen(!pagesEditOpen)}
+                tooltip="Pages Edit"
+                className={`flex items-center justify-between w-full text-white/90 hover:bg-white/10 ${state === 'collapsed' ? 'justify-center p-2' : ''}`}
+              >
+                <div className={`flex items-center gap-3 ${state === 'collapsed' ? 'justify-center' : ''}`}>
+                  <FileText className="w-5 h-5 shrink-0 text-primary-400" />
+                  {state !== 'collapsed' && <span className="font-semibold text-sm">Pages Edit</span>}
+                </div>
+                {state !== 'collapsed' && (
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${pagesEditOpen ? 'rotate-180' : ''}`} />
+                )}
+              </SidebarMenuButton>
+
+              {/* Dropdown Items */}
+              {(pagesEditOpen || state === 'collapsed') && (
+                <div className={`space-y-1 mt-1 ${state !== 'collapsed' ? 'pl-4 border-l border-white/10 ml-4' : ''}`}>
+                  {pagesEditItems.map(({ label, icon: Icon, path }) => {
+                    const isActive = location.pathname.startsWith(path);
+                    return (
+                      <SidebarMenuButton
+                        key={path}
+                        asChild
+                        isActive={isActive}
+                        tooltip={label}
+                        className={state === 'collapsed' ? 'justify-center p-2' : ''}
+                      >
+                        <NavLink to={path} className={`flex items-center gap-3 w-full ${state === 'collapsed' ? 'justify-center' : ''}`}>
+                          <Icon className={`w-4.5 h-4.5 shrink-0 ${isActive ? 'text-primary-400' : 'text-gray-400'}`} />
+                          {state !== 'collapsed' && <span className="flex-1 font-semibold text-xs truncate">{label}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    );
+                  })}
+                </div>
+              )}
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+
+        {/* MAIN MENU SECTION */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-gray-400 font-bold text-xs uppercase tracking-wider px-2 mb-1">
+            MAIN MENU
+          </SidebarGroupLabel>
+          <SidebarMenu>
+            {mainNavItems.map(({ label, icon: Icon, path }) => {
               const isActive =
                 path === '/admin'
                   ? location.pathname === '/admin'

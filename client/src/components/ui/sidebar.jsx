@@ -135,14 +135,14 @@ export const Sidebar = React.forwardRef(({
     >
       {/* Structural layout spacer to guarantee main content sits next to sidebar without overlapping */}
       <div
-        className="h-svh shrink-0 transition-[width] duration-200 ease-linear"
+        className="h-svh shrink-0 transition-[width] duration-300 ease-in-out transform-gpu"
         style={{ width }}
       />
 
       {/* Fixed Sidebar container overlay */}
       <aside
         className={cn(
-          "fixed top-0 bottom-0 left-0 z-30 h-svh transition-[width] duration-200 ease-linear overflow-hidden bg-[#141824] border-r border-white/10 flex flex-col",
+          "fixed top-0 bottom-0 left-0 z-30 h-svh transition-[width] duration-300 ease-in-out transform-gpu overflow-hidden bg-[#141824] border-r border-white/10 flex flex-col",
           className
         )}
         style={{ width }}
@@ -165,7 +165,7 @@ export const SidebarTrigger = React.forwardRef(({ className, onClick, ...props }
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn("h-8 w-8 text-gray-500 hover:text-gray-900 hover:bg-slate-100 rounded-lg", className)}
+      className={cn("h-8 w-8 text-gray-500 hover:text-gray-900 hover:bg-slate-100 rounded-lg transition-transform active:scale-95", className)}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
@@ -183,7 +183,7 @@ export const SidebarInset = React.forwardRef(({ className, ...props }, ref) => (
   <main
     ref={ref}
     className={cn(
-      "relative flex min-h-svh flex-1 flex-col bg-slate-50 min-w-0 overflow-x-hidden transition-all duration-200 ease-linear rounded-xl md:m-2 border border-gray-200/80 shadow-sm",
+      "relative flex min-h-svh flex-1 flex-col bg-slate-50 min-w-0 overflow-x-hidden transition-all duration-300 ease-in-out transform-gpu rounded-xl md:m-2 border border-gray-200/80 shadow-sm",
       className
     )}
     {...props}

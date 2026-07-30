@@ -25,6 +25,8 @@ import UserManagement from './admin/pages/UserManagement';
 import TestimonialsManagement from './admin/pages/TestimonialsManagement';
 import MessagesManagement from './admin/pages/MessagesManagement';
 import HeroManagement from './admin/pages/HeroManagement';
+import AboutPageManagement from './admin/pages/AboutPageManagement';
+import ContactPageManagement from './admin/pages/ContactPageManagement';
 import DynamicSections from './admin/pages/DynamicSections';
 import Settings from './admin/pages/Settings';
 import AdminProfile from './admin/pages/AdminProfile';
@@ -73,6 +75,8 @@ const AppRoutes = () => (
     >
       <Route index element={<Dashboard />} />
       <Route path="hero" element={<HeroManagement />} />
+      <Route path="about-page" element={<AboutPageManagement />} />
+      <Route path="contact-page" element={<ContactPageManagement />} />
       <Route path="rooms" element={<RoomManagement />} />
       <Route path="bookings" element={<BookingManagement />} />
       <Route path="users" element={<UserManagement />} />

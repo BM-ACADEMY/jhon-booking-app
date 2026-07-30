@@ -11,6 +11,7 @@ const ContactPage = () => {
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pageContent, setPageContent] = useState(null);
   const [settings, setSettings] = useState({
     email: 'reservations@thebalified.com',
     phone: '+1 (555) 123-4567',
@@ -23,6 +24,8 @@ const ContactPage = () => {
     linkedin: ''
   });
 
+  const baseUrl = import.meta.env.VITE_BASE_URL && import.meta.env.VITE_BASE_URL !== 'undefined' ? import.meta.env.VITE_BASE_URL : '';
+
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -34,7 +37,18 @@ const ContactPage = () => {
         console.error('Failed to fetch contact settings:', err);
       }
     };
+    const fetchPageContent = async () => {
+      try {
+        const res = await api.get('/page-content/contact');
+        if (res.data) {
+          setPageContent(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch contact page content:', err);
+      }
+    };
     fetchSettings();
+    fetchPageContent();
   }, []);
 
   const handleChange = (e) => {
@@ -103,13 +117,23 @@ const ContactPage = () => {
     { name: 'LinkedIn', url: settings.linkedin, icon: <Linkedin className="w-5 h-5" /> },
   ].filter(link => link.url && link.url !== '#' && link.url.trim() !== '');
 
+  const getFullUrl = (src) => {
+    if (!src) return '';
+    if (src.startsWith('http') || src.startsWith('data:')) return src;
+    return `${baseUrl}${src}`;
+  };
+
+  const bannerImg = pageContent?.bannerImage || "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1920&q=80";
+  const bannerTitle = pageContent?.bannerTitle || "Contact Us";
+  const bannerSubtitle = pageContent?.bannerSubtitle || "Have questions? We're here to help you plan your perfect stay.";
+
   return (
-    <div className="bg-stone-50 min-h-screen font-sans text-stone-800">
+    <div className="bg-stone-50 min-h-screen font-sans text-stone-800 animate-in fade-in duration-500">
       {/* Hero Section */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1920&q=80"
+            src={getFullUrl(bannerImg)}
             alt="Contact Us"
             className="w-full h-full object-cover"
           />
@@ -120,11 +144,13 @@ const ContactPage = () => {
             Get in Touch
           </span>
           <h1 className="text-5xl md:text-7xl font-serif text-white mb-6">
-            Contact <span className="italic text-[#d9f969]">Us</span>
+            {bannerTitle}
           </h1>
-          <p className="text-lg md:text-2xl text-white max-w-2xl mx-auto font-light">
-            Have questions? We're here to help you plan your perfect stay.
-          </p>
+          {bannerSubtitle && (
+            <p className="text-lg md:text-2xl text-white max-w-2xl mx-auto font-light">
+              {bannerSubtitle}
+            </p>
+          )}
         </div>
       </section>
 
