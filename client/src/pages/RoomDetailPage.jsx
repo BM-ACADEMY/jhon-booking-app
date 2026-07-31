@@ -277,6 +277,8 @@ const RoomDetailPage = () => {
   const [allRooms, setAllRooms] = useState([]);
   const [selectedAdditionalRooms, setSelectedAdditionalRooms] = useState([]);
   const [taxRules, setTaxRules] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [extraBedsSelected, setExtraBedsSelected] = useState(0);
 
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -430,12 +432,13 @@ const RoomDetailPage = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const [roomRes, reviewsRes, allRoomsRes, settingsRes, addonsRes] = await Promise.all([
+        const [roomRes, reviewsRes, allRoomsRes, settingsRes, addonsRes, categoriesRes] = await Promise.all([
           api.get(`/rooms/${id}`),
           api.get(`/reviews/room/${id}`),
           api.get('/rooms'),
           api.get('/settings'),
-          api.get('/addons')
+          api.get('/addons'),
+          api.get('/categories')
         ]);
         const fetchedRoom = roomRes.data;
         setRoom(fetchedRoom);
@@ -444,6 +447,7 @@ const RoomDetailPage = () => {
         setTaxRules(settingsRes.data?.taxRules || []);
         setSettings(settingsRes.data);
         setAddons(addonsRes.data || []);
+        setCategories(categoriesRes.data || []);
 
         // Record room visit
         let visitorId = localStorage.getItem('room_visitor_id');
@@ -912,13 +916,55 @@ const RoomDetailPage = () => {
       curr.setDate(curr.getDate() + 1);
     }
 
+    const extraBedCharge = (room?.allowExtraBed && room?.extraBedPrice > 0 && extraBedsSelected > 0)
+      ? (extraBedsSelected * room.extraBedPrice * breakdown.length)
+      : 0;
+
+    total += extraBedCharge;
+
     return {
       total,
+      extraBedCharge,
       average: breakdown.length > 0 ? Math.round(total / breakdown.length) : selectedRooms.reduce((sum, r) => sum + (r.price || 0), 0),
       nights: breakdown.length,
       breakdown
     };
   };
+
+  const getResolvedTimings = () => {
+    let inTime = room?.checkInTime;
+    let outTime = room?.checkOutTime;
+
+    if (!inTime || !outTime) {
+      const cat = categories.find(c => c.name === room?.category);
+      if (!inTime && cat?.checkInTime) inTime = cat.checkInTime;
+      if (!outTime && cat?.checkOutTime) outTime = cat.checkOutTime;
+    }
+
+    if (!inTime) inTime = settings?.checkInTime || '14:00';
+    if (!outTime) outTime = settings?.checkOutTime || '11:00';
+
+    const format12h = (tStr) => {
+      if (!tStr) return '';
+      const parts = tStr.split(':');
+      if (parts.length < 2) return tStr;
+      let h = parseInt(parts[0], 10);
+      const m = parts[1];
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      if (h === 0) h = 12;
+      return `${h}:${m} ${ampm}`;
+    };
+
+    return {
+      checkIn: format12h(inTime),
+      checkOut: format12h(outTime),
+      rawCheckIn: inTime,
+      rawCheckOut: outTime
+    };
+  };
+
+  const resolvedTimings = getResolvedTimings();
 
   const { total, average, nights, breakdown } = getBookingPriceBreakdown(room, checkIn, checkOut, selectedAdditionalRooms);
 
@@ -1343,7 +1389,7 @@ const RoomDetailPage = () => {
                     {[
                       room.size && { icon: Maximize, label: room.size },
                       (room.maxAdults || room.maxChildren) && { icon: Users, label: `Max: ${room.maxAdults || 2} Adults${(room.maxChildren || 0) > 0 ? ` · ${room.maxChildren} Children` : ''}` },
-                      room.bedrooms && { icon: BedDouble, label: `${room.bedrooms} Bedroom${room.bedrooms > 1 ? 's' : ''}` },
+                      room.allowExtraBed && room.extraBedCount > 0 && { icon: BedDouble, label: `Extra Bed: Max ${room.extraBedCount} beds (₹${room.extraBedPrice}/bed)` },
                       room.bathrooms > 0 && { icon: Bath, label: `${room.bathrooms} Bath${room.bathrooms > 1 ? 's' : ''}` },
                       room.showers > 0 && { icon: ShowerHead, label: `${room.showers} Shower${room.showers > 1 ? 's' : ''}` }
                     ].filter(Boolean).map(({ icon: Icon, label }, idx) => (
@@ -1352,6 +1398,30 @@ const RoomDetailPage = () => {
                         <span className="text-[13px] lg:text-sm font-medium text-gray-600 lg:text-gray-700">{label}</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Check-In & Check-Out Timings Section */}
+              <div className="bg-indigo-50/50 border border-indigo-100 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-indigo-100/80 rounded-2xl text-indigo-700">
+                    <Icons.Clock className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-base">Check-In &amp; Check-Out Timings</h3>
+                    <p className="text-xs text-gray-500 font-medium mt-0.5">Policy &amp; timing schedule for your stay</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6 bg-white px-5 py-3 rounded-2xl border border-indigo-100 shadow-sm w-full sm:w-auto justify-around">
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-indigo-600 tracking-wider block">Check-In</span>
+                    <span className="text-sm font-black text-gray-900">{resolvedTimings.checkIn}</span>
+                  </div>
+                  <div className="h-8 w-px bg-gray-200" />
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-rose-600 tracking-wider block">Check-Out</span>
+                    <span className="text-sm font-black text-gray-900">{resolvedTimings.checkOut}</span>
                   </div>
                 </div>
               </div>
@@ -1560,7 +1630,33 @@ const RoomDetailPage = () => {
 
                     {activeAccordion === 1 && (
                       <div className="p-6 bg-white space-y-4">
-                        <p className="text-xs text-gray-500">Select premium add-on services to customize your experience, or skip to continue.</p>
+                        <p className="text-xs text-gray-500">Select premium add-on services or extra beds to customize your experience, or skip to continue.</p>
+
+                        {/* Extra Bed Option Selection */}
+                        {room?.allowExtraBed && room?.extraBedCount > 0 && (
+                          <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2.5 bg-amber-100/90 text-amber-800 rounded-xl">
+                                <Icons.BedDouble className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <h4 className="text-xs font-bold text-amber-950">Extra Bed Option</h4>
+                                <p className="text-[11px] text-amber-800 font-medium">₹{room.extraBedPrice?.toLocaleString('en-IN')}/bed per night (Max {room.extraBedCount} beds)</p>
+                              </div>
+                            </div>
+                            <select
+                              value={extraBedsSelected}
+                              onChange={(e) => setExtraBedsSelected(Number(e.target.value))}
+                              className="bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer w-full sm:w-auto"
+                            >
+                              {Array.from({ length: (room.extraBedCount || 0) + 1 }, (_, i) => (
+                                <option key={i} value={i}>
+                                  {i === 0 ? 'No extra bed' : `${i} Extra Bed${i > 1 ? 's' : ''} (+₹${(i * (room.extraBedPrice || 0)).toLocaleString('en-IN')}/night)`}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                         {addons.length === 0 ? (
                           <p className="text-xs text-gray-400 italic">No add-ons available for selection.</p>
                         ) : (

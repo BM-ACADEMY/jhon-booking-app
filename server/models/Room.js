@@ -20,6 +20,15 @@ const roomSchema = new mongoose.Schema({
   bathrooms: { type: Number, default: 1 },
   showers: { type: Number, default: 0 },
 
+  // Extra Bed Concept
+  allowExtraBed: { type: Boolean, default: false },
+  extraBedCount: { type: Number, default: 0 },
+  extraBedPrice: { type: Number, default: 0 },
+
+  // Room Timings
+  checkInTime: { type: String, default: '' },
+  checkOutTime: { type: String, default: '' },
+
   size: { type: String }, 
 
   // Highlights

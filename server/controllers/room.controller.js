@@ -185,11 +185,15 @@ export const getLatestDraft = async (req, res) => {
 
 const parseRoomData = (roomData, req) => {
   // Parse numeric fields
-  ['price', 'originalPrice', 'guests', 'bedrooms', 'beds', 'bathrooms', 'showers', 'maxAdults', 'maxChildren'].forEach(field => {
+  ['price', 'originalPrice', 'guests', 'bedrooms', 'beds', 'bathrooms', 'showers', 'maxAdults', 'maxChildren', 'extraBedCount', 'extraBedPrice'].forEach(field => {
     if (roomData[field] !== undefined && roomData[field] !== '') {
       roomData[field] = Number(roomData[field]);
     }
   });
+
+  if (roomData.allowExtraBed !== undefined) {
+    roomData.allowExtraBed = String(roomData.allowExtraBed) === 'true' || roomData.allowExtraBed === true;
+  }
 
   // Parse JSON fields
   ['amenities', 'highlights', 'datePrices', 'blockedDates'].forEach(field => {

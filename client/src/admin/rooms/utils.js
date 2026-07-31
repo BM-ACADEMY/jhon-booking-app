@@ -51,6 +51,11 @@ export const DEFAULT_ROOM_FORM = {
   beds: 1,
   bathrooms: 1,
   showers: 0,
+  allowExtraBed: false,
+  extraBedCount: 0,
+  extraBedPrice: 0,
+  checkInTime: '',
+  checkOutTime: '',
   size: '',
   address: '',
   city: '',
@@ -88,7 +93,7 @@ export const ICON_LIST = [
 export const getIconComp = (name, fallback = Star) =>
   ICON_LIST.find((ic) => ic.name === name)?.icon || fallback;
 
-export const DEFAULT_CAT_FORM = { name: '', description: '', color: 'bg-gray-100 text-gray-700' };
+export const DEFAULT_CAT_FORM = { name: '', description: '', color: 'bg-gray-100 text-gray-700', checkInTime: '', checkOutTime: '' };
 
 export const CATEGORY_COLORS = [
   'bg-gray-100 text-gray-700',
@@ -207,6 +212,11 @@ export const roomToForm = (r, fallbackCategory = '') => ({
   beds: r?.beds || 1,
   bathrooms: r?.bathrooms || 1,
   showers: r?.showers || 0,
+  allowExtraBed: r?.allowExtraBed ?? false,
+  extraBedCount: r?.extraBedCount || 0,
+  extraBedPrice: r?.extraBedPrice || 0,
+  checkInTime: r?.checkInTime || '',
+  checkOutTime: r?.checkOutTime || '',
   size: r?.size || '',
   address: r?.address || '',
   city: r?.city || '',
