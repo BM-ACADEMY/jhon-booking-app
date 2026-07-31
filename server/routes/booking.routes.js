@@ -6,18 +6,21 @@ import {
   updateBookingStatus,
   createRazorpayOrder,
   verifyRazorpayPayment,
+  checkGuestAccount,
   getDashboardStats,
   cancelBooking,
   processRefund,
   updatePaymentNotes,
   markPaymentComplete,
   createBalanceRazorpayOrder,
-  verifyBalanceRazorpayPayment
+  verifyBalanceRazorpayPayment,
+  getBookingByIdPublic
 } from '../controllers/booking.controller.js';
-import { protect, adminOnly } from '../middleware/auth.middleware.js';
+import { protect, adminOnly, protectOptional } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
+router.get('/public/:id', getBookingByIdPublic);
 router.get('/stats/dashboard', protect, adminOnly, getDashboardStats);
 router.get('/', protect, adminOnly, getAllBookings);
 router.get('/my', protect, getMyBookings);
@@ -29,8 +32,9 @@ router.patch('/:id/payment-notes', protect, adminOnly, updatePaymentNotes);
 router.patch('/:id/payment-complete', protect, adminOnly, markPaymentComplete);
 
 // Razorpay Routes
-router.post('/razorpay-order', protect, createRazorpayOrder);
-router.post('/verify-payment', protect, verifyRazorpayPayment);
+router.post('/check-guest', protectOptional, checkGuestAccount);
+router.post('/razorpay-order', protectOptional, createRazorpayOrder);
+router.post('/verify-payment', protectOptional, verifyRazorpayPayment);
 router.post('/:id/balance-razorpay-order', protect, createBalanceRazorpayOrder);
 router.post('/:id/verify-balance-payment', protect, verifyBalanceRazorpayPayment);
 

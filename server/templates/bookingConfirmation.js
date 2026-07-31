@@ -1,4 +1,4 @@
-export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails) => {
+export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails, createdCredentials = null) => {
   const nights = Math.max(1, Math.ceil((new Date(booking.checkOut) - new Date(booking.checkIn)) / (1000 * 60 * 60 * 24)));
   const invoiceDate = new Date(booking.createdAt || Date.now()).toLocaleDateString('en-IN', {
     year: 'numeric', month: 'long', day: 'numeric'
@@ -38,6 +38,33 @@ export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails) 
           <td style="padding: 15px;">
             <strong style="color: #92400e; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Special Request Note</strong>
             <p style="margin: 0; font-size: 13px; color: #b45309; line-height: 1.5;">"${booking.specialRequests}"</p>
+          </td>
+        </tr>
+      </table>
+    `;
+  }
+
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  const loginUrl = `${clientUrl}/login`;
+  const bookingDetailsUrl = `${clientUrl}/booking-details/${booking._id}`;
+
+  let credentialsHtml = '';
+  if (createdCredentials) {
+    credentialsHtml = `
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+        <tr>
+          <td style="padding: 20px;">
+            <strong style="color: #0f172a; font-size: 13px; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Account Credentials</strong>
+            <p style="margin: 0 0 12px 0; font-size: 13px; color: #475569; line-height: 1.5;">A new account has been automatically created using your booking details. Use the password below to log in later:</p>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
+              <tr>
+                <td style="padding: 12px 15px; font-size: 13px; color: #475569;">
+                  <strong>Email:</strong> ${createdCredentials.email}<br/>
+                  <strong>Password:</strong> ${createdCredentials.password} <span style="color: #64748b; font-size: 11px;">(Your phone number)</span>
+                </td>
+              </tr>
+            </table>
+            <a href="${loginUrl}" style="display: inline-block; background-color: #c5a880; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 600; padding: 10px 20px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Login URL</a>
           </td>
         </tr>
       </table>
@@ -87,6 +114,29 @@ export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails) 
                       <td>
                         <h2 style="margin: 0 0 10px 0; font-size: 22px; color: #1a1d20; font-weight: 600;">Thank You for Your Booking!</h2>
                         <p style="margin: 0; font-size: 14px; color: #64748b; line-height: 1.6;">Dear ${user.name}, your reservation at The Balified Villa has been successfully confirmed. Below are your invoice details.</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Login Credentials Section (If Auto-Created) -->
+                  ${credentialsHtml}
+
+                  <!-- Helpful Links Section -->
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px; padding: 15px;">
+                    <tr>
+                      <td>
+                        <strong style="color: #0f172a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Booking Portal Access</strong>
+                        <p style="margin: 0 12px 12px 0; font-size: 13px; color: #64748b; line-height: 1.5;">You can view and manage your reservation at any time using the links below:</p>
+                        <table border="0" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td>
+                              <a href="${bookingDetailsUrl}" style="display: inline-block; background-color: #1a1d20; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 600; padding: 8px 16px; border-radius: 4px; margin-right: 10px;">Booking Details URL</a>
+                            </td>
+                            <td>
+                              <a href="${loginUrl}" style="display: inline-block; border: 1px solid #cbd5e1; color: #1a1d20; text-decoration: none; font-size: 12px; font-weight: 600; padding: 8px 16px; border-radius: 4px;">Login Page</a>
+                            </td>
+                          </tr>
+                        </table>
                       </td>
                     </tr>
                   </table>

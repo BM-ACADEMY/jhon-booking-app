@@ -14,6 +14,7 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import ProfilePage from './pages/ProfilePage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import PublicBookingDetails from './pages/PublicBookingDetails';
 
 // Admin
 import AdminLayout from './admin/layout/AdminLayout';
@@ -61,6 +62,7 @@ const AppRoutes = () => (
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/wishlist" element={<WishlistPage />} />
+      <Route path="/booking-details/:id" element={<PublicBookingDetails />} />
     </Route>
 
     {/* Admin */}

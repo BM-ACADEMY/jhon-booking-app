@@ -49,7 +49,15 @@ const AuthModal = () => {
   if (!authModal) return null;
 
   const handleLoginChange = (e) => setLoginForm((p) => ({ ...p, [e.target.name]: e.target.value }));
-  const handleRegisterChange = (e) => setRegisterForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const handleRegisterChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'phone') {
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 10);
+      setRegisterForm((p) => ({ ...p, phone: digitsOnly }));
+      return;
+    }
+    setRegisterForm((p) => ({ ...p, [name]: value }));
+  };
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -549,7 +557,8 @@ const AuthModal = () => {
                   value={registerForm.phone}
                   onChange={handleRegisterChange}
                   required
-                  placeholder="Enter your phone number"
+                  maxLength={10}
+                  placeholder="Enter 10-digit mobile number"
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all bg-white placeholder-gray-400 font-medium"
                 />
               </div>

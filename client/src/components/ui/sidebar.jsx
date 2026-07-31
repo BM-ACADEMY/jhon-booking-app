@@ -183,7 +183,7 @@ export const SidebarInset = React.forwardRef(({ className, ...props }, ref) => (
   <main
     ref={ref}
     className={cn(
-      "relative flex min-h-svh flex-1 flex-col bg-slate-50 min-w-0 overflow-x-hidden transition-all duration-300 ease-in-out transform-gpu rounded-xl md:m-2 border border-gray-200/80 shadow-sm",
+      "relative flex min-h-svh flex-1 flex-col bg-slate-50 min-w-0 overflow-x-hidden transition-all duration-300 ease-in-out transform-gpu",
       className
     )}
     {...props}

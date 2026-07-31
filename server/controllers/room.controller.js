@@ -4,6 +4,7 @@ import RoomVisit from '../models/RoomVisit.js';
 import https from 'https';
 import fs from 'fs';
 import path from 'path';
+import { syncRoomUnavailableDates } from './booking.controller.js';
 
 const resolveRedirect = (url, depth = 0) => {
   return new Promise((resolve) => {
@@ -67,6 +68,7 @@ const getMonthVisitorCounts = async (roomIds) => {
 // Public: only return published rooms
 export const getRooms = async (req, res) => {
   try {
+    await syncRoomUnavailableDates();
     const { category, available } = req.query;
     const filter = { status: 'published' };
     if (category) filter.category = category;
@@ -120,6 +122,7 @@ export const getAllRoomsAdmin = async (req, res) => {
 
 export const getRoomById = async (req, res) => {
   try {
+    await syncRoomUnavailableDates();
     let room;
     let paramId = req.params.id;
 

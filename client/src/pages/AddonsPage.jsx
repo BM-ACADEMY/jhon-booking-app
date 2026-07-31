@@ -18,6 +18,13 @@ const categoryIcons = {
   'Guest Services': Heart
 };
 
+const baseUrl = import.meta.env.VITE_BASE_URL && import.meta.env.VITE_BASE_URL !== 'undefined' ? import.meta.env.VITE_BASE_URL : '';
+
+const resolveImage = (url) => {
+  if (!url) return '';
+  return url.startsWith('http') ? url : `${baseUrl}${url}`;
+};
+
 const AddonsPage = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -343,9 +350,13 @@ const AddonsPage = () => {
                               {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                             </div>
 
-                            {/* Icon Container */}
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50 text-[#006749]">
-                              <IconComponent className="w-5 h-5" />
+                            {/* Icon / Image Container */}
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50 text-[#006749] overflow-hidden flex-shrink-0">
+                              {addon.image ? (
+                                <img src={resolveImage(addon.image)} alt={addon.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <IconComponent className="w-5 h-5" />
+                              )}
                             </div>
 
                             {/* Addon Details */}

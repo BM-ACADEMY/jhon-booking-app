@@ -1,9 +1,11 @@
+import mongoose from 'mongoose';
 import Booking from '../models/Booking.js';
 import Room from '../models/Room.js';
 import User from '../models/User.js';
 import Review from '../models/Review.js';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import sendEmail from '../utils/email.js';
 import Setting from '../models/Setting.js';
 import { 
@@ -71,8 +73,40 @@ const canAccommodateCombination = (roomsList, adults, children) => {
 };
 
 
+// Helper to dynamically sync unavailableDates array on Room model with active bookings in DB
+export const syncRoomUnavailableDates = async () => {
+  try {
+    const activeBookings = await Booking.find({ status: { $ne: 'cancelled' } });
+    const roomDatesMap = {};
+
+    for (const b of activeBookings) {
+      if (!b.checkIn || !b.checkOut) continue;
+      const dates = getDatesInRange(b.checkIn, b.checkOut);
+      const rooms = b.rooms && b.rooms.length > 0 ? b.rooms : [b.room];
+
+      for (const roomId of rooms) {
+        if (!roomId) continue;
+        const rStr = roomId.toString();
+        if (!roomDatesMap[rStr]) roomDatesMap[rStr] = [];
+        dates.forEach(d => {
+          roomDatesMap[rStr].push(d);
+        });
+      }
+    }
+
+    const rooms = await Room.find({});
+    for (const r of rooms) {
+      const validDates = roomDatesMap[r._id.toString()] || [];
+      await Room.findByIdAndUpdate(r._id, { unavailableDates: validDates });
+    }
+  } catch (err) {
+    console.error('Error syncing room unavailable dates:', err);
+  }
+};
+
 // Helper to verify if room is available
 const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children, roomsCount = 1, infants = 0, selectedRoomIds = []) => {
+  await syncRoomUnavailableDates();
   if (!roomId) return { isAvailable: true };
   const primaryRoom = await Room.findById(roomId);
   if (!primaryRoom) return { isAvailable: false, message: 'Room not found.' };
@@ -278,6 +312,40 @@ export const createRazorpayOrder = async (req, res) => {
   }
 };
 
+export const checkGuestAccount = async (req, res) => {
+  try {
+    if (req.user) {
+      return res.json({ status: 'loggedIn' });
+    }
+
+    const email = req.body.email?.toLowerCase()?.trim();
+    const phone = (req.body.phone || '').trim();
+
+    if (!email || phone.length < 6) {
+      return res.status(400).json({ message: 'A valid email and phone number are required' });
+    }
+
+    const userByEmail = await User.findOne({ email });
+    const userByPhone = await User.findOne({ phone });
+
+    if (userByEmail && userByPhone && userByEmail._id.toString() === userByPhone._id.toString()) {
+      return res.json({ status: 'existing' });
+    }
+
+    if (userByEmail || userByPhone) {
+      return res.status(400).json({
+        message: userByEmail
+          ? 'Email already used with a different phone number.'
+          : 'Phone number already used with a different email.'
+      });
+    }
+
+    return res.json({ status: 'new' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export const verifyRazorpayPayment = async (req, res) => {
   try {
     const {
@@ -314,6 +382,59 @@ export const verifyRazorpayPayment = async (req, res) => {
       return res.status(400).json({ message: availability.message });
     }
 
+    // Resolve booking user
+    let bookingUser = null;
+    let createdCredentials = null;
+
+    if (req.user) {
+      bookingUser = req.user;
+      const guestDetails = bookingData.guestDetails || {};
+      const guestPhone = (guestDetails.phone || '').trim();
+      if (guestPhone && !bookingUser.phone) {
+        bookingUser.phone = guestPhone;
+        await bookingUser.save();
+      }
+    } else {
+      const guestDetails = bookingData.guestDetails || {};
+      const email = guestDetails.email?.toLowerCase()?.trim();
+      const phone = (guestDetails.phone || '').trim();
+      if (!email) {
+        return res.status(400).json({ message: 'Email address is required for guest booking' });
+      }
+      if (phone.length < 6) {
+        return res.status(400).json({ message: 'Phone number must be at least 6 digits (it will also act as your account password)' });
+      }
+
+      const userByEmail = await User.findOne({ email });
+      const userByPhone = await User.findOne({ phone });
+
+      if (userByEmail && userByPhone && userByEmail._id.toString() === userByPhone._id.toString()) {
+        // Same existing user, reuse the account without re-sending credentials
+        bookingUser = userByEmail;
+      } else if (userByEmail || userByPhone) {
+        // Email/phone belong to different accounts - reject to avoid duplicate/mismatched accounts
+        return res.status(400).json({
+          message: userByEmail
+            ? 'Email already used with a different phone number.'
+            : 'Phone number already used with a different email.'
+        });
+      } else {
+        // Brand new guest - create account
+        const firstName = guestDetails.firstName || 'Guest';
+        const lastName = guestDetails.lastName || '';
+        bookingUser = await User.create({
+          name: `${firstName} ${lastName}`.trim(),
+          email,
+          phone,
+          password: phone,
+        });
+        createdCredentials = {
+          email,
+          password: phone
+        };
+      }
+    }
+
     // Payment is verified, create the booking
     const isAdvance = bookingData.paymentType === 'advance';
     const totalAmount = bookingData.totalAmount;
@@ -323,7 +444,8 @@ export const verifyRazorpayPayment = async (req, res) => {
 
     const booking = await Booking.create({
       ...bookingData,
-      user: req.user._id,
+      user: bookingUser._id,
+      gstNumber: bookingData.guestDetails?.gstNumber || '',
       rooms: availability.rooms || [bookingData.room],
       roomsCount: availability.rooms ? availability.rooms.length : 1,
       razorpayOrderId: razorpay_order_id,
@@ -346,35 +468,47 @@ export const verifyRazorpayPayment = async (req, res) => {
     );
 
     // Send confirmation emails in the background
-    User.findById(req.user._id)
-      .then(user => {
-        return Room.findById(bookingData.room).then(primaryRoomDetails => {
-          const emailHtmlUser = getGuestBookingEmailTemplate(user, booking, primaryRoomDetails);
+    Room.findById(bookingData.room)
+      .then(primaryRoomDetails => {
+        if (!primaryRoomDetails) return;
+        const emailHtmlUser = getGuestBookingEmailTemplate(bookingUser, booking, primaryRoomDetails, createdCredentials);
 
-          // Send to User
-          sendEmail({
-            email: user.email,
-            subject: 'Booking Confirmation - The Balified Villa',
-            html: emailHtmlUser,
-          }).catch(err => console.error('Error sending guest email:', err));
+        // Send to User
+        sendEmail({
+          email: bookingUser.email,
+          subject: 'Booking Confirmation - The Balified Villa',
+          html: emailHtmlUser,
+        }).catch(err => console.error('Error sending guest email:', err));
 
-          // Send to Admin
-          const adminEmail = 'thebalifiedvilla@gmail.com';
-          const emailHtmlAdmin = getAdminBookingEmailTemplate(user, booking, primaryRoomDetails);
-          sendEmail({
-            email: adminEmail,
-            subject: `New Booking Received - ${user.name}`,
-            html: emailHtmlAdmin,
-          }).catch(err => console.error('Error sending admin email:', err));
-        });
+        // Send to Admin
+        const adminEmail = 'thebalifiedvilla@gmail.com';
+        const emailHtmlAdmin = getAdminBookingEmailTemplate(bookingUser, booking, primaryRoomDetails);
+        sendEmail({
+          email: adminEmail,
+          subject: `New Booking Received - ${bookingUser.name}`,
+          html: emailHtmlAdmin,
+        }).catch(err => console.error('Error sending admin email:', err));
       })
       .catch(emailErr => {
         console.error('Failed to send confirmation emails in background:', emailErr);
       });
 
+    const token = jwt.sign({ id: bookingUser._id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN || '30d',
+    });
+
     res.status(201).json({
       message: 'Payment verified and booking created successfully',
-      booking
+      booking,
+      token,
+      user: {
+        id: bookingUser._id,
+        name: bookingUser.name,
+        email: bookingUser.email,
+        phone: bookingUser.phone,
+        role: bookingUser.role,
+        wishlist: bookingUser.wishlist || []
+      }
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -789,6 +923,40 @@ export const verifyBalanceRazorpayPayment = async (req, res) => {
     await booking.save();
 
     res.json({ message: 'Balance payment verified successfully', booking });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getBookingByIdPublic = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let booking = null;
+
+    if (mongoose.isValidObjectId(id)) {
+      booking = await Booking.findById(id)
+        .populate('user', 'name email phone')
+        .populate('room')
+        .populate('rooms');
+    }
+
+    if (!booking) {
+      booking = await Booking.findOne({
+        $or: [
+          { razorpayOrderId: id },
+          { razorpayPaymentId: id }
+        ]
+      })
+        .populate('user', 'name email phone')
+        .populate('room')
+        .populate('rooms');
+    }
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.json(booking);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

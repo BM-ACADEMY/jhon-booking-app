@@ -28,6 +28,7 @@ const bookingSchema = new mongoose.Schema({
     iconType: { type: String }
   }],
   specialRequests: { type: String },
+  gstNumber: { type: String, default: '' },
 }, { timestamps: true });
 
 export default mongoose.model('Booking', bookingSchema);

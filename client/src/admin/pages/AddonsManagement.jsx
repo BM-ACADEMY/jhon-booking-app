@@ -1,14 +1,48 @@
-import { useState, useEffect } from 'react';
-import { Layers, Plus, Trash2, Edit2, Utensils, Bell, Car, Sparkles, Heart, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Layers, Plus, Trash2, Edit2, Utensils, Bell, Car, Sparkles, Heart, Loader2, ImagePlus, X } from 'lucide-react';
 import api from '../../api';
 import toast from 'react-hot-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 const categoryIcons = {
   'food': Utensils,
   'room services': Bell,
   'transport': Car,
   'Special Arrangements': Sparkles,
-  'Guest Services': Heart
+  'Guest Services': Heart,
+};
+
+const baseUrl = import.meta.env.VITE_BASE_URL && import.meta.env.VITE_BASE_URL !== 'undefined' ? import.meta.env.VITE_BASE_URL : '';
+
+const resolveImage = (url) => {
+  if (!url) return '';
+  return url.startsWith('http') ? url : `${baseUrl}${url}`;
 };
 
 const AddonsManagement = () => {
@@ -16,12 +50,17 @@ const AddonsManagement = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingAddon, setEditingAddon] = useState(null);
-  
-  // Form fields
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [showEditConfirm, setShowEditConfirm] = useState(false);
+
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [iconType, setIconType] = useState('food');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
 
   const fetchAddons = async () => {
     try {
@@ -39,11 +78,18 @@ const AddonsManagement = () => {
     fetchAddons();
   }, []);
 
-  const openAddModal = () => {
-    setEditingAddon(null);
+  const resetForm = () => {
     setName('');
     setPrice('');
     setIconType('food');
+    setImageFile(null);
+    setImagePreview('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const openAddModal = () => {
+    setEditingAddon(null);
+    resetForm();
     setShowModal(true);
   };
 
@@ -52,26 +98,55 @@ const AddonsManagement = () => {
     setName(addon.name);
     setPrice(addon.price);
     setIconType(addon.iconType);
+    setImageFile(null);
+    setImagePreview(resolveImage(addon.image));
     setShowModal(true);
   };
 
-  const handleSubmit = async (e) => {
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveImagePreview = () => {
+    setImageFile(null);
+    setImagePreview('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleFormSubmit = (e) => {
     e.preventDefault();
     if (!name.trim()) return toast.error('Name is required');
     if (!price || isNaN(price) || Number(price) < 0) return toast.error('Please enter a valid price');
 
+    if (editingAddon) {
+      setShowEditConfirm(true);
+    } else {
+      performSubmit();
+    }
+  };
+
+  const performSubmit = async () => {
     try {
       setSubmitting(true);
-      const payload = { name, price: Number(price), iconType };
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('price', Number(price));
+      formData.append('iconType', iconType);
+      if (imageFile) formData.append('image', imageFile);
 
       if (editingAddon) {
-        await api.put(`/addons/${editingAddon._id}`, payload);
+        await api.put(`/addons/${editingAddon._id}`, formData);
         toast.success('Add-on service updated!');
       } else {
-        await api.post('/addons', payload);
+        await api.post('/addons', formData);
         toast.success('Add-on service created!');
       }
       setShowModal(false);
+      setShowEditConfirm(false);
+      resetForm();
       fetchAddons();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Action failed');
@@ -80,179 +155,263 @@ const AddonsManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this add-on service?')) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.delete(`/addons/${id}`);
+      setDeleting(true);
+      await api.delete(`/addons/${deleteTarget._id}`);
       toast.success('Add-on service deleted successfully');
+      setDeleteTarget(null);
       fetchAddons();
     } catch (err) {
       toast.error('Failed to delete add-on service');
+    } finally {
+      setDeleting(false);
     }
   };
 
   return (
     <div className="space-y-6 max-w-6xl p-4 sm:p-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <Layers className="w-6 h-6 text-primary-500" />
-            Add-on Services Management
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">Create and manage premium services available during checkout</p>
-        </div>
-        <button
-          onClick={openAddModal}
-          className="flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer border-none shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Add Service
-        </button>
-      </div>
+      <Card>
+        <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6">
+          <div>
+            <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <Layers className="w-6 h-6 text-primary-500" />
+              Add-on Services Management
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Create and manage premium services available during checkout</p>
+          </div>
+          <Button onClick={openAddModal} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Add Service
+          </Button>
+        </CardContent>
+      </Card>
 
-      {/* Grid or Loading */}
-      {loading ? (
-        <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-gray-100 shadow-sm">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-        </div>
-      ) : addons.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-gray-100 shadow-sm">
-          <Layers className="w-12 h-12 text-gray-300 mx-auto mb-3 animate-pulse" />
-          <p className="text-gray-500 font-medium">No add-on services found.</p>
-          <p className="text-sm text-gray-400 mt-1">Click "Add Service" to create your first add-on.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {addons.map((addon) => {
-            const IconComponent = categoryIcons[addon.iconType] || Layers;
-            return (
-              <div
-                key={addon._id}
-                className="bg-white rounded-xl border border-gray-100 hover:border-primary-200 transition-all p-5 shadow-sm hover:shadow-md flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600">
-                      <IconComponent className="w-5 h-5 text-primary-600" />
-                    </div>
-                    <span className="text-xs uppercase font-semibold text-gray-400 tracking-wider">
-                      {addon.iconType}
-                    </span>
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+            </div>
+          ) : addons.length === 0 ? (
+            <div className="text-center py-16">
+              <Layers className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 font-medium">No add-on services found.</p>
+              <p className="text-sm text-gray-400 mt-1">Click "Add Service" to create your first add-on.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Image</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {addons.map((addon) => {
+                  const IconComponent = categoryIcons[addon.iconType] || Layers;
+                  return (
+                    <TableRow key={addon._id}>
+                      <TableCell>
+                        {addon.image ? (
+                          <img
+                            src={resolveImage(addon.image)}
+                            alt={addon.name}
+                            className="w-12 h-12 rounded-lg object-cover border border-gray-100"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600">
+                            <IconComponent className="w-5 h-5" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-semibold text-gray-800">{addon.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="gap-1">
+                          <IconComponent className="w-3.5 h-3.5" />
+                          {addon.iconType}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-bold text-gray-900">
+                        ₹{addon.price.toLocaleString('en-IN')}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="outline" size="icon" onClick={() => openEditModal(addon)} title="Edit Service">
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setDeleteTarget(addon)}
+                            title="Delete Service"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingAddon ? 'Edit Add-on Service' : 'Add New Service'}</DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Service Image</Label>
+              <div className="flex items-center gap-4">
+                {imagePreview ? (
+                  <div className="relative">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-20 h-20 rounded-lg object-cover border border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImagePreview}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-sm cursor-pointer border-none"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </div>
-                  <h3 className="font-bold text-gray-800 text-lg line-clamp-1">{addon.name}</h3>
-                  <p className="text-2xl font-black text-gray-900 mt-2">
-                    ₹{addon.price.toLocaleString('en-IN')}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-end gap-2 mt-5 pt-4 border-t border-gray-50">
+                ) : (
                   <button
-                    onClick={() => openEditModal(addon)}
-                    className="p-2 rounded-lg hover:bg-gray-50 border border-gray-100 text-gray-500 hover:text-primary-600 transition-colors cursor-pointer"
-                    title="Edit Service"
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 hover:text-primary-500 hover:border-primary-300 cursor-pointer bg-transparent"
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <ImagePlus className="w-6 h-6" />
                   </button>
-                  <button
-                    onClick={() => handleDelete(addon._id)}
-                    className="p-2 rounded-lg hover:bg-red-50 border border-transparent text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
-                    title="Delete Service"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                )}
+                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                  {imagePreview ? 'Change Image' : 'Upload Image'}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
               </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Add / Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform transition-all">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-              <h2 className="font-bold text-gray-800 text-lg">
-                {editingAddon ? 'Edit Add-on Service' : 'Add New Service'}
-              </h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer border-none bg-transparent"
-              >
-                &times;
-              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Name */}
-              <div>
-                <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1.5">
-                  Service Name
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., Breakfast Buffet, Airport Transfer"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary-500 text-sm text-gray-800 font-medium"
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label>Service Name</Label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., Breakfast Buffet, Airport Transfer"
+              />
+            </div>
 
-              {/* Price */}
-              <div>
-                <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1.5">
-                  Price (₹)
-                </label>
-                <input
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="e.g., 500"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary-500 text-sm text-gray-800 font-medium"
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label>Price (₹)</Label>
+              <Input
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="e.g., 500"
+              />
+            </div>
 
-              {/* Category Icon */}
-              <div>
-                <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1.5">
-                  Category & Icon
-                </label>
-                <select
-                  value={iconType}
-                  onChange={(e) => setIconType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary-500 text-sm text-gray-800 font-medium bg-white"
-                >
-                  <option value="food">Food & Dining (Utensils)</option>
-                  <option value="room services">Room Service (Bell)</option>
-                  <option value="transport">Transport / Travel (Car)</option>
-                  <option value="Special Arrangements">Special Arrangements (Sparkles)</option>
-                  <option value="Guest Services">Guest Services (Heart)</option>
-                </select>
-              </div>
+            <div className="space-y-1.5">
+              <Label>Category & Icon</Label>
+              <Select value={iconType} onValueChange={setIconType}>
+                <SelectTrigger className="focus:ring-0 focus:ring-offset-0 focus:border-gray-200">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="food">Food & Dining (Utensils)</SelectItem>
+                  <SelectItem value="room services">Room Service (Bell)</SelectItem>
+                  <SelectItem value="transport">Transport / Travel (Car)</SelectItem>
+                  <SelectItem value="Special Arrangements">Special Arrangements (Sparkles)</SelectItem>
+                  <SelectItem value="Guest Services">Guest Services (Heart)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-50">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-500 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex items-center gap-1.5 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors cursor-pointer border-none"
-                >
-                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {editingAddon ? 'Save Changes' : 'Create Service'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting} className="gap-1.5">
+                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {editingAddon ? 'Save Changes' : 'Create Service'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showEditConfirm} onOpenChange={setShowEditConfirm}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit2 className="w-5 h-5 text-primary-600" />
+              Confirm Update
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-500">
+            Save changes to{' '}
+            <span className="font-semibold text-gray-800">{editingAddon?.name}</span>?
+          </p>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowEditConfirm(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={performSubmit} disabled={submitting} className="gap-1.5">
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              Confirm & Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Delete Add-on Service
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-500">
+            Are you sure you want to delete{' '}
+            <span className="font-semibold text-gray-800">{deleteTarget?.name}</span>? This will
+            also remove its image from storage. This action cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="gap-1.5 bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

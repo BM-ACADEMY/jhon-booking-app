@@ -22,6 +22,24 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  useEffect(() => {
+    const token = localStorage.getItem('admin_token');
+    if (token) {
+      api.get('/auth/me')
+        .then(res => {
+          if (res.data?.user) {
+            setUser(res.data.user);
+            localStorage.setItem('admin_user', JSON.stringify(res.data.user));
+          } else {
+            logout();
+          }
+        })
+        .catch(() => {
+          logout();
+        });
+    }
+  }, []);
+
   const updateUserData = (userData) => {
     localStorage.setItem('admin_user', JSON.stringify(userData));
     setUser(userData);

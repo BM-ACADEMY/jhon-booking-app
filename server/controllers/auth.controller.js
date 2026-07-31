@@ -8,14 +8,15 @@ const signToken = (id) =>
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, password, phone } = req.body;
+    const email = req.body.email?.toLowerCase()?.trim();
     if (!phone) return res.status(400).json({ message: 'Phone number is required' });
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ message: 'Email already registered' });
     const user = await User.create({ name, email, password, phone });
     res.status(201).json({
       token: signToken(user._id),
-      user: { id: user._id, name, email, role: user.role, wishlist: user.wishlist || [] },
+      user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role, wishlist: user.wishlist || [] },
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -25,13 +26,13 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email?.toLowerCase()?.trim() });
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     res.json({
       token: signToken(user._id),
-      user: { id: user._id, name: user.name, email, role: user.role, wishlist: user.wishlist || [] },
+      user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role, wishlist: user.wishlist || [] },
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -39,6 +40,9 @@ export const login = async (req, res) => {
 };
 
 export const getMe = (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'User account no longer exists' });
+  }
   res.json({ user: req.user });
 };
 
@@ -207,7 +211,7 @@ export const resetPassword = async (req, res) => {
 
     res.json({
       token: signToken(user._id),
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, wishlist: user.wishlist || [] },
+      user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role, wishlist: user.wishlist || [] },
       message: 'Password reset successful!'
     });
   } catch (err) {
