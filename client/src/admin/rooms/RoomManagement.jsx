@@ -6,7 +6,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import api from '../../api';
 import { roomToForm } from './utils';
 import RoomSidebar from './components/RoomSidebar';
-import RoomCalendarPanel from './components/RoomCalendarPanel';
+import RoomAvailabilityGrid from './components/RoomAvailabilityGrid';
+import ReservationSheet from './components/ReservationSheet';
 import RoomConfigSheet from './components/RoomConfigSheet';
 import AddRoomWizard from './components/AddRoomWizard';
 import DraftResumeDialog from './components/DraftResumeDialog';
@@ -22,6 +23,7 @@ const RoomManagement = () => {
   const [rooms, setRooms] = useState([]);
   const [categories, setCategories] = useState([]);
   const [priceUnits, setPriceUnits] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
 
   // --- Browsing -----------------------------------------------------------
@@ -49,18 +51,21 @@ const RoomManagement = () => {
   const [viewRoomTarget, setViewRoomTarget] = useState(null);
   const [unitDialogOpen, setUnitDialogOpen] = useState(false);
   const [editUnitTarget, setEditUnitTarget] = useState(null);
+  const [viewReservation, setViewReservation] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
       setLoadingRooms(true);
-      const [roomsRes, catsRes, unitsRes] = await Promise.all([
+      const [roomsRes, catsRes, unitsRes, bookingsRes] = await Promise.all([
         api.get('/rooms/admin/all'),
         api.get('/categories'),
         api.get('/price-units'),
+        api.get('/bookings').catch(() => ({ data: [] })),
       ]);
       setRooms(roomsRes.data);
       setCategories(catsRes.data);
       setPriceUnits(unitsRes.data);
+      setBookings(bookingsRes.data);
     } catch (err) {
       toast.error('Failed to load data');
     } finally {
@@ -69,6 +74,14 @@ const RoomManagement = () => {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Focus the first room automatically once the initial list loads.
+  useEffect(() => {
+    if (!loadingRooms && rooms.length > 0 && selectedRoomId === null) {
+      setSelectedRoomId(rooms[0]._id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingRooms]);
 
   const filteredRooms = useMemo(() => rooms.filter((r) => {
     const matchSearch = (r.name || '').toLowerCase().includes(search.toLowerCase());
@@ -81,6 +94,13 @@ const RoomManagement = () => {
     [rooms, selectedRoomId]
   );
 
+  // Rooms shown in the calendar: narrowed to just the selected one, or all
+  // filtered rooms when nothing is focused.
+  const gridRooms = useMemo(
+    () => (selectedRoom ? [selectedRoom] : filteredRooms),
+    [selectedRoom, filteredRooms]
+  );
+
   const getCatColor = useCallback((catName) => {
     const cat = categories.find((c) => c.name === catName);
     return cat ? cat.color : 'bg-gray-100 text-gray-700';
@@ -88,7 +108,8 @@ const RoomManagement = () => {
 
   // --- Rooms --------------------------------------------------------------
   const handleSelectRoom = (room) => {
-    setSelectedRoomId(room._id);
+    // Clicking the already-selected room clears the filter back to "all rooms".
+    setSelectedRoomId((prev) => (prev === room._id ? null : room._id));
     setSelectedDates(null);
   };
 
@@ -98,9 +119,10 @@ const RoomManagement = () => {
     setSheetOpen(true);
   };
 
-  const handleRangeSelect = (range) => {
+  const handleRangeSelect = (room, range) => {
+    setSelectedRoomId(room._id);
     setSelectedDates(range);
-    if (range && selectedRoom) {
+    if (range) {
       setSheetSection('pricing');
       setSheetOpen(true);
     }
@@ -186,10 +208,16 @@ const RoomManagement = () => {
             />
           </div>
 
-          <RoomCalendarPanel
-            room={selectedRoom}
+          <RoomAvailabilityGrid
+            rooms={gridRooms}
+            bookings={bookings}
+            loading={loadingRooms}
+            getCatColor={getCatColor}
+            focusedRoom={selectedRoom}
+            onClearFocus={() => setSelectedRoomId(null)}
             onRangeSelect={handleRangeSelect}
-            onOpenSection={(section) => selectedRoom && openConfig(selectedRoom, section)}
+            onOpenSection={(room, section) => openConfig(room, section)}
+            onOpenReservation={setViewReservation}
           />
         </div>
       ) : (
@@ -271,6 +299,12 @@ const RoomManagement = () => {
         categories={categories}
         onOpenChange={setViewRoomTarget}
         onConfigure={(room) => { setViewRoomTarget(null); openConfig(room, 'general'); }}
+      />
+
+      {/* Reservation summary (from an availability-grid booking bar) */}
+      <ReservationSheet
+        booking={viewReservation}
+        onOpenChange={(open) => { if (!open) setViewReservation(null); }}
       />
 
       {/* Price units */}

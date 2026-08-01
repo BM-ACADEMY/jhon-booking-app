@@ -74,6 +74,7 @@ const AppRoutes = () => (
           <AdminLayout />
         </ProtectedRoute>
       }
+      
     >
       <Route index element={<Dashboard />} />
       <Route path="hero" element={<HeroManagement />} />

@@ -76,36 +76,6 @@ const CategoryDialog = ({ open, onOpenChange, editTarget, onSaved }) => {
             />
           </div>
 
-          {/* Category Check-in & Check-out Timings */}
-          <div className="space-y-2 rounded-xl bg-gray-50 p-3 border border-gray-100">
-            <Label className="text-xs font-bold text-gray-800">Category Timings (Check-In & Check-Out)</Label>
-            <p className="text-[11px] text-gray-500">
-              Optional timing rules for all rooms in this category. Leave empty to use global default settings.
-            </p>
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="space-y-1">
-                <Label htmlFor="cat-checkin" className="text-[10px] uppercase font-bold text-gray-500">Check-In</Label>
-                <input
-                  id="cat-checkin"
-                  type="time"
-                  value={catForm.checkInTime || ''}
-                  onChange={(e) => setCatForm((p) => ({ ...p, checkInTime: e.target.value }))}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-primary-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="cat-checkout" className="text-[10px] uppercase font-bold text-gray-500">Check-Out</Label>
-                <input
-                  id="cat-checkout"
-                  type="time"
-                  value={catForm.checkOutTime || ''}
-                  onChange={(e) => setCatForm((p) => ({ ...p, checkOutTime: e.target.value }))}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-primary-500"
-                />
-              </div>
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label>Label Color</Label>
             <div className="flex flex-wrap gap-2">

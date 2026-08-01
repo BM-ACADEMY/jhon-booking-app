@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -51,9 +52,10 @@ const paymentConfig = {
 };
 
 const BookingManagement = () => {
+  const [searchParams] = useSearchParams();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
