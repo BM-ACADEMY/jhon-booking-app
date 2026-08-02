@@ -439,6 +439,22 @@ const RoomDetailPage = () => {
 
   const availableOtherRooms = getAvailableOtherRooms();
 
+  const validateClientOccupancy = () => {
+    if (!room) return { isAllowed: true };
+    const maxTotal = (room.guests || 2) * roomsCount;
+    const maxInf = (((room.maxInfants !== undefined && room.maxInfants !== null) ? room.maxInfants : 2) + (room.allowExtraInfant ? 1 : 0)) * roomsCount;
+
+    if (adults + children > maxTotal) {
+      return { isAllowed: false, message: `Maximum ${maxTotal} guests (Adults + Children) allowed for this room.` };
+    }
+    if (infants > maxInf) {
+      return { isAllowed: false, message: `Maximum ${maxInf} infants allowed.` };
+    }
+    return { isAllowed: true };
+  };
+
+  const clientOccupancyValidation = validateClientOccupancy();
+
   useEffect(() => {
     if (!room) return;
     const maxAdultsAllowed = ((room.maxAdults !== undefined && room.maxAdults !== null) ? room.maxAdults : (room.guests || 10)) * roomsCount;
@@ -1500,9 +1516,7 @@ const RoomDetailPage = () => {
                     ))}
                   </div>
                 </div>
-              </div>
-
-              {/* Check-In & Check-Out Timings Section */}
+                   {/* Check-In & Check-Out Timings Section */}
               <div className="bg-indigo-50/50 border border-indigo-100 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-indigo-100/80 rounded-2xl text-indigo-700">
@@ -1510,7 +1524,7 @@ const RoomDetailPage = () => {
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900 text-base">Check-In &amp; Check-Out Timings</h3>
-                    <p className="text-xs text-gray-500 font-medium mt-0.5">Policy &amp; timing schedule for your stay</p>
+                    <p className="text-xs text-gray-550 font-medium mt-0.5">Policy &amp; timing schedule for your stay</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6 bg-white px-5 py-3 rounded-2xl border border-indigo-100 shadow-sm w-full sm:w-auto justify-around">
@@ -1525,6 +1539,36 @@ const RoomDetailPage = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Maximum Occupancy & Rules Section */}
+              <div className="bg-zinc-55 border border-zinc-200 rounded-3xl p-5 sm:p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-zinc-200 rounded-2xl text-zinc-700">
+                    <Icons.Users className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-base">Maximum Occupancy &amp; Rules</h3>
+                    <p className="text-xs text-gray-550 font-medium mt-0.5">Sleeping capacity and guest occupancy limits</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 bg-white p-4 rounded-2xl border border-zinc-100 shadow-sm">
+                  <div className="text-center sm:text-left">
+                    <span className="text-[10px] font-black uppercase text-zinc-550 tracking-wider block">Max Guests (Non-Infants)</span>
+                    <span className="text-sm font-black text-gray-900">{room.guests || 2} Guests</span>
+                  </div>
+                  <div className="text-center sm:text-left border-l border-zinc-100 pl-4">
+                    <span className="text-[10px] font-black uppercase text-zinc-550 tracking-wider block">Max Infants</span>
+                    <span className="text-sm font-black text-gray-900">{(room.maxInfants !== undefined && room.maxInfants !== null ? room.maxInfants : 2) + (room.allowExtraInfant ? 1 : 0)} Infants</span>
+                  </div>
+                </div>
+
+                {room.capacityNotes && (
+                  <div className="bg-white border border-zinc-150 rounded-xl p-3.5 text-xs text-gray-600 font-medium leading-relaxed shadow-sm">
+                    <strong>Capacity Notes:</strong> {room.capacityNotes}
+                  </div>
+                )}
+              </div>             </div>
 
               <hr className="hidden lg:block border-gray-200" />
 
@@ -2117,21 +2161,19 @@ const RoomDetailPage = () => {
                     </div>
                     <div className="flex items-center gap-3">
                       <button onClick={() => setAdults(g => Math.max(1, g - 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">−</button>
-                      <button onClick={() => setAdults(g => Math.min(((room.maxAdults !== undefined && room.maxAdults !== null) ? room.maxAdults : (room.guests || 10)) * roomsCount, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
+                      <button onClick={() => setAdults(g => Math.min((room.guests || 2) * roomsCount - children, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
                     </div>
                   </div>
-                  {((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 0) > 0 && (
-                    <div className="p-3 flex items-center justify-between border-b border-gray-300">
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Children</label>
-                        <span className="text-sm text-gray-700">{children} Child{children !== 1 ? 'ren' : ''}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => setChildren(g => Math.max(0, g - 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">−</button>
-                        <button onClick={() => setChildren(g => Math.min(((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 10) * roomsCount, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
-                      </div>
+                  <div className="p-3 flex items-center justify-between border-b border-gray-300">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Children</label>
+                      <span className="text-sm text-gray-700">{children} Child{children !== 1 ? 'ren' : ''}</span>
                     </div>
-                  )}
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setChildren(g => Math.max(0, g - 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">−</button>
+                      <button onClick={() => setChildren(g => Math.min((room.guests || 2) * roomsCount - adults, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
+                    </div>
+                  </div>
                   <div className="p-3 flex items-center justify-between border-b border-gray-300">
                     <div>
                       <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Infants</label>
@@ -2139,7 +2181,10 @@ const RoomDetailPage = () => {
                     </div>
                     <div className="flex items-center gap-3">
                       <button onClick={() => setInfants(g => Math.max(0, g - 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">−</button>
-                      <button onClick={() => setInfants(g => Math.min(10 * roomsCount, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
+                      <button onClick={() => setInfants(g => {
+                        const maxInfLimit = ((room.maxInfants !== undefined && room.maxInfants !== null ? room.maxInfants : 2) + (room.allowExtraInfant ? 1 : 0)) * roomsCount;
+                        return Math.min(maxInfLimit, g + 1);
+                      })} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
                     </div>
                   </div>
                   <div className={`p-3 flex items-center justify-between ${roomsCount > 1 ? 'border-b border-gray-300' : ''}`}>
@@ -2220,13 +2265,20 @@ const RoomDetailPage = () => {
                   </div>
                 )}
 
+                {!clientOccupancyValidation.isAllowed && (
+                  <div className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold flex items-start gap-2">
+                    <Icons.AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-rose-600" />
+                    <span>{clientOccupancyValidation.message}</span>
+                  </div>
+                )}
+
                 <button 
                   onClick={handleBooking} 
-                  disabled={bookingLoading || !room.isAvailable || (checkIn && checkOut && remainingRooms === 0)} 
-                  className="w-full bg-[#FCE83A] hover:bg-[#FCE83A]/90 text-gray-900 font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                  disabled={bookingLoading || !room.isAvailable || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed} 
+                  className="w-full bg-[#FCE83A] hover:bg-[#FCE83A]/90 text-gray-900 font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm mt-4"
                 >
                   {bookingLoading && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {remainingRooms === 0 ? 'Sold Out' : (room.isAvailable ? 'Book Now' : 'Check Availability')}
+                  {remainingRooms === 0 ? 'Sold Out' : (!clientOccupancyValidation.isAllowed ? 'Invalid Guests' : (room.isAvailable ? 'Book Now' : 'Check Availability'))}
                 </button>
                 <p className="text-sm text-gray-500 text-center mt-4">You won't be charged yet</p>
               </div>
@@ -2319,7 +2371,7 @@ const RoomDetailPage = () => {
                     onChange={e => setAdults(parseInt(e.target.value, 10))}
                     className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none"
                   >
-                    {[...Array(((room.maxAdults !== undefined && room.maxAdults !== null ? room.maxAdults : (room.guests || 10)) * roomsCount))].map((_, i) => (
+                    {[...Array(Math.max(0, ((room.guests || 2) * roomsCount) - children))].map((_, i) => (
                       <option key={i+1} value={i+1}>{i+1} Adult{i+1 > 1 ? 's' : ''}</option>
                     ))}
                   </select>
@@ -2328,24 +2380,22 @@ const RoomDetailPage = () => {
               </div>
 
               {/* Children Card */}
-              {((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 0) > 0 && (
-                <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80">
-                  <Users className="w-6 h-6 text-gray-400" />
-                  <div className="flex flex-col flex-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Children</label>
-                    <select
-                      value={children}
-                      onChange={e => setChildren(parseInt(e.target.value, 10))}
-                      className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none"
-                    >
-                      {[...Array((((room.maxChildren !== undefined && room.maxChildren !== null ? room.maxChildren : 10) * roomsCount)) + 1)].map((_, i) => (
-                        <option key={i} value={i}>{i} Child{i !== 1 ? 'ren' : ''}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <ChevronDown className="w-5 h-5 text-gray-900 mr-1" />
+              <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80">
+                <Icons.Users className="w-6 h-6 text-gray-400" />
+                <div className="flex flex-col flex-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Children</label>
+                  <select
+                    value={children}
+                    onChange={e => setChildren(parseInt(e.target.value, 10))}
+                    className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none"
+                  >
+                    {[...Array(Math.max(0, ((room.guests || 2) * roomsCount) - adults) + 1)].map((_, i) => (
+                      <option key={i} value={i}>{i} Child{i !== 1 ? 'ren' : ''}</option>
+                    ))}
+                  </select>
                 </div>
-              )}
+                <ChevronDown className="w-5 h-5 text-gray-900 mr-1" />
+              </div>
 
               {/* Infants Card */}
               <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80">
@@ -2357,7 +2407,7 @@ const RoomDetailPage = () => {
                     onChange={e => setInfants(parseInt(e.target.value, 10))}
                     className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none"
                   >
-                    {[...Array((10 * roomsCount) + 1)].map((_, i) => (
+                    {[...Array((((room.maxInfants !== undefined && room.maxInfants !== null ? room.maxInfants : 2) + (room.allowExtraInfant ? 1 : 0)) * roomsCount) + 1)].map((_, i) => (
                       <option key={i} value={i}>{i} Infant{i !== 1 ? 's' : ''}</option>
                     ))}
                   </select>
@@ -2438,13 +2488,20 @@ const RoomDetailPage = () => {
             </div>
 
             {/* Action Button inside Modal */}
+            {!clientOccupancyValidation.isAllowed && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold flex items-start gap-2 mb-2">
+                <Icons.AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-rose-600" />
+                <span>{clientOccupancyValidation.message}</span>
+              </div>
+            )}
+
             <button
               onClick={handleBooking}
-              disabled={bookingLoading || (checkIn && checkOut && remainingRooms === 0)}
+              disabled={bookingLoading || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed}
               className="w-full bg-[#FCE83A] active:bg-[#f3df2c] text-gray-900 font-bold text-[17px] py-4 rounded-full transition-transform duration-200 active:scale-[0.98] disabled:opacity-50 mt-2 shadow-sm flex justify-center items-center"
             >
               {bookingLoading && <Loader2 className="w-5 h-5 animate-spin mr-2" />}
-              {remainingRooms === 0 ? 'Sold Out' : 'Confirm & Pay'}
+              {remainingRooms === 0 ? 'Sold Out' : (!clientOccupancyValidation.isAllowed ? 'Invalid Guests' : 'Confirm & Pay')}
             </button>
           </div>
         </div>

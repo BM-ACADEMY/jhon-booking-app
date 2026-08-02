@@ -185,7 +185,7 @@ export const getLatestDraft = async (req, res) => {
 
 const parseRoomData = (roomData, req) => {
   // Parse numeric fields
-  ['price', 'originalPrice', 'guests', 'bedrooms', 'beds', 'bathrooms', 'showers', 'maxAdults', 'maxChildren', 'extraBedCount', 'extraBedPrice', 'maxInventory'].forEach(field => {
+  ['price', 'originalPrice', 'guests', 'bedrooms', 'beds', 'bathrooms', 'showers', 'maxAdults', 'maxChildren', 'extraBedCount', 'extraBedPrice', 'maxInventory', 'maxInfants'].forEach(field => {
     if (roomData[field] !== undefined && roomData[field] !== '') {
       roomData[field] = Number(roomData[field]);
     }
@@ -193,6 +193,10 @@ const parseRoomData = (roomData, req) => {
 
   if (roomData.allowExtraBed !== undefined) {
     roomData.allowExtraBed = String(roomData.allowExtraBed) === 'true' || roomData.allowExtraBed === true;
+  }
+
+  if (roomData.allowExtraInfant !== undefined) {
+    roomData.allowExtraInfant = String(roomData.allowExtraInfant) === 'true' || roomData.allowExtraInfant === true;
   }
 
   // Ensure maxInventory defaults safely to 1 if left blank

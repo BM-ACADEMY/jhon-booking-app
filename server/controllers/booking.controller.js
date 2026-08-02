@@ -51,19 +51,12 @@ const canAccommodateCombination = (roomsList, adults, children) => {
     }
 
     const room = roomsList[index];
-    const maxAd = (room.maxAdults !== undefined && room.maxAdults !== null) ? room.maxAdults : (room.guests || 2);
-    const maxCh = (room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 0;
-    const maxTotalGuests = (room.guests !== undefined && room.guests !== null) ? room.guests : (maxAd + maxCh);
+    const maxTotalGuests = room.guests || 2;
 
-    const upperA = Math.min(maxAd, remainingAdults);
+    const upperA = Math.min(maxTotalGuests, remainingAdults);
     for (let a = 1; a <= upperA; a++) {
-      if (a > maxTotalGuests) continue;
-      const maxChForThisRoom = maxCh + (maxAd - a);
-      const upperC = Math.min(maxChForThisRoom, maxTotalGuests - a, remainingChildren);
+      const upperC = Math.min(maxTotalGuests - a, remainingChildren);
       for (let c = 0; c <= upperC; c++) {
-        // Comfort check: if adults are at maximum limit for the room, children must be 0
-        if (a === maxAd && c > 0) continue;
-
         if (backtrack(index + 1, remainingAdults - a, remainingChildren - c)) {
           return true;
         }
@@ -113,6 +106,20 @@ export const syncRoomUnavailableDates = async () => {
   } catch (err) {
     console.error('Error syncing room unavailable dates:', err);
   }
+};
+
+// Helper to validate occupancy rules for a single room
+const validateOccupancy = (room, adults, children, infants) => {
+  const maxTotal = room.guests || 2;
+  const maxInf = (room.maxInfants !== undefined && room.maxInfants !== null ? room.maxInfants : 2) + (room.allowExtraInfant ? 1 : 0);
+
+  if (adults + children > maxTotal) {
+    return { isAllowed: false, message: `Maximum ${maxTotal} guests (Adults + Children) allowed for this room.` };
+  }
+  if (infants > maxInf) {
+    return { isAllowed: false, message: `Maximum ${maxInf} infants allowed.` };
+  }
+  return { isAllowed: true };
 };
 
 // Helper to verify if room is available
@@ -167,11 +174,11 @@ const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children
 
   // If roomsCount is 1, check if primary room can accommodate the guests
   if (roomsCount === 1) {
-    if (canAccommodateCombination([primaryRoom], adults !== undefined ? Number(adults) : 1, children !== undefined ? Number(children) : 0)) {
-      return { isAvailable: true, rooms: [primaryRoom._id], remainingRooms };
-    } else {
-      return { isAvailable: false, message: 'Room capacity exceeded for the selected guest combination.', remainingRooms };
+    const validation = validateOccupancy(primaryRoom, Number(adults), Number(children), Number(infants));
+    if (!validation.isAllowed) {
+      return { isAvailable: false, message: validation.message, remainingRooms };
     }
+    return { isAvailable: true, rooms: [primaryRoom._id], remainingRooms };
   }
 
   // If roomsCount > 1, we need to find roomsCount - 1 other available rooms
@@ -204,6 +211,11 @@ const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children
     }
   } else {
     availableOtherRooms.push(...allRooms);
+  }
+
+  const maxInf = (primaryRoom.maxInfants !== undefined && primaryRoom.maxInfants !== null) ? primaryRoom.maxInfants : 2;
+  if (Number(infants) > roomsCount * maxInf) {
+    return { isAvailable: false, message: `Maximum ${roomsCount * maxInf} infants allowed for ${roomsCount} rooms.`, remainingRooms };
   }
 
   // We need to find if there is a subset of size (roomsCount - 1) from availableOtherRooms

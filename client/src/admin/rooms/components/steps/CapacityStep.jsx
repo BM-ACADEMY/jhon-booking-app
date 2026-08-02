@@ -3,9 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
 const CAPACITY_FIELDS = [
-  { id: 'guests', label: 'Max Guests', icon: Users },
-  { id: 'maxAdults', label: 'Max Adults', icon: Users },
-  { id: 'maxChildren', label: 'Max Children', icon: Users },
+  { id: 'guests', label: 'Max Guests (Non-Infants)', icon: Users },
   { id: 'bathrooms', label: 'Bathrooms', icon: Bath },
   { id: 'showers', label: 'Showers', icon: ShowerHead },
 ];
@@ -174,6 +172,47 @@ export const CapacityFields = ({ form, patch, readOnly = false, showAvailability
             </div>
           );
         })()}
+      </div>
+
+      {/* Additional Occupancy Rules & Notes Section */}
+      <div className="rounded-2xl border border-zinc-200 bg-zinc-50/40 p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-zinc-200 rounded-xl">
+              <Users className="h-4 w-4 text-zinc-700" />
+            </div>
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900">
+                Additional Occupancy Rules
+              </h4>
+              <p className="text-[11px] text-zinc-500 font-medium">
+                Configure extra infant permissions and booking details
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="allow-extra-infant" className="text-xs font-bold text-gray-700">Allow Extra Infant</Label>
+            <Switch
+              id="allow-extra-infant"
+              checked={!!form.allowExtraInfant}
+              disabled={readOnly}
+              onCheckedChange={(v) => patch({ allowExtraInfant: v })}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="capacity-notes" className="text-xs font-bold text-gray-700">Capacity & Occupancy Notes</Label>
+          <textarea
+            id="capacity-notes"
+            disabled={readOnly}
+            value={form.capacityNotes || ''}
+            onChange={(e) => patch({ capacityNotes: e.target.value })}
+            placeholder="e.g. Infants do not count towards overall capacity. Up to 1 free, or 2 with prior approval."
+            rows={2}
+            className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-bold text-gray-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-100 disabled:opacity-60 resize-none"
+          />
+        </div>
       </div>
 
       {showAvailability && (
