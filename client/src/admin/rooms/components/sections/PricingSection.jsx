@@ -10,60 +10,19 @@ import { matchDate } from '../../utils';
 
 /** Base price + price unit — shared by the wizard's General step and the sheet. */
 export const BasePricingFields = ({
-  form, patch, priceUnits = [], readOnly = false, onManageUnits,
+  form, patch, readOnly = false,
 }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <div className="space-y-1.5">
-      <Label htmlFor="room-price">Base Price (₹) *</Label>
-      <Input
-        id="room-price"
-        type="number"
-        value={form.price}
-        disabled={readOnly}
-        onChange={(e) => patch({ price: e.target.value })}
-        placeholder="e.g. 500"
-      />
-    </div>
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <Label htmlFor="room-price-unit">Price Unit</Label>
-        {!readOnly && onManageUnits && (
-          <button
-            type="button"
-            onClick={onManageUnits}
-            className="cursor-pointer text-[10px] font-bold text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
-          >
-            <Plus className="w-3 h-3" /> Add New Unit
-          </button>
-        )}
-      </div>
-      <Select
-        value={form.priceUnit || undefined}
-        disabled={readOnly}
-        onValueChange={(v) => patch({ priceUnit: v })}
-      >
-        <SelectTrigger id="room-price-unit">
-          <SelectValue placeholder="Select unit" />
-        </SelectTrigger>
-        <SelectContent>
-          {priceUnits.map((u) => (
-            <SelectItem key={u._id} value={u.name}>{u.label}</SelectItem>
-          ))}
-          {priceUnits.length === 0 && <SelectItem value="night">Per Night</SelectItem>}
-        </SelectContent>
-      </Select>
-    </div>
-    <div className="space-y-1.5 sm:col-span-2">
-      <Label htmlFor="room-original-price">Original Price (₹, optional)</Label>
-      <Input
-        id="room-original-price"
-        type="number"
-        value={form.originalPrice}
-        disabled={readOnly}
-        onChange={(e) => patch({ originalPrice: e.target.value })}
-        placeholder="Shown struck-through on the listing"
-      />
-    </div>
+  <div className="space-y-1.5">
+    <Label htmlFor="room-price" className="text-xs font-semibold text-zinc-700">Base Price (₹) *</Label>
+    <Input
+      id="room-price"
+      type="number"
+      value={form.price}
+      disabled={readOnly}
+      onChange={(e) => patch({ price: e.target.value })}
+      placeholder="e.g. 500"
+      className="border-zinc-200 focus-visible:ring-zinc-400"
+    />
   </div>
 );
 
@@ -91,9 +50,9 @@ const PricingSection = ({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-gray-100 bg-gray-50/60 p-4 space-y-4">
-        <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-          <Tag className="w-3.5 h-3.5 text-primary-500" /> Base Pricing Setup
+      <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-4 shadow-sm">
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+          <Tag className="w-3.5 h-3.5 text-zinc-400" /> Base Pricing Setup
         </h4>
         <BasePricingFields
           form={form}
@@ -105,24 +64,24 @@ const PricingSection = ({
       </div>
 
       <div className="space-y-3">
-        <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-          <CalendarIcon className="w-3.5 h-3.5 text-primary-500" /> Dynamic Daily Pricing
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+          <CalendarIcon className="w-3.5 h-3.5 text-zinc-400" /> Dynamic Daily Pricing
         </h4>
-        <p className="text-[11px] text-gray-500 leading-relaxed">
+        <p className="text-[11px] text-zinc-500 leading-relaxed">
           Pick a date on the calendar to set a custom price for that day. Days with a custom
-          price are highlighted in green. Without one, the base price (₹{form.price || 0}) applies.
+          price will use the specified rate; otherwise, the base price (₹{form.price || 0}) applies.
         </p>
 
         {selectedDate ? (
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+          <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Selected Date</span>
-              <span className="text-xs font-bold text-gray-900 bg-white border border-gray-100 px-2.5 py-1 rounded-lg shadow-sm">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Selected Date</span>
+              <span className="text-xs font-semibold text-zinc-900 bg-zinc-50 border border-zinc-200 px-2.5 py-1 rounded-lg">
                 {selectedDate}
               </span>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="custom-price">Price for this day (₹)</Label>
+              <Label htmlFor="custom-price" className="text-xs font-semibold text-zinc-700">Price for this day (₹)</Label>
               <div className="flex gap-2">
                 <Input
                   id="custom-price"
@@ -131,11 +90,12 @@ const PricingSection = ({
                   disabled={readOnly}
                   onChange={(e) => setCustomPriceInput(e.target.value)}
                   placeholder={`e.g. ${form.price || '500'}`}
+                  className="border-zinc-200 focus-visible:ring-zinc-400"
                 />
                 <Button
                   type="button"
                   disabled={readOnly}
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  className="bg-zinc-900 hover:bg-zinc-800 text-white font-medium"
                   onClick={() => onSetCustomPrice?.(selectedDate, customPriceInput)}
                 >
                   Set Price
@@ -143,11 +103,11 @@ const PricingSection = ({
               </div>
             </div>
             {!readOnly && (
-              <div className="pt-2 border-t border-gray-200 flex justify-end">
+              <div className="pt-2 border-t border-zinc-100 flex justify-end">
                 <button
                   type="button"
                   onClick={() => onResetCustomPrice?.(selectedDate)}
-                  className="cursor-pointer text-[10px] font-black uppercase text-red-500 hover:text-red-700 underline"
+                  className="cursor-pointer text-[10px] font-bold uppercase text-red-500 hover:text-red-700 underline"
                 >
                   Reset to Base Price
                 </button>
@@ -155,35 +115,35 @@ const PricingSection = ({
             )}
           </div>
         ) : (
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 py-8 text-center text-gray-400">
-            <CalendarIcon className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-            <p className="text-xs font-bold">Select a date on the calendar to configure pricing</p>
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 py-8 text-center text-zinc-400">
+            <CalendarIcon className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
+            <p className="text-xs font-medium">Select a date on the calendar to configure pricing</p>
           </div>
         )}
       </div>
 
       {customList.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-            <Settings2 className="w-3.5 h-3.5 text-emerald-500" /> Custom Priced Days ({customList.length})
+          <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+            <Settings2 className="w-3.5 h-3.5 text-zinc-400" /> Custom Priced Days ({customList.length})
           </h4>
           <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
             {customList.map((dp, i) => (
               <div
                 key={`${dp.date}-${i}`}
-                className="flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-2"
+                className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-3 py-2 shadow-sm"
               >
-                <span className="text-xs font-bold text-emerald-800">
+                <span className="text-xs font-semibold text-zinc-700">
                   {String(dp.date).substring(0, 10)}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-emerald-700">₹{dp.price}</span>
+                  <span className="text-xs font-bold text-zinc-900">₹{dp.price}</span>
                   {!readOnly && (
                     <button
                       type="button"
                       title="Reset to base price"
                       onClick={() => onResetCustomPrice?.(String(dp.date).substring(0, 10))}
-                      className="cursor-pointer p-1 text-gray-400 hover:text-red-500 transition-colors"
+                      className="cursor-pointer p-1 text-zinc-400 hover:text-red-500 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

@@ -10,50 +10,22 @@ import {
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger
 } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import api from '../../../api';
 import { buildFormData, roomToForm } from '../utils';
 import useRoomForm from '../hooks/useRoomForm';
-import useDebouncedSave from '../hooks/useDebouncedSave';
 import GeneralSection from './sections/GeneralSection';
 import PricingSection from './sections/PricingSection';
 import AvailabilitySection from './sections/AvailabilitySection';
-import FeaturesSection from './sections/FeaturesSection';
-import AmenitiesSection from './sections/AmenitiesSection';
 import GallerySection from './sections/GallerySection';
 import AdvancedSection from './sections/AdvancedSection';
+import WhatThisPlaceOffers from './sections/WhatThisPlaceOffers';
 import { CapacityFields } from './steps/CapacityStep';
 
-const SaveIndicator = ({ status }) => {
-  if (status === 'saving' || status === 'pending') {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-        <Loader2 className="h-3 w-3 animate-spin" /> Saving…
-      </span>
-    );
-  }
-  if (status === 'saved') {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
-        <Check className="h-3 w-3" /> Saved
-      </span>
-    );
-  }
-  if (status === 'error') {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-red-500">
-        <CloudOff className="h-3 w-3" /> Not saved
-      </span>
-    );
-  }
-  return null;
-};
-
 /**
- * Sliding room configuration panel. Every edit schedules a debounced
- * `PUT /rooms/:id` (same FormData shape as the old handleSaveRoom), so there
- * is no explicit Save button.
+ * Sliding room configuration panel. Click the Save button at the bottom to persist changes.
  */
 const RoomConfigSheet = ({
   open, onOpenChange, room, categories = [], priceUnits = [],
@@ -67,63 +39,58 @@ const RoomConfigSheet = ({
     setCustomPrice, resetCustomPrice, addBlockRange, removeBlockRange,
   } = formApi;
 
-  const { status, schedule, cancel } = useDebouncedSave(800);
-  const [openSections, setOpenSections] = useState([defaultSection]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [openSection, setOpenSection] = useState(undefined);
 
   useEffect(() => {
     if (!open || !room) return;
-    cancel();
     resetForm(roomToForm(room));
+    setOpenSection(undefined); // Ensure all sections start closed when opening or changing rooms
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, room?._id]);
 
-  useEffect(() => {
-    if (!open) return;
-    setOpenSections((prev) => (prev.includes(defaultSection) ? prev : [...prev, defaultSection]));
-  }, [open, defaultSection]);
-
   const persist = useCallback(async () => {
     if (!room?._id) return;
-    const payload = buildFormData(formRef.current, imagesRef.current, room.status || 'published');
-    const res = await api.put(`/rooms/${room._id}`, payload);
-    // Newly uploaded files are now persisted — adopt the server's image list.
-    setRoomImages([]);
-    imagesRef.current = [];
-    if (res.data?.images) {
-      setRoomForm((p) => ({ ...p, images: res.data.images }));
-      formRef.current = { ...formRef.current, images: res.data.images };
+    setIsSaving(true);
+    try {
+      const payload = buildFormData(formRef.current, imagesRef.current, room.status || 'published');
+      const res = await api.put(`/rooms/${room._id}`, payload);
+      // Newly uploaded files are now persisted — adopt the server's image list.
+      setRoomImages([]);
+      imagesRef.current = [];
+      if (res.data?.images) {
+        setRoomForm((p) => ({ ...p, images: res.data.images }));
+        formRef.current = { ...formRef.current, images: res.data.images };
+      }
+      onSaved?.(res.data);
+      toast.success('Room configurations saved successfully');
+      onOpenChange?.(false); // Close the sheet after saving
+    } catch (err) {
+      toast.error('Failed to save configurations');
+    } finally {
+      setIsSaving(false);
     }
-    onSaved?.(res.data);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room?._id, room?.status, onSaved]);
+  }, [room?._id, room?.status, onSaved, onOpenChange]);
 
-  const queueSave = useCallback(() => {
-    if (readOnly || !room?._id) return;
-    schedule(persist);
-  }, [readOnly, room?._id, schedule, persist]);
-
-  /** Every field edit goes through here: update local state, then autosave. */
+  /** Every field edit updates local state only (no autosave). */
   const patch = useCallback((partial) => {
     rawPatch(partial);
-    queueSave();
-  }, [rawPatch, queueSave]);
+  }, [rawPatch]);
 
   const onMapLinkChange = useCallback(async (val) => {
     await handleMapLinkChange(val);
-    queueSave();
-  }, [handleMapLinkChange, queueSave]);
+  }, [handleMapLinkChange]);
 
   const handleSetCustomPrice = (dateStr, value) => {
     if (setCustomPrice(dateStr, value)) {
       toast.success(`Price set to ₹${Number(value)} for ${dateStr}`);
-      queueSave();
     }
   };
 
   const handleResetCustomPrice = (dateStr) => {
     if (resetCustomPrice(dateStr)) {
       toast.success(`Reset to base price for ${dateStr}`);
-      queueSave();
     }
   };
 
@@ -131,7 +98,6 @@ const RoomConfigSheet = ({
     const ok = addBlockRange(start, end, reason);
     if (ok) {
       toast.success('Date block added');
-      queueSave();
     }
     return ok;
   };
@@ -139,7 +105,6 @@ const RoomConfigSheet = ({
   const handleRemoveBlock = (idx) => {
     removeBlockRange(idx);
     toast.success('Date block removed');
-    queueSave();
   };
 
   const sections = [
@@ -164,7 +129,7 @@ const RoomConfigSheet = ({
       ),
     },
     {
-      id: 'availability', label: 'Availability', icon: Shield,
+      id: 'availability', label: 'Room Blocking Feature', icon: Shield,
       content: (
         <AvailabilitySection
           form={roomForm} patch={patch} readOnly={readOnly}
@@ -175,10 +140,6 @@ const RoomConfigSheet = ({
       ),
     },
     {
-      id: 'features', label: 'Features', icon: Sparkles,
-      content: <FeaturesSection form={roomForm} patch={patch} readOnly={readOnly} />,
-    },
-    {
       id: 'policies', label: 'Policies & Capacity', icon: Users,
       content: <CapacityFields form={roomForm} patch={patch} readOnly={readOnly} />,
     },
@@ -187,13 +148,13 @@ const RoomConfigSheet = ({
       content: (
         <GallerySection
           form={roomForm} patch={patch} imageApi={formApi}
-          readOnly={readOnly} onDirty={queueSave}
+          readOnly={readOnly} onDirty={() => {}}
         />
       ),
     },
     {
-      id: 'amenities', label: 'Amenities', icon: Check,
-      content: <AmenitiesSection form={roomForm} patch={patch} readOnly={readOnly} />,
+      id: 'amenities', label: 'What this place offers', icon: Sparkles,
+      content: <WhatThisPlaceOffers form={roomForm} patch={patch} readOnly={readOnly} />,
     },
     {
       id: 'advanced', label: 'Advanced Settings', icon: MapPin,
@@ -210,9 +171,9 @@ const RoomConfigSheet = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-xl"
+        className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-xl"
       >
-        <SheetHeader className="sticky top-0 z-10 border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur">
+        <SheetHeader className="sticky top-0 z-10 border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur shrink-0">
           <div className="flex items-start justify-between gap-4 pr-8">
             <div className="min-w-0">
               <SheetTitle className="truncate">{room?.name || 'Room configuration'}</SheetTitle>
@@ -229,39 +190,60 @@ const RoomConfigSheet = ({
               </SheetDescription>
             </div>
             <div className="shrink-0 pt-1">
-              {readOnly
-                ? <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Read only</span>
-                : <SaveIndicator status={status} />}
+              {readOnly && (
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Read only</span>
+              )}
             </div>
           </div>
-          {!readOnly && (
-            <p className="pt-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-              Changes save automatically
-            </p>
-          )}
         </SheetHeader>
 
-        <div className="flex-1 px-6 pb-10">
+        <div className="flex-1 px-6 pb-10 overflow-y-auto pt-4">
           {!room ? (
             <div className="py-20 text-center text-sm font-bold text-gray-400">
               Select a room to configure.
             </div>
           ) : (
-            <Accordion type="multiple" value={openSections} onValueChange={setOpenSections}>
+            <Accordion type="single" collapsible value={openSection} onValueChange={setOpenSection}>
               {sections.map((s) => (
-                <AccordionItem key={s.id} value={s.id}>
-                  <AccordionTrigger>
+                <AccordionItem key={s.id} value={s.id} className="border-zinc-200">
+                  <AccordionTrigger className="hover:no-underline py-4 text-sm font-semibold text-zinc-900">
                     <span className="flex items-center gap-2">
-                      <s.icon className={cn('h-4 w-4 text-primary-500')} />
+                      <s.icon className={cn('h-4 w-4 text-zinc-500')} />
                       {s.label}
                     </span>
                   </AccordionTrigger>
-                  <AccordionContent>{s.content}</AccordionContent>
+                  <AccordionContent className="pb-5 pt-1">{s.content}</AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
           )}
         </div>
+
+        {room && (
+          <div className="sticky bottom-0 z-10 border-t border-zinc-200 bg-white px-6 py-4 flex justify-end gap-3 shrink-0 shadow-lg">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSaving}
+              onClick={() => onOpenChange?.(false)}
+              className="border-zinc-200 hover:bg-zinc-50 text-zinc-700"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={isSaving || readOnly}
+              className="bg-zinc-900 hover:bg-zinc-800 text-white min-w-[100px] font-medium"
+              onClick={persist}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                </>
+              ) : 'Save'}
+            </Button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );

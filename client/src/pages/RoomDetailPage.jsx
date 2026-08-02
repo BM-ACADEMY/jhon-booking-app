@@ -16,6 +16,78 @@ import "yet-another-react-lightbox/styles.css";
 
 const SERVER_URL = import.meta.env.VITE_BASE_URL;
 
+// Import SVG Assets for Room Details
+import airIcon from '@/assets/svg/air.svg';
+import bedLinenIcon from '@/assets/svg/bed linen.svg';
+import blenderIcon from '@/assets/svg/blender.svg';
+import bodySoapIcon from '@/assets/svg/body soap.svg';
+import cleaningIcon from '@/assets/svg/cleaing.svg';
+import clothesStorageIcon from '@/assets/svg/clothes storage.svg';
+import coffeeIcon from '@/assets/svg/coffee.svg';
+import conditionerIcon from '@/assets/svg/conditioner.svg';
+import cookerIcon from '@/assets/svg/cooker.svg';
+import diningTableIcon from '@/assets/svg/dining table.svg';
+import essentialsIcon from '@/assets/svg/essentials.svg';
+import extraPillowsIcon from '@/assets/svg/extra pillows and blankets.svg';
+import firstAidIcon from '@/assets/svg/first and kit.svg';
+import fridgeIcon from '@/assets/svg/fridge.svg';
+import hairdryerIcon from '@/assets/svg/hairdryer.svg';
+import hangersIcon from '@/assets/svg/hangers.svg';
+import hotWaterIcon from '@/assets/svg/hot water.svg';
+import ironIcon from '@/assets/svg/iron.svg';
+import kettleIcon from '@/assets/svg/kettle.svg';
+import paidCotIcon from '@/assets/svg/paid cot.svg';
+import paidFoldingIcon from '@/assets/svg/paid floading.svg';
+import parkingIcon from '@/assets/svg/parking.svg';
+import blindsIcon from '@/assets/svg/room darkening blinds.svg';
+import shampooIcon from '@/assets/svg/shampoo.svg';
+import showerGelIcon from '@/assets/svg/shower gel.svg';
+import tvIcon from '@/assets/svg/tv.svg';
+import washingMachineIcon from '@/assets/svg/washing machine.svg';
+import wifiIcon from '@/assets/svg/wifi.svg';
+import workspaceIcon from '@/assets/svg/workspace.svg';
+
+const AMENITY_SVG_MAP = {
+  'Hairdryer': hairdryerIcon,
+  'Cleaning Products': cleaningIcon,
+  'Shampoo': shampooIcon,
+  'Conditioner': conditionerIcon,
+  'Body Soap': bodySoapIcon,
+  'Hot Water': hotWaterIcon,
+  'Shower Gel': showerGelIcon,
+  'Washing Machine': washingMachineIcon,
+  'Essentials': essentialsIcon,
+  'Hangers': hangersIcon,
+  'Bed Linen': bedLinenIcon,
+  'Extra Pillows and Blankets': extraPillowsIcon,
+  'Room-Darkening Blinds': blindsIcon,
+  'Iron': ironIcon,
+  'TV': tvIcon,
+  'Paid Cot': paidCotIcon,
+  'Paid Folding Chair': paidFoldingIcon,
+  'Air Conditioning': airIcon,
+  'Exterior Security Cameras': firstAidIcon,
+  'First Aid Kit': firstAidIcon,
+  'Wifi': wifiIcon,
+  'Dedicated Workspace': workspaceIcon,
+  'Kitchen': cookerIcon,
+  'Fridge': fridgeIcon,
+  'Cooking Basics': cookerIcon,
+  'Crockery and Cutlery': diningTableIcon,
+  'Cooker': cookerIcon,
+  'Kettle': kettleIcon,
+  'Blender': blenderIcon,
+  'Dining Table': diningTableIcon,
+  'Coffee': coffeeIcon,
+  'Free Parking on Premises': parkingIcon,
+  'Self Check-In': wifiIcon,
+  'Building Staff': workspaceIcon,
+  'Tumble Dryer': washingMachineIcon,
+  'Smoke Alarm': firstAidIcon,
+  'Carbon Monoxide Alarm': firstAidIcon,
+  'Heating': airIcon
+};
+
 const getImageUrl = (img) => {
   const u = img?.url || img;
   if (!u || typeof u !== 'string') return null;
@@ -1507,10 +1579,15 @@ const RoomDetailPage = () => {
                   <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-5 lg:mb-6">What this place offers</h2>
                   <div className="grid grid-cols-2 gap-y-4 gap-x-8">
                     {room.amenities.map((a, i) => {
+                      const svgSrc = AMENITY_SVG_MAP[a.name];
                       const Icon = getIcon(a.icon);
                       return (
                         <div key={i} className="flex items-center gap-3 lg:gap-4 text-gray-700">
-                          <Icon className="w-5 h-5 lg:w-6 lg:h-6 text-gray-400" />
+                          {svgSrc ? (
+                            <img src={svgSrc} className="w-5 h-5 lg:w-6 lg:h-6 object-contain" alt={a.name} style={{ filter: 'grayscale(100%) brightness(0.3)' }} />
+                          ) : (
+                            <Icon className="w-5 h-5 lg:w-6 lg:h-6 text-gray-400" />
+                          )}
                           <span className="font-medium text-[15px] lg:text-base">{a.name}</span>
                         </div>
                       );

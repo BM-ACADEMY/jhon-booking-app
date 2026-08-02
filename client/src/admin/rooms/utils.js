@@ -249,6 +249,20 @@ export const quillFormats = [
 ];
 
 export const QUILL_RESPONSIVE_CSS = `
+  .quill-responsive-container {
+    border: 1px solid #e4e4e7 !important; /* border-zinc-200 */
+    border-radius: 8px !important;
+  }
+  .quill-responsive-container .ql-toolbar.ql-snow {
+    border: none !important;
+    border-bottom: 1px solid #e4e4e7 !important; /* border-zinc-200 */
+    background-color: #ffffff;
+    padding: 8px 12px;
+  }
+  .quill-responsive-container .ql-container.ql-snow {
+    border: none !important;
+    background-color: #ffffff;
+  }
   .quill-responsive-container .ql-container {
     min-height: 200px;
     max-height: 400px;

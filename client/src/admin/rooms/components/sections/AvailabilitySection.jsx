@@ -16,6 +16,7 @@ const AvailabilitySection = ({
   const [blockStartDate, setBlockStartDate] = useState('');
   const [blockEndDate, setBlockEndDate] = useState('');
   const [blockReason, setBlockReason] = useState('Maintenance');
+  const [isToggledOn, setIsToggledOn] = useState(false);
 
   // Prefill from the dates picked on the main calendar.
   useEffect(() => {
@@ -24,87 +25,112 @@ const AvailabilitySection = ({
     else if (selectedRange?.from) setBlockEndDate(selectedRange.from);
   }, [selectedRange?.from, selectedRange?.to]);
 
+  useEffect(() => {
+    if (blockStartDate && blockEndDate) {
+      const blocked = form.blockedDates?.some(
+        (b) =>
+          new Date(b.startDate).toDateString() === new Date(blockStartDate).toDateString() &&
+          new Date(b.endDate).toDateString() === new Date(blockEndDate).toDateString()
+      );
+      setIsToggledOn(!!blocked);
+    } else {
+      setIsToggledOn(false);
+    }
+  }, [blockStartDate, blockEndDate, form.blockedDates]);
+
+  const handleToggleChange = (val) => {
+    if (!val) {
+      // Toggle off: remove the block if it exists
+      const idx = form.blockedDates?.findIndex(
+        (b) =>
+          new Date(b.startDate).toDateString() === new Date(blockStartDate).toDateString() &&
+          new Date(b.endDate).toDateString() === new Date(blockEndDate).toDateString()
+      );
+      if (idx !== undefined && idx !== -1) {
+        onRemoveBlock?.(idx);
+      }
+      setIsToggledOn(false);
+    } else {
+      setIsToggledOn(true);
+    }
+  };
+
   const submitBlock = () => {
     const ok = onAddBlock?.(blockStartDate, blockEndDate, blockReason);
     if (ok) {
-      setBlockStartDate('');
-      setBlockEndDate('');
       setBlockReason('Maintenance');
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
-        <div>
-          <p className="text-sm font-bold text-emerald-900">Currently available</p>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700/70 mt-0.5">
-            Guest policies &amp; bookability
-          </p>
-        </div>
-        <Switch
-          checked={!!form.isAvailable}
-          disabled={readOnly}
-          onCheckedChange={(v) => patch({ isAvailable: v })}
-        />
-      </div>
-
-      <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4 space-y-1.5">
-        <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-800 flex items-center gap-2">
-          <Shield className="w-3.5 h-3.5" /> Date Blocking Policy
-        </h4>
-        <p className="text-[11px] text-amber-700 leading-relaxed">
-          Block dates to prevent bookings during maintenance, renovation, or owner use.
-          Blocked dates will not be searchable or bookable.
-        </p>
-      </div>
-
       {!readOnly && (
-        <div className="rounded-2xl border border-gray-100 bg-gray-50/60 p-4 space-y-4">
-          <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-            Create New Date Block
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-4 shadow-sm">
+          <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            Block Room Dates
           </h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="block-start">Start Date</Label>
-              <Input
-                id="block-start"
-                type="date"
-                value={blockStartDate}
-                onChange={(e) => setBlockStartDate(e.target.value)}
-              />
+
+          {blockStartDate && blockEndDate ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between py-1 bg-zinc-50 border border-zinc-200 px-3 py-2.5 rounded-lg">
+                <span className="text-xs font-semibold text-zinc-500">Selected Dates</span>
+                <span className="text-xs font-bold text-zinc-900">
+                  {blockStartDate === blockEndDate 
+                    ? new Date(blockStartDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                    : `${new Date(blockStartDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} – ${new Date(blockEndDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`
+                  }
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-t border-zinc-100">
+                <span className="text-sm font-semibold text-zinc-800">Block Room for Selected Dates</span>
+                <div className="scale-110 pr-1">
+                  <Switch
+                    checked={isToggledOn}
+                    onCheckedChange={handleToggleChange}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="block-end">End Date</Label>
-              <Input
-                id="block-end"
-                type="date"
-                value={blockEndDate}
-                onChange={(e) => setBlockEndDate(e.target.value)}
-              />
+          ) : (
+            <div className="py-4 text-center text-xs font-medium text-zinc-400">
+              Select a date on the calendar to configure blocking
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="block-reason">Reason / Note</Label>
-            <Input
-              id="block-reason"
-              value={blockReason}
-              onChange={(e) => setBlockReason(e.target.value)}
-              placeholder="e.g. Maintenance"
-            />
-          </div>
-          <div className="flex justify-end">
-            <Button type="button" size="sm" onClick={submitBlock}>Add Block Range</Button>
-          </div>
+          )}
+
+          {isToggledOn && blockStartDate && blockEndDate && (
+            <div className="space-y-3 pt-2 border-t border-zinc-100 animate-in fade-in duration-200">
+              <div className="space-y-1.5">
+                <Label htmlFor="block-reason" className="text-xs font-semibold text-zinc-700">Reason / Note</Label>
+                <Input
+                  id="block-reason"
+                  value={blockReason}
+                  onChange={(e) => setBlockReason(e.target.value)}
+                  placeholder="e.g. Maintenance, Owner use"
+                  className="border-zinc-200 focus:outline-none"
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  className="bg-zinc-900 hover:bg-zinc-800 text-white font-medium px-4"
+                  onClick={submitBlock}
+                >
+                  Apply Block
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       <div className="space-y-2">
-        <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-          <CalendarIcon className="w-3.5 h-3.5 text-primary-500" /> Active Date Blocks
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+          <CalendarIcon className="w-3.5 h-3.5 text-zinc-400" /> Active Date Blocks
         </h4>
         {(!form.blockedDates || form.blockedDates.length === 0) ? (
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 py-6 text-center text-[10px] font-bold uppercase tracking-widest text-gray-400">
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 py-6 text-center text-[10px] font-bold uppercase tracking-widest text-zinc-400 shadow-sm">
             No active date blocks configured.
           </div>
         ) : (
@@ -116,15 +142,15 @@ const AvailabilitySection = ({
               return (
                 <div
                   key={idx}
-                  className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-3 hover:bg-gray-100/60 transition-colors"
+                  className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-3 hover:bg-zinc-50 transition-colors shadow-sm"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-600">
                       <Shield className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="text-xs font-black text-gray-800">{startStr} – {endStr}</span>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mt-0.5">
+                      <span className="text-xs font-semibold text-zinc-950">{startStr} – {endStr}</span>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mt-0.5">
                         {block.reason || 'Maintenance'}
                       </p>
                     </div>
@@ -134,7 +160,7 @@ const AvailabilitySection = ({
                       type="button"
                       title="Remove Block"
                       onClick={() => onRemoveBlock?.(idx)}
-                      className="cursor-pointer p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                      className="cursor-pointer p-1.5 text-zinc-400 hover:text-red-500 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
