@@ -42,6 +42,20 @@ const GeneralSection = ({
       </Select>
     </div>
 
+    <div className="space-y-1.5">
+      <Label htmlFor="room-inventory">Maximum Physical Rooms (Inventory) *</Label>
+      <Input
+        id="room-inventory"
+        type="number"
+        min={1}
+        value={form.maxInventory !== undefined ? form.maxInventory : ''}
+        disabled={readOnly}
+        onChange={(e) => patch({ maxInventory: e.target.value === '' ? '' : Number(e.target.value) })}
+        placeholder="e.g. 2"
+        className="border-zinc-200 focus:outline-none"
+      />
+    </div>
+
     {showPricing && (
       <BasePricingFields
         form={form}

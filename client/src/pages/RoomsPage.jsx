@@ -623,6 +623,9 @@ const RoomsPage = () => {
         const maxChForThisRoom = maxCh + (maxAd - a);
         const upperC = Math.min(maxChForThisRoom, maxTotalGuests - a, remainingChildren);
         for (let c = 0; c <= upperC; c++) {
+          // Comfort check: if adults are at maximum limit for the room, children must be 0
+          if (a === maxAd && c > 0) continue;
+
           if (backtrack(index + 1, remainingAdults - a, remainingChildren - c)) {
             return true;
           }

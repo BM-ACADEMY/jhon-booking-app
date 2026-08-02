@@ -72,6 +72,7 @@ const roomSchema = new mongoose.Schema({
   }],
 
   status: { type: String, enum: ['draft', 'published'], default: 'draft' },
+  maxInventory: { type: Number, required: true, default: 1 },
   isAvailable: { type: Boolean, default: true },
   isFeatured: { type: Boolean, default: false },
   rating: { type: Number, default: 0 },

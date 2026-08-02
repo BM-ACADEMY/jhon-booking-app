@@ -66,6 +66,7 @@ export const DEFAULT_ROOM_FORM = {
   highlights: [], // [{ icon, text, subtext }]
   images: [], // [{ url, label }]
   isAvailable: true,
+  maxInventory: 1,
   datePrices: [],
   blockedDates: []
 };
@@ -227,6 +228,7 @@ export const roomToForm = (r, fallbackCategory = '') => ({
   highlights: r?.highlights || [],
   images: r?.images || [],
   isAvailable: r?.isAvailable ?? true,
+  maxInventory: r?.maxInventory ?? 1,
   datePrices: r?.datePrices || [],
   blockedDates: r?.blockedDates || []
 });

@@ -14,12 +14,14 @@ import {
   markPaymentComplete,
   createBalanceRazorpayOrder,
   verifyBalanceRazorpayPayment,
-  getBookingByIdPublic
+  getBookingByIdPublic,
+  getRoomAvailabilityPublic
 } from '../controllers/booking.controller.js';
 import { protect, adminOnly, protectOptional } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
+router.get('/room-availability/:id', getRoomAvailabilityPublic);
 router.get('/public/:id', getBookingByIdPublic);
 router.get('/stats/dashboard', protect, adminOnly, getDashboardStats);
 router.get('/', protect, adminOnly, getAllBookings);

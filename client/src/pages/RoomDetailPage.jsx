@@ -256,6 +256,34 @@ const RoomDetailPage = () => {
   const [infants, setInfants] = useState(infantsQuery);
   const [roomsCount, setRoomsCount] = useState(roomsCountQuery);
 
+  const [remainingRooms, setRemainingRooms] = useState(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  useEffect(() => {
+    if (!room?._id) return;
+    if (!checkIn || !checkOut) {
+      setRemainingRooms(null);
+      return;
+    }
+
+    const fetchAvailability = async () => {
+      setCheckingAvailability(true);
+      try {
+        const res = await api.get(`/bookings/room-availability/${room._id}`, {
+          params: { checkIn, checkOut, adults, children, roomsCount }
+        });
+        setRemainingRooms(res.data.remainingRooms ?? 0);
+      } catch (err) {
+        console.error('Failed to fetch availability:', err);
+        setRemainingRooms(0);
+      } finally {
+        setCheckingAvailability(false);
+      }
+    };
+
+    fetchAvailability();
+  }, [room?._id, checkIn, checkOut, adults, children, roomsCount]);
+
   const [guestInfo, setGuestInfo] = useState({
     fullName: '',
     email: '',
@@ -2172,12 +2200,33 @@ const RoomDetailPage = () => {
                       <span>Total</span>
                       <span>₹{(total + getAppliedTax(total)).toLocaleString('en-IN')}</span>
                     </div>
+
+                    {checkIn && checkOut && remainingRooms !== null && (
+                      <div className="mt-3 text-center py-2 px-3 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center gap-2">
+                        {remainingRooms > 5 && (
+                          <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide">Available</span>
+                        )}
+                        {remainingRooms > 1 && remainingRooms <= 5 && (
+                          <span className="text-xs font-bold text-amber-600 uppercase tracking-wide">{remainingRooms} Rooms Available</span>
+                        )}
+                        {remainingRooms === 1 && (
+                          <span className="text-xs font-bold text-rose-600 uppercase tracking-wide">Only 1 Room Left</span>
+                        )}
+                        {remainingRooms === 0 && (
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Sold Out</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                <button onClick={handleBooking} disabled={bookingLoading || !room.isAvailable} className="w-full bg-[#FCE83A] hover:bg-[#FCE83A]/90 text-gray-900 font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm">
+                <button 
+                  onClick={handleBooking} 
+                  disabled={bookingLoading || !room.isAvailable || (checkIn && checkOut && remainingRooms === 0)} 
+                  className="w-full bg-[#FCE83A] hover:bg-[#FCE83A]/90 text-gray-900 font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                >
                   {bookingLoading && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {room.isAvailable ? 'Book Now' : 'Check Availability'}
+                  {remainingRooms === 0 ? 'Sold Out' : (room.isAvailable ? 'Book Now' : 'Check Availability')}
                 </button>
                 <p className="text-sm text-gray-500 text-center mt-4">You won't be charged yet</p>
               </div>
@@ -2191,10 +2240,10 @@ const RoomDetailPage = () => {
       <div className="lg:hidden fixed bottom-0 inset-x-0 bg-gray-400/10 backdrop-blur-[5px] px-5 pt-3 pb-8 z-40 shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
         <button
           onClick={() => setShowMobileBooking(true)}
-          disabled={!room.isAvailable}
+          disabled={!room.isAvailable || (checkIn && checkOut && remainingRooms === 0)}
           className="w-full bg-[#FCE83A] active:bg-[#f3df2c] text-gray-900 font-bold text-[17px] py-4 rounded-full transition-transform duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-sm"
         >
-          {room.isAvailable ? 'Book Now' : 'Check Availability'}
+          {remainingRooms === 0 ? 'Sold Out' : (room.isAvailable ? 'Book Now' : 'Check Availability')}
         </button>
       </div>
 
@@ -2391,11 +2440,11 @@ const RoomDetailPage = () => {
             {/* Action Button inside Modal */}
             <button
               onClick={handleBooking}
-              disabled={bookingLoading}
+              disabled={bookingLoading || (checkIn && checkOut && remainingRooms === 0)}
               className="w-full bg-[#FCE83A] active:bg-[#f3df2c] text-gray-900 font-bold text-[17px] py-4 rounded-full transition-transform duration-200 active:scale-[0.98] disabled:opacity-50 mt-2 shadow-sm flex justify-center items-center"
             >
               {bookingLoading && <Loader2 className="w-5 h-5 animate-spin mr-2" />}
-              Confirm & Pay
+              {remainingRooms === 0 ? 'Sold Out' : 'Confirm & Pay'}
             </button>
           </div>
         </div>
