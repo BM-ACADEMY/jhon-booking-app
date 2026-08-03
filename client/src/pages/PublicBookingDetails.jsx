@@ -27,7 +27,8 @@ const PublicBookingDetails = () => {
     const fetchBookingDetails = async () => {
       try {
         setLoading(true);
-        const res = await api.get(`/bookings/public/${id}`);
+        const searchParams = window.location.search || '';
+        const res = await api.get(`/bookings/public/${id}${searchParams}`);
         setBooking(res.data);
       } catch (err) {
         console.error('Error fetching public booking details:', err);

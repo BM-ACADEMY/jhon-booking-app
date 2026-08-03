@@ -12,11 +12,7 @@ const roomSchema = new mongoose.Schema({
   priceUnit: { type: String, default: 'night' }, // night, day, hour, etc.
 
   // Capacity details
-  guests: { type: Number, required: true, default: 2 },
-  maxAdults: { type: Number, required: true, default: 2 },
-  maxChildren: { type: Number, required: true, default: 0 },
-  maxInfants: { type: Number, default: 2 },
-  allowExtraInfant: { type: Boolean, default: false },
+  maxOccupancy: { type: Number, required: true, default: 2 },
   capacityNotes: { type: String, default: '' },
   bedrooms: { type: Number, default: 1 },
   beds: { type: Number, default: 1 },

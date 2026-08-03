@@ -1889,224 +1889,232 @@ const RoomDetailPage = () => {
 
                     {activeAccordion === 2 && (
                       <div className="p-6 bg-white">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                          
-                          {/* FORM FIELDS (LEFT SIDE) */}
-                          <div className="lg:col-span-7 space-y-4">
-                            
-                            <div>
-                              <input
-                                type="text"
-                                name="fullName"
-                                value={guestInfo.fullName}
-                                onChange={handleGuestInfoChange}
-                                placeholder="First Name and Last Name *"
-                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-xs font-semibold focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-colors"
-                              />
+                        {user?.role === 'admin' ? (
+                          <div className="max-w-xl mx-auto text-center py-10 px-6 bg-amber-50 border border-amber-200 rounded-3xl space-y-6 shadow-sm">
+                            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-600">
+                              <Icons.ShieldAlert className="w-8 h-8 shrink-0" />
                             </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <input
-                                type="email"
-                                name="email"
-                                value={guestInfo.email}
-                                onChange={handleGuestInfoChange}
-                                placeholder="Email Address *"
-                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-xs font-semibold focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-colors"
-                              />
-                              <div className="flex border border-gray-300 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-yellow-500 focus-within:border-yellow-500">
-                                <span className="bg-gray-50 border-r border-gray-300 px-3 py-3 text-xs font-bold text-gray-500 flex items-center gap-1">
-                                  🇮🇳 +91
-                                </span>
+                            <h3 className="text-xl font-bold text-slate-900">Admin Session Active</h3>
+                            <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
+                              Direct website self-booking is disabled for administrator accounts. To book a room for a customer, please go to the official Admin Booking Creator inside the admin panel.
+                            </p>
+                            <div className="pt-2">
+                              <Link 
+                                to="/admin/bookings" 
+                                className="inline-flex items-center gap-2 bg-purple-700 hover:bg-purple-800 text-white font-extrabold text-xs px-8 py-3.5 rounded-xl uppercase tracking-widest transition-all shadow-md hover:shadow-lg active:scale-95 border-none cursor-pointer"
+                              >
+                                Go to Admin Bookings
+                              </Link>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                            
+                            {/* FORM FIELDS (LEFT SIDE) */}
+                            <div className="lg:col-span-7 space-y-4">
+                              
+                              <div>
                                 <input
-                                  type="tel"
-                                  name="phone"
-                                  value={guestInfo.phone}
+                                  type="text"
+                                  name="fullName"
+                                  value={guestInfo.fullName}
                                   onChange={handleGuestInfoChange}
-                                  maxLength={10}
-                                  placeholder="10-digit mobile number *"
-                                  className="w-full bg-white border-none px-4 py-3 text-xs font-semibold outline-none"
+                                  placeholder="First Name and Last Name *"
+                                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-xs font-semibold focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-colors"
                                 />
                               </div>
-                            </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <input
+                                  type="email"
+                                  name="email"
+                                  value={guestInfo.email}
+                                  onChange={handleGuestInfoChange}
+                                  placeholder="Email Address *"
+                                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-xs font-semibold focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-colors"
+                                />
+                                <div className="flex border border-gray-300 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-yellow-500 focus-within:border-yellow-500">
+                                  <span className="bg-gray-50 border-r border-gray-300 px-3 py-3 text-xs font-bold text-gray-500 flex items-center gap-1">
+                                    🇮🇳 +91
+                                  </span>
+                                  <input
+                                    type="tel"
+                                    name="phone"
+                                    value={guestInfo.phone}
+                                    onChange={handleGuestInfoChange}
+                                    maxLength={10}
+                                    placeholder="10-digit mobile number *"
+                                    className="w-full bg-white border-none px-4 py-3 text-xs font-semibold outline-none"
+                                  />
+                                </div>
+                              </div>
 
 
 
-                            <div>
-                              <input
-                                type="text"
-                                name="gstNumber"
-                                value={guestInfo.gstNumber}
-                                onChange={handleGuestInfoChange}
-                                placeholder="GST Number (Optional)"
-                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-xs font-semibold focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-colors"
-                              />
-                            </div>
+                              <div>
+                                <input
+                                  type="text"
+                                  name="gstNumber"
+                                  value={guestInfo.gstNumber}
+                                  onChange={handleGuestInfoChange}
+                                  placeholder="GST Number (Optional)"
+                                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-xs font-semibold focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-colors"
+                                />
+                              </div>
 
 
 
-                            {/* Payment Options (Styled like Screenshot) */}
-                            <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3 shadow-sm">
-                              {/* Option 1: Pay Later (Advance Payment) - Only show if advancePercent < 100 */}
-                              {advancePercent < 100 && (
-                                <div className="flex items-start gap-3">
+                              {/* Payment Options (Styled like Screenshot) */}
+                              <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3 shadow-sm">
+                                {/* Option 1: Pay Later (Advance Payment) - Only show if advancePercent < 100 */}
+                                {advancePercent < 100 && (
+                                  <div className="flex items-start gap-3">
+                                    <input
+                                      type="radio"
+                                      id="payAdvance"
+                                      name="paymentChoice"
+                                      checked={paymentType === 'advance'}
+                                      onChange={() => setPaymentType('advance')}
+                                      className="mt-1 accent-black"
+                                    />
+                                    <label htmlFor="payAdvance" className="flex-1 text-xs text-gray-900 cursor-pointer">
+                                      <span className="font-bold block">I prefer to Pay Later</span>
+                                      <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
+                                        <span>Pay Now:</span>
+                                        <span className="font-bold text-gray-900">₹{Math.round(finalTotal * (advancePercent / 100)).toLocaleString('en-IN')}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-[11px] text-gray-500">
+                                        <span>Pay Later:</span>
+                                        <span>₹{(finalTotal - Math.round(finalTotal * (advancePercent / 100))).toLocaleString('en-IN')}</span>
+                                      </div>
+                                    </label>
+                                  </div>
+                                )}
+
+                                {/* Option 2: Pay 100% Now */}
+                                <div className={`flex items-start gap-3 ${advancePercent < 100 ? 'border-t border-gray-150 pt-3' : ''}`}>
                                   <input
                                     type="radio"
-                                    id="payAdvance"
+                                    id="pay100"
                                     name="paymentChoice"
-                                    checked={paymentType === 'advance'}
-                                    onChange={() => setPaymentType('advance')}
+                                    checked={paymentType === 'full'}
+                                    onChange={() => setPaymentType('full')}
                                     className="mt-1 accent-black"
                                   />
-                                  <label htmlFor="payAdvance" className="flex-1 text-xs text-gray-900 cursor-pointer">
-                                    <span className="font-bold block">I prefer to Pay Later</span>
+                                  <label htmlFor="pay100" className="flex-1 text-xs text-gray-900 cursor-pointer">
+                                    <span className="font-bold block">I prefer to pay 100% now</span>
                                     <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
                                       <span>Pay Now:</span>
-                                      <span className="font-bold text-gray-900">₹{Math.round(finalTotal * (advancePercent / 100)).toLocaleString('en-IN')}</span>
+                                      <span className="font-bold text-gray-900">₹{finalTotal.toLocaleString('en-IN')}</span>
                                     </div>
                                     <div className="flex items-center justify-between text-[11px] text-gray-500">
                                       <span>Pay Later:</span>
-                                      <span>₹{(finalTotal - Math.round(finalTotal * (advancePercent / 100))).toLocaleString('en-IN')}</span>
+                                      <span>₹0.00</span>
                                     </div>
                                   </label>
                                 </div>
-                              )}
+                              </div>
 
-                              {/* Option 2: Pay 100% Now */}
-                              <div className={`flex items-start gap-3 ${advancePercent < 100 ? 'border-t border-gray-150 pt-3' : ''}`}>
+                              {/* Terms and Conditions Checkbox */}
+                              <div className="flex items-start gap-2.5 pt-2">
                                 <input
-                                  type="radio"
-                                  id="pay100"
-                                  name="paymentChoice"
-                                  checked={paymentType === 'full'}
-                                  onChange={() => setPaymentType('full')}
-                                  className="mt-1 accent-black"
+                                  type="checkbox"
+                                  id="termsCheck"
+                                  checked={termsAccepted}
+                                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-black focus:ring-black accent-black"
                                 />
-                                <label htmlFor="pay100" className="flex-1 text-xs text-gray-900 cursor-pointer">
-                                  <span className="font-bold block">I prefer to pay 100% now</span>
-                                  <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
-                                    <span>Pay Now:</span>
-                                    <span className="font-bold text-gray-900">₹{finalTotal.toLocaleString('en-IN')}</span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-[11px] text-gray-500">
-                                    <span>Pay Later:</span>
-                                    <span>₹0.00</span>
-                                  </div>
+                                <label htmlFor="termsCheck" className="text-[11px] text-gray-500 leading-snug cursor-pointer">
+                                  By completing this reservation you are accepting our <span className="underline font-bold text-gray-800">Terms & Conditions</span>
                                 </label>
                               </div>
-                            </div>
 
-                            {/* Terms and Conditions Checkbox */}
-                            <div className="flex items-start gap-2.5 pt-2">
-                              <input
-                                type="checkbox"
-                                id="termsCheck"
-                                checked={termsAccepted}
-                                onChange={(e) => setTermsAccepted(e.target.checked)}
-                                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-black focus:ring-black accent-black"
-                              />
-                              <label htmlFor="termsCheck" className="text-[11px] text-gray-500 leading-snug cursor-pointer">
-                                By completing this reservation you are accepting our <span className="underline font-bold text-gray-800">Terms & Conditions</span>
-                              </label>
-                            </div>
-
-                            {/* Submit Button */}
-                            <div className="pt-2">
-                              <button
-                                type="button"
-                                disabled={paymentProcessing || !termsAccepted}
-                                onClick={initiateGuestBookingPayment}
-                                className="w-full bg-[#1a1d20] hover:bg-black text-white font-bold text-[13px] py-3.5 rounded-lg transition-all border-none cursor-pointer tracking-wider uppercase flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-[0.99]"
-                              >
-                                {paymentProcessing ? (
-                                  <Icons.Loader2 className="w-4 h-4 animate-spin text-white" />
-                                ) : (
-                                  <>
-                                    <span>Book Now & Pay via</span>
-                                    <span className="inline-flex items-center gap-1 text-[#3395ff] font-extrabold normal-case text-sm tracking-tight">
-                                      <svg className="w-4 h-4 fill-[#3395ff]" viewBox="0 0 24 24">
-                                        <path d="M22.436 0l-11.91 7.773-1.174 4.276 6.625-4.323-2.937 10.686 11.396-7.441 1.174-4.276-6.625 4.323zM9.467 11.23L0 17.414l7.106-2.585z"/>
-                                      </svg>
-                                      Razorpay
-                                    </span>
-                                  </>
-                                )}
-                              </button>
-                            </div>
-
-                            {/* Credit Card & Razorpay Logos */}
-                            <div className="flex flex-wrap justify-center items-center gap-2 pt-2 opacity-80">
-                              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Secured via:</span>
-                              <div className="bg-blue-50 text-[#0066cc] border border-blue-200 px-2 py-0.5 rounded text-[10px] font-extrabold flex items-center gap-1">
-                                <svg className="w-3 h-3 fill-[#0066cc]" viewBox="0 0 24 24">
-                                  <path d="M22.436 0l-11.91 7.773-1.174 4.276 6.625-4.323-2.937 10.686 11.396-7.441 1.174-4.276-6.625 4.323zM9.467 11.23L0 17.414l7.106-2.585z"/>
-                                </svg>
-                                Razorpay
+                              {/* Submit Button */}
+                              <div className="pt-2">
+                                <button
+                                  type="button"
+                                  onClick={initiateGuestBookingPayment}
+                                  className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[13px] py-3.5 rounded-lg transition-all border-none cursor-pointer tracking-wider uppercase flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.99]"
+                                >
+                                  <Icons.CreditCard className="w-4 h-4 text-white" />
+                                  <span>Pay & Confirm Booking</span>
+                                </button>
                               </div>
-                              <div className="bg-gray-100 px-2 py-0.5 rounded text-[9px] font-black text-gray-700 tracking-wider">VISA</div>
-                              <div className="bg-gray-100 px-2 py-0.5 rounded text-[9px] font-black text-gray-700 tracking-wider">MASTERCARD</div>
-                              <div className="bg-gray-100 px-2 py-0.5 rounded text-[9px] font-black text-gray-700 tracking-wider">UPI / NET BANKING</div>
-                            </div>
 
-                          </div>
-
-                          {/* sticky SUMMARY CARD (RIGHT SIDE) */}
-                          <div className="lg:col-span-5 bg-white border border-gray-300 rounded-2xl p-6 space-y-4 shadow-sm">
-                            <h3 className="font-bold text-sm text-gray-900 border-b border-gray-200 pb-2">Your Booking Details</h3>
-                            
-                            <div className="flex justify-between items-start gap-2">
-                              <span className="font-bold text-gray-900 text-xs sm:text-[13px]">The Balified Villa</span>
-                              <span className="font-bold text-gray-900 text-xs sm:text-[13px]">₹{(total + getAppliedTax(total) + selectedAddons.reduce((sum, a) => sum + a.price, 0)).toLocaleString('en-IN')}</span>
-                            </div>
-
-                            <div className="bg-gray-50 rounded-xl p-3 text-[11px] text-gray-500 font-semibold space-y-1">
-                              <div>{formatDisplayDate(checkIn, 'en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })} - {formatDisplayDate(checkOut, 'en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                              <div>{nights} Night{nights > 1 ? 's' : ''} — {roomsCount} Room{roomsCount > 1 ? 's' : ''}, {adults} Adult{adults > 1 ? 's' : ''}</div>
-                            </div>
-
-                            <div className="space-y-2 border-t border-gray-200 pt-3 text-xs">
-                              <div className="flex justify-between items-start text-gray-600">
-                                <span>Room - {room.name}</span>
-                                <span className="font-semibold text-gray-900">₹{total.toLocaleString('en-IN')}</span>
+                              {/* Credit Card & Razorpay Logos */}
+                              <div className="flex flex-wrap justify-center items-center gap-2 pt-2 opacity-80">
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Secured via:</span>
+                                <div className="bg-blue-50 text-[#0066cc] border border-blue-200 px-2 py-0.5 rounded text-[10px] font-extrabold flex items-center gap-1">
+                                  <svg className="w-3 h-3 fill-[#0066cc]" viewBox="0 0 24 24">
+                                    <path d="M22.436 0l-11.91 7.773-1.174 4.276 6.625-4.323-2.937 10.686 11.396-7.441 1.174-4.276-6.625 4.323zM9.467 11.23L0 17.414l7.106-2.585z"/>
+                                  </svg>
+                                  Razorpay
+                                </div>
+                                <div className="bg-gray-100 px-2 py-0.5 rounded text-[9px] font-black text-gray-700 tracking-wider">VISA</div>
+                                <div className="bg-gray-100 px-2 py-0.5 rounded text-[9px] font-black text-gray-700 tracking-wider">MASTERCARD</div>
+                                <div className="bg-gray-100 px-2 py-0.5 rounded text-[9px] font-black text-gray-700 tracking-wider">UPI / NET BANKING</div>
                               </div>
-                              <div className="text-[10px] text-gray-400 italic">Room with Breakfast & Premium Comfort</div>
+
+                            </div>
+
+                            {/* sticky SUMMARY CARD (RIGHT SIDE) */}
+                            <div className="lg:col-span-5 bg-white border border-gray-300 rounded-2xl p-6 space-y-4 shadow-sm">
+                              <h3 className="font-bold text-sm text-gray-900 border-b border-gray-200 pb-2">Your Booking Details</h3>
                               
-                              {selectedAddons.length > 0 && (
-                                <div className="space-y-1.5 pt-1.5 border-t border-gray-100">
-                                  <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Add-on Services</span>
-                                  {selectedAddons.map(a => (
-                                    <div key={a._id} className="flex justify-between text-gray-500">
-                                      <span>• {a.name}</span>
-                                      <span>₹{a.price.toLocaleString('en-IN')}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-
-                              <div className="flex justify-between text-gray-600 border-t border-gray-100 pt-2">
-                                <span>Sub Total</span>
-                                <span className="font-semibold text-gray-900">₹{(total + selectedAddons.reduce((sum, a) => sum + a.price, 0)).toLocaleString('en-IN')}</span>
+                              <div className="flex justify-between items-start gap-2">
+                                <span className="font-bold text-gray-900 text-xs sm:text-[13px]">The Balified Villa</span>
+                                <span className="font-bold text-gray-900 text-xs sm:text-[13px]">₹{(total + getAppliedTax(total) + selectedAddons.reduce((sum, a) => sum + a.price, 0)).toLocaleString('en-IN')}</span>
                               </div>
 
-                              {getAppliedTaxPercent(total) > 0 && (
-                                <div className="flex justify-between text-gray-600">
-                                  <span>Taxes and Fees</span>
-                                  <span className="font-semibold text-gray-900">₹{getAppliedTax(total).toLocaleString('en-IN')}</span>
-                                </div>
-                              )}
-
-                              <div className="flex justify-between text-gray-900 font-bold text-sm border-t border-gray-200 pt-3">
-                                <span>Grand Total</span>
-                                <span className="text-[#c5a880] text-base">₹{(total + getAppliedTax(total) + selectedAddons.reduce((sum, a) => sum + a.price, 0)).toLocaleString('en-IN')}</span>
+                              <div className="bg-gray-50 rounded-xl p-3 text-[11px] text-gray-500 font-semibold space-y-1">
+                                <div>{formatDisplayDate(checkIn, 'en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })} - {formatDisplayDate(checkOut, 'en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                                <div>{nights} Night{nights > 1 ? 's' : ''} — {roomsCount} Room{roomsCount > 1 ? 's' : ''}, {adults} Adult{adults > 1 ? 's' : ''}</div>
                               </div>
 
-                              <div className="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-3 py-2 rounded-lg text-center border border-emerald-200">
-                                You are saving 10% on this premium villa deal!
+                              <div className="space-y-2 border-t border-gray-200 pt-3 text-xs">
+                                <div className="flex justify-between items-start text-gray-600">
+                                  <span>Room - {room.name}</span>
+                                  <span className="font-semibold text-gray-900">₹{total.toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="text-[10px] text-gray-400 italic">Room with Breakfast & Premium Comfort</div>
+                                
+                                {selectedAddons.length > 0 && (
+                                  <div className="space-y-1.5 pt-1.5 border-t border-gray-100">
+                                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Add-on Services</span>
+                                    {selectedAddons.map(a => (
+                                      <div key={a._id} className="flex justify-between text-gray-500">
+                                        <span>• {a.name}</span>
+                                        <span>₹{a.price.toLocaleString('en-IN')}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                <div className="flex justify-between text-gray-600 border-t border-gray-100 pt-2">
+                                  <span>Sub Total</span>
+                                  <span className="font-semibold text-gray-900">₹{(total + selectedAddons.reduce((sum, a) => sum + a.price, 0)).toLocaleString('en-IN')}</span>
+                                </div>
+
+                                {getAppliedTaxPercent(total) > 0 && (
+                                  <div className="flex justify-between text-gray-600">
+                                    <span>Taxes and Fees</span>
+                                    <span className="font-semibold text-gray-900">₹{getAppliedTax(total).toLocaleString('en-IN')}</span>
+                                  </div>
+                                )}
+
+                                <div className="flex justify-between text-gray-900 font-bold text-sm border-t border-gray-200 pt-3">
+                                  <span>Grand Total</span>
+                                  <span className="text-[#c5a880] text-base">₹{(total + getAppliedTax(total) + selectedAddons.reduce((sum, a) => sum + a.price, 0)).toLocaleString('en-IN')}</span>
+                                </div>
+
+                                <div className="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-3 py-2 rounded-lg text-center border border-emerald-200">
+                                  You are saving 10% on this premium villa deal!
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                        </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -2272,14 +2280,23 @@ const RoomDetailPage = () => {
                   </div>
                 )}
 
-                <button 
-                  onClick={handleBooking} 
-                  disabled={bookingLoading || !room.isAvailable || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed} 
-                  className="w-full bg-[#FCE83A] hover:bg-[#FCE83A]/90 text-gray-900 font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm mt-4"
-                >
-                  {bookingLoading && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {remainingRooms === 0 ? 'Sold Out' : (!clientOccupancyValidation.isAllowed ? 'Invalid Guests' : (room.isAvailable ? 'Book Now' : 'Check Availability'))}
-                </button>
+                {user?.role === 'admin' ? (
+                  <Link 
+                    to="/admin/bookings" 
+                    className="w-full bg-purple-750 hover:bg-purple-800 text-white font-bold text-base py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm mt-4 uppercase tracking-wider text-center border-none cursor-pointer"
+                  >
+                    Go to Admin Bookings
+                  </Link>
+                ) : (
+                  <button 
+                    onClick={handleBooking} 
+                    disabled={bookingLoading || !room.isAvailable || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed} 
+                    className="w-full bg-[#FCE83A] hover:bg-[#FCE83A]/90 text-gray-900 font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm mt-4"
+                  >
+                    {bookingLoading && <Loader2 className="w-5 h-5 animate-spin" />}
+                    {remainingRooms === 0 ? 'Sold Out' : (!clientOccupancyValidation.isAllowed ? 'Invalid Guests' : (room.isAvailable ? 'Book Now' : 'Check Availability'))}
+                  </button>
+                )}
                 <p className="text-sm text-gray-500 text-center mt-4">You won't be charged yet</p>
               </div>
             </div>
@@ -2290,13 +2307,22 @@ const RoomDetailPage = () => {
 
       {/* --- MOBILE FIXED BOTTOM BAR (Lite Glassmorphism Updated) --- */}
       <div className="lg:hidden fixed bottom-0 inset-x-0 bg-gray-400/10 backdrop-blur-[5px] px-5 pt-3 pb-8 z-40 shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
-        <button
-          onClick={() => setShowMobileBooking(true)}
-          disabled={!room.isAvailable || (checkIn && checkOut && remainingRooms === 0)}
-          className="w-full bg-[#FCE83A] active:bg-[#f3df2c] text-gray-900 font-bold text-[17px] py-4 rounded-full transition-transform duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-sm"
-        >
-          {remainingRooms === 0 ? 'Sold Out' : (room.isAvailable ? 'Book Now' : 'Check Availability')}
-        </button>
+        {user?.role === 'admin' ? (
+          <Link 
+            to="/admin/bookings" 
+            className="w-full bg-purple-700 active:bg-purple-800 text-white font-bold text-[17px] py-4 rounded-full flex items-center justify-center shadow-sm uppercase tracking-wider text-center border-none cursor-pointer"
+          >
+            Go to Admin Bookings
+          </Link>
+        ) : (
+          <button
+            onClick={() => setShowMobileBooking(true)}
+            disabled={!room.isAvailable || (checkIn && checkOut && remainingRooms === 0)}
+            className="w-full bg-[#FCE83A] active:bg-[#f3df2c] text-gray-900 font-bold text-[17px] py-4 rounded-full transition-transform duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-sm"
+          >
+            {remainingRooms === 0 ? 'Sold Out' : (room.isAvailable ? 'Book Now' : 'Check Availability')}
+          </button>
+        )}
       </div>
 
       {/* --- MOBILE BOOKING BOTTOM SHEET (MODAL) --- */}

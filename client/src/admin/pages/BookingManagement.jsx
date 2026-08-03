@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -13,6 +13,7 @@ import {
   User,
   Home,
   Calendar,
+  CalendarPlus,
   DollarSign,
   ChevronLeft,
   ChevronRight,
@@ -20,7 +21,9 @@ import {
   ChevronDown,
   Percent,
   CircleCheckBig,
-  MessageSquare
+  MessageSquare,
+  Share2,
+  ExternalLink
 } from 'lucide-react';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
@@ -52,6 +55,7 @@ const paymentConfig = {
 };
 
 const BookingManagement = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,21 +82,28 @@ const BookingManagement = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Fetch bookings from API
-  const fetchBookings = async () => {
+  const fetchBookings = async (showLoadingSpinner = true) => {
     try {
-      setLoading(true);
+      if (showLoadingSpinner) setLoading(true);
       const res = await api.get('/bookings');
       setBookings(res.data);
     } catch (err) {
-      toast.error('Failed to load bookings');
+      if (showLoadingSpinner) toast.error('Failed to load bookings');
       console.error(err);
     } finally {
-      setLoading(false);
+      if (showLoadingSpinner) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBookings();
+    fetchBookings(true);
+
+    // Poll for new bookings in real-time every 8 seconds
+    const interval = setInterval(() => {
+      fetchBookings(false);
+    }, 8000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Reset page to 1 when search, filter, date filter, or items per page change
@@ -250,8 +261,71 @@ const BookingManagement = () => {
     return diff > 0 ? Math.round(diff / (1000 * 60 * 60 * 24)) : 0;
   };
 
+  // WhatsApp Share Helper targeting _blank
+  const handleShareWhatsApp = (booking) => {
+    const rawPhone = booking.user?.phone || '';
+    const phone = rawPhone.replace(/\D/g, '');
+    if (!phone) {
+      toast.error('Customer phone number not available');
+      return;
+    }
+    const cleanPhone = phone.startsWith('91') ? phone : (phone.length === 10 ? `91${phone}` : phone);
+
+    const roomName = booking.rooms && booking.rooms.length > 0
+      ? booking.rooms.map(r => r.name).join(', ')
+      : (booking.room?.name || 'Villa Room');
+    const customerName = booking.user?.name || 'Customer';
+    const cIn = booking.checkIn ? new Date(booking.checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+    const cOut = booking.checkOut ? new Date(booking.checkOut).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+    const due = booking.dueAmount > 0 ? booking.dueAmount : (booking.paymentStatus === 'unpaid' ? booking.totalAmount : 0);
+
+    const paymentUrl = `${window.location.origin}/booking-details/${booking._id}`;
+
+    const message = 
+`Hello *${customerName}*! 👋
+
+Your room booking at *The Balified Villa* details: 🏨✨
+
+📋 *Booking ID:* #${booking._id.slice(-6).toUpperCase()}
+• *Room:* ${roomName} (${booking.roomsCount || 1} Room${(booking.roomsCount || 1) > 1 ? 's' : ''})
+• *Check-In:* ${cIn}
+• *Check-Out:* ${cOut}
+
+💳 *Payment Breakdown:*
+• *Total Amount:* ₹${(booking.totalAmount || 0).toLocaleString('en-IN')}
+• *Paid Amount:* ₹${(booking.paidAmount || 0).toLocaleString('en-IN')}
+• *Due Balance:* ₹${due.toLocaleString('en-IN')}
+
+${due > 0 ? `🔗 *Payment Link:* ${paymentUrl}\n\nPlease complete your balance payment using the link above.` : '✅ *Payment Status:* Full Paid'}
+
+Thank you for choosing The Balified Villa! 🌴`;
+
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, '_blank');
+  };
+
   return (
     <div className="space-y-6">
+      {/* Top Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-200/80">
+        <div>
+          <h1 className="text-xl font-black text-gray-900 flex items-center gap-2">
+            <Calendar className="w-6 h-6 text-primary-600" />
+            Bookings Management
+          </h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Admin Panel Room Bookings • Create Customer Booking & Share WhatsApp Payment Link
+          </p>
+        </div>
+        <button
+          onClick={() => navigate('/admin/create-booking')}
+          className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-extrabold rounded-xl shadow text-xs flex items-center gap-2 transition-all cursor-pointer shrink-0"
+        >
+          <CalendarPlus className="w-4.5 h-4.5" />
+          Create Customer Room Booking
+        </button>
+      </div>
+
       {/* Dynamic Statistics Panel */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {/* Total Revenue Card */}
@@ -469,9 +543,14 @@ const BookingManagement = () => {
                       {b._id ? `${b._id.slice(-8).toUpperCase()}` : 'N/A'}
                     </td>
                     <td className="px-5 py-3.5">
-                      <p className="text-sm font-bold text-gray-800">{b.user?.name || 'Deleted User'}</p>
-                      <p className="text-xs text-gray-400 font-medium">{b.user?.email || 'N/A'}</p>
-                      <p className="text-xs text-violet-650 font-bold mt-0.5">{b.user?.phone || 'No Phone'}</p>
+                      <p className="text-sm font-bold text-gray-800">{b.guestName || b.user?.name || 'Deleted User'}</p>
+                      <p className="text-xs text-gray-400 font-medium">{b.guestEmail || b.user?.email || 'N/A'}</p>
+                      <p className="text-xs text-violet-650 font-bold mt-0.5">{b.guestPhone || b.user?.phone || 'No Phone'}</p>
+                      {b.createdByAdmin && (
+                        <span className="inline-block mt-1 text-[9px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">
+                          Admin Created: {b.user?.name || 'Admin'}
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-3.5">
                       <p className="text-sm font-semibold text-gray-700">
@@ -565,6 +644,13 @@ const BookingManagement = () => {
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleShareWhatsApp(b)}
+                          className="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 transition-colors cursor-pointer"
+                          title="Share Payment Link on WhatsApp (New Tab)"
+                        >
+                          <Share2 className="w-4.5 h-4.5" />
+                        </button>
                         <button
                           onClick={() => setSelectedBooking(b)}
                           className="p-1.5 rounded-lg hover:bg-violet-50 text-violet-600 transition-colors cursor-pointer"

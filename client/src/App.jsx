@@ -15,6 +15,7 @@ import ContactPage from './pages/ContactPage';
 import ProfilePage from './pages/ProfilePage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import PublicBookingDetails from './pages/PublicBookingDetails';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
 
 // Admin
 import AdminLayout from './admin/layout/AdminLayout';
@@ -34,6 +35,7 @@ import AdminProfile from './admin/pages/AdminProfile';
 import RoomsReview from './admin/pages/RoomsReview';
 import AddonsManagement from './admin/pages/AddonsManagement';
 import RoomVisitors from './admin/pages/RoomVisitors';
+import AdminCreateBooking from './admin/pages/AdminCreateBooking';
 import AddonsPage from './pages/AddonsPage';
 
 const ProtectedRoute = ({ children }) => {
@@ -63,6 +65,7 @@ const AppRoutes = () => (
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/wishlist" element={<WishlistPage />} />
       <Route path="/booking-details/:id" element={<PublicBookingDetails />} />
+      <Route path="/payment-success" element={<PaymentSuccessPage />} />
     </Route>
 
     {/* Admin */}
@@ -82,6 +85,7 @@ const AppRoutes = () => (
       <Route path="contact-page" element={<ContactPageManagement />} />
       <Route path="rooms" element={<RoomManagement />} />
       <Route path="bookings" element={<BookingManagement />} />
+      <Route path="create-booking" element={<AdminCreateBooking />} />
       <Route path="users" element={<UserManagement />} />
       <Route path="reviews" element={<RoomsReview />} />
       <Route path="testimonials" element={<TestimonialsManagement />} />

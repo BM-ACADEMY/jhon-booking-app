@@ -29,6 +29,12 @@ const bookingSchema = new mongoose.Schema({
   }],
   specialRequests: { type: String },
   gstNumber: { type: String, default: '' },
+  guestName: { type: String },
+  guestPhone: { type: String },
+  guestEmail: { type: String },
+  createdByAdmin: { type: Boolean, default: false },
+  adminUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  adminNotified: { type: Boolean, default: false },
 }, { timestamps: true });
 
 export default mongoose.model('Booking', bookingSchema);

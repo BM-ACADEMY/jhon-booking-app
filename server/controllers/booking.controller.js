@@ -51,11 +51,11 @@ const canAccommodateCombination = (roomsList, adults, children) => {
     }
 
     const room = roomsList[index];
-    const maxTotalGuests = room.guests || 2;
+    const maxOccupancy = room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2);
 
-    const upperA = Math.min(maxTotalGuests, remainingAdults);
+    const upperA = Math.min(maxOccupancy, remainingAdults);
     for (let a = 1; a <= upperA; a++) {
-      const upperC = Math.min(maxTotalGuests - a, remainingChildren);
+      const upperC = Math.min(maxOccupancy - a, remainingChildren);
       for (let c = 0; c <= upperC; c++) {
         if (backtrack(index + 1, remainingAdults - a, remainingChildren - c)) {
           return true;
@@ -72,7 +72,7 @@ const canAccommodateCombination = (roomsList, adults, children) => {
 // Helper to dynamically sync unavailableDates array on Room model with active bookings in DB
 export const syncRoomUnavailableDates = async () => {
   try {
-    const activeBookings = await Booking.find({ status: { $ne: 'cancelled' } });
+    const activeBookings = await Booking.find({ status: { $in: ['confirmed', 'completed'] } });
     const roomDateCounts = {};
 
     for (const b of activeBookings) {
@@ -110,14 +110,11 @@ export const syncRoomUnavailableDates = async () => {
 
 // Helper to validate occupancy rules for a single room
 const validateOccupancy = (room, adults, children, infants) => {
-  const maxTotal = room.guests || 2;
-  const maxInf = (room.maxInfants !== undefined && room.maxInfants !== null ? room.maxInfants : 2) + (room.allowExtraInfant ? 1 : 0);
+  const maxOccupancy = room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2);
+  const occupiedGuests = Number(adults) + Number(children);
 
-  if (adults + children > maxTotal) {
-    return { isAllowed: false, message: `Maximum ${maxTotal} guests (Adults + Children) allowed for this room.` };
-  }
-  if (infants > maxInf) {
-    return { isAllowed: false, message: `Maximum ${maxInf} infants allowed.` };
+  if (occupiedGuests > maxOccupancy) {
+    return { isAllowed: false, message: `Maximum ${maxOccupancy} guests (Adults + Children) allowed for this room.` };
   }
   return { isAllowed: true };
 };
@@ -136,9 +133,9 @@ const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children
     const start = new Date(checkIn);
     const end = new Date(checkOut);
 
-    // Count overlapping non-cancelled bookings for this room type
+    // Count overlapping confirmed/completed bookings for this room type
     const overlappingBookings = await Booking.countDocuments({
-      status: { $ne: 'cancelled' },
+      status: { $in: ['confirmed', 'completed'] },
       $or: [
         { room: roomId },
         { rooms: roomId }
@@ -150,9 +147,13 @@ const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children
     remainingRooms = Math.max(0, (primaryRoom.maxInventory || 1) - overlappingBookings);
 
     if (remainingRooms < roomsCount) {
+      const cInStr = start.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+      const cOutStr = end.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
       return { 
         isAvailable: false, 
-        message: remainingRooms === 0 ? 'Sold Out' : `Only ${remainingRooms} room(s) left.`,
+        message: remainingRooms === 0 
+          ? `Sold Out: This room is already booked for ${cInStr} - ${cOutStr}. Please select available dates.` 
+          : `Only ${remainingRooms} room(s) left for ${cInStr} - ${cOutStr}.`,
         remainingRooms 
       };
     }
@@ -252,7 +253,8 @@ const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children
 export const getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.find()
-      .populate('user', 'name email phone')
+      .populate('user', 'name email phone role')
+      .populate('adminUser', 'name email phone')
       .populate('room', 'name category price')
       .populate('rooms', 'name category price')
       .sort({ createdAt: -1 });
@@ -264,7 +266,14 @@ export const getAllBookings = async (req, res) => {
 
 export const getMyBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ user: req.user._id })
+    const userEmail = req.user.email ? req.user.email.toLowerCase().trim() : '';
+    const userPhone = req.user.phone ? req.user.phone.trim() : '';
+
+    const filterConditions = [{ user: req.user._id }];
+    if (userEmail) filterConditions.push({ guestEmail: userEmail });
+    if (userPhone) filterConditions.push({ guestPhone: userPhone });
+
+    const bookings = await Booking.find({ $or: filterConditions })
       .populate('room')
       .populate('rooms')
       .sort({ createdAt: -1 });
@@ -583,14 +592,263 @@ export const createBooking = async (req, res) => {
   }
 };
 
+export const createAdminBooking = async (req, res) => {
+  let session = null;
+  try {
+    const { 
+      customerDetails = {}, 
+      room, 
+      checkIn, 
+      checkOut, 
+      adults = 1, 
+      children = 0, 
+      infants = 0, 
+      roomsCount = 1, 
+      selectedRoomIds = [],
+      totalAmount = 0,
+      paidAmount = 0,
+      paymentType = 'full',
+      paymentStatus = 'unpaid',
+      paymentNotes = '',
+      addons = [],
+      specialRequests = '',
+      gstNumber = ''
+    } = req.body;
+
+    const { name, phone, email } = customerDetails;
+    if (!name || !phone) {
+      return res.status(400).json({ message: 'Customer name and phone number are required.' });
+    }
+
+    // Check room availability
+    const availability = await checkRoomAvailability(room, checkIn, checkOut, adults, children, roomsCount, infants, selectedRoomIds);
+    if (!availability.isAvailable) {
+      return res.status(400).json({ message: availability.message });
+    }
+
+    // Resolve Customer & Admin Email
+    const cleanPhone = phone.trim();
+    const cleanEmail = email && email.trim() ? email.toLowerCase().trim() : (req.user?.email || 'thebalifiedvilla@gmail.com');
+
+    const calculatedDue = Math.max(0, totalAmount - paidAmount);
+    const calculatedAdvance = paymentType === 'advance' ? paidAmount : 0;
+    const finalPaymentStatus = paymentStatus || (calculatedDue === 0 ? 'paid' : (paidAmount > 0 ? 'partially_paid' : 'unpaid'));
+    const originUrl = req.headers.origin;
+
+    // IF UNPAID / PAYMENT LINK REQUEST: DO NOT CREATE BOOKING IN DB YET!
+    if (finalPaymentStatus !== 'paid') {
+      let razorpayLink = '';
+      const amountToCharge = paymentType === 'advance' ? calculatedAdvance : totalAmount;
+
+      if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+        try {
+          const razorpay = getRazorpayInstance();
+          const plink = await razorpay.paymentLink.create({
+            amount: Math.round(amountToCharge * 100),
+            currency: 'INR',
+            accept_partial: false,
+            description: `Room Booking Payment - ${name}`,
+            customer: {
+              name,
+              contact: cleanPhone,
+              email: cleanEmail
+            },
+            notify: { sms: true, email: true },
+            reminder_enable: true,
+            notes: {
+              adminUserId: req.user._id.toString(),
+              roomId: room.toString(),
+              checkIn: String(checkIn),
+              checkOut: String(checkOut),
+              adults: String(adults),
+              children: String(children),
+              infants: String(infants),
+              roomsCount: String(roomsCount),
+              guestName: name.trim(),
+              guestPhone: cleanPhone,
+              guestEmail: cleanEmail,
+              totalAmount: String(totalAmount),
+              paidAmount: String(amountToCharge),
+              paymentType: String(paymentType),
+              paymentNotes: paymentNotes.trim(),
+              specialRequests: specialRequests.trim(),
+              gstNumber: gstNumber.trim(),
+              addons: JSON.stringify(addons)
+            },
+            callback_url: `${originUrl}/payment-success`,
+            callback_method: 'get'
+          });
+          if (plink && plink.short_url) {
+            razorpayLink = plink.short_url;
+          }
+        } catch (rzpErr) {
+          console.error('Razorpay Link Creation Error:', rzpErr?.message || rzpErr);
+          return res.status(500).json({ message: 'Razorpay Payment Link creation error: ' + (rzpErr?.message || 'Check API keys') });
+        }
+      }
+
+      return res.status(201).json({
+        message: 'Razorpay Payment Link generated successfully',
+        paymentUrl: razorpayLink || `${originUrl}/payment-success`,
+        isLinkOnly: true
+      });
+    }
+
+    // DIRECT CASH / FULL PAID IMMEDIATELY: Create Confirmed Booking in DB
+    try {
+      session = await mongoose.startSession();
+      session.startTransaction();
+    } catch (e) {
+      session = null;
+    }
+
+    const options = session ? { session } : {};
+    const [booking] = await Booking.create([{
+      user: req.user._id, // Created under logged-in Admin's Account/Name
+      adminUser: req.user._id,
+      createdByAdmin: true,
+      guestName: name.trim(),
+      guestPhone: cleanPhone,
+      guestEmail: cleanEmail,
+      room,
+      rooms: availability.rooms || [room],
+      roomsCount: availability.rooms ? availability.rooms.length : 1,
+      checkIn,
+      checkOut,
+      guests: Number(adults) + Number(children) + Number(infants),
+      adults: Number(adults),
+      children: Number(children),
+      infants: Number(infants),
+      totalAmount,
+      paidAmount,
+      dueAmount: calculatedDue,
+      advanceAmount: calculatedAdvance,
+      paymentType,
+      paymentStatus: 'paid',
+      paymentNotes,
+      addons,
+      specialRequests,
+      gstNumber,
+      status: 'confirmed'
+    }], options);
+
+    if (session) {
+      await session.commitTransaction();
+      await session.endSession();
+    }
+
+    await syncRoomUnavailableDates();
+
+    // Send confirmation emails in background
+    Room.findById(room).then(primaryRoomDetails => {
+      if (!primaryRoomDetails) return;
+      const guestObj = {
+        name: name.trim(),
+        email: cleanEmail,
+        phone: cleanPhone
+      };
+      const emailHtmlUser = getGuestBookingEmailTemplate(guestObj, booking, primaryRoomDetails, null);
+      sendEmail({
+        email: cleanEmail,
+        subject: 'Room Booking Confirmation - The Balified Villa',
+        html: emailHtmlUser
+      }).catch(err => console.error('Error sending guest email:', err));
+
+      const adminEmail = req.user?.email || 'thebalifiedvilla@gmail.com';
+      const emailHtmlAdmin = getAdminBookingEmailTemplate(guestObj, booking, primaryRoomDetails);
+      sendEmail({
+        email: adminEmail,
+        subject: `New Admin-Created Booking - ${name}`,
+        html: emailHtmlAdmin
+      }).catch(err => console.error('Error sending admin email:', err));
+    }).catch(e => console.error('Error fetching room for email:', e));
+
+    res.status(201).json({
+      message: 'Booking created successfully',
+      booking,
+      paymentUrl: '',
+      customerUser: {
+        id: req.user._id,
+        name: name.trim(),
+        phone: cleanPhone,
+        email: cleanEmail
+      }
+    });
+  } catch (err) {
+    if (session) {
+      try {
+        if (session.inTransaction()) {
+          await session.abortTransaction();
+        }
+        await session.endSession();
+      } catch (sessErr) {
+        console.error('Session cleanup error:', sessErr);
+      }
+    }
+    console.error('Error in createAdminBooking:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const createPaymentLink = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id).populate('user').populate('room');
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    const due = booking.dueAmount > 0 ? booking.dueAmount : booking.totalAmount;
+    const originUrl = req.headers.origin || 'http://localhost:5173';
+    const fallbackUrl = `${originUrl}/booking-details/${booking._id}`;
+    let shortUrl = '';
+
+    if (due > 0 && process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+      try {
+        const razorpay = getRazorpayInstance();
+        const plink = await razorpay.paymentLink.create({
+          amount: Math.round(due * 100),
+          currency: 'INR',
+          accept_partial: false,
+          description: `Room Booking Payment - ${booking.room?.name || 'Villa Stay'}`,
+          customer: {
+            name: booking.user?.name || 'Guest',
+            contact: booking.user?.phone || '',
+            email: booking.user?.email || ''
+          },
+          notify: { sms: true, email: true },
+          reminder_enable: true,
+          notes: { bookingId: booking._id.toString() }
+        });
+        if (plink && plink.short_url) {
+          shortUrl = plink.short_url;
+        }
+      } catch (rzpErr) {
+        console.error('Razorpay Payment Link creation error:', rzpErr?.message || rzpErr);
+      }
+    }
+
+    const finalPaymentUrl = shortUrl || fallbackUrl;
+    res.json({
+      bookingId: booking._id,
+      paymentUrl: finalPaymentUrl,
+      shortUrl: shortUrl || null,
+      dueAmount: due
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export const updateBookingStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
 
-    const oldStatus = booking.status;
     booking.status = status;
+    if (status === 'confirmed') {
+      booking.paymentStatus = 'paid';
+      booking.paidAmount = booking.totalAmount;
+      booking.dueAmount = 0;
+    }
     await booking.save();
 
     // Sync dynamic dates on cancellation or reactivation
@@ -960,7 +1218,278 @@ export const getBookingByIdPublic = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
+    // Auto-verify Payment Link success if redirected from Razorpay payment link or query status or API check
+    const { razorpay_payment_link_status, razorpay_payment_id, payment_link_success } = req.query;
+    if (booking && (booking.paymentStatus === 'unpaid' || booking.paymentStatus === 'partially_paid')) {
+      let shouldMarkPaid = razorpay_payment_link_status === 'paid' || razorpay_payment_id || payment_link_success === 'true';
+
+      // If query parameters are not present, check Razorpay API directly
+      if (!shouldMarkPaid && process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+        try {
+          const razorpay = getRazorpayInstance();
+          const payments = await razorpay.payments.all({ count: 20 });
+          if (payments && payments.items && Array.isArray(payments.items)) {
+            const bookingIdStr = booking._id.toString();
+            const shortIdStr = bookingIdStr.slice(-6).toLowerCase();
+
+            const foundPayment = payments.items.find(p => {
+              if (p.status !== 'captured' && p.status !== 'authorized') return false;
+              const notes = p.notes || {};
+              const desc = (p.description || '').toLowerCase();
+              return notes.bookingId === bookingIdStr || desc.includes(shortIdStr);
+            });
+            if (foundPayment) {
+              shouldMarkPaid = true;
+              if (foundPayment.id) booking.razorpayPaymentId = foundPayment.id;
+            }
+          }
+        } catch (rzpErr) {
+          console.error('Razorpay payment link auto-sync check error:', rzpErr?.message || rzpErr);
+        }
+      }
+
+      if (shouldMarkPaid) {
+        booking.paymentStatus = 'paid';
+        booking.status = 'confirmed';
+        booking.paidAmount = booking.totalAmount;
+        booking.dueAmount = 0;
+        if (razorpay_payment_id && !booking.razorpayPaymentId) {
+          booking.razorpayPaymentId = razorpay_payment_id;
+        }
+        await booking.save();
+        await syncRoomUnavailableDates();
+      }
+    }
+
     res.json(booking);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const razorpayWebhook = async (req, res) => {
+  try {
+    const event = req.body;
+    if (event && (event.event === 'payment.link.paid' || event.event === 'payment.captured')) {
+      const entity = event.payload?.payment_link?.entity || event.payload?.payment?.entity;
+      const bookingId = entity?.notes?.bookingId;
+      if (bookingId && mongoose.isValidObjectId(bookingId)) {
+        const booking = await Booking.findById(bookingId);
+        if (booking) {
+          booking.paymentStatus = 'paid';
+          booking.status = 'confirmed';
+          booking.paidAmount = booking.totalAmount;
+          booking.dueAmount = 0;
+          if (entity.id) booking.razorpayPaymentId = entity.id;
+          await booking.save();
+          await syncRoomUnavailableDates();
+        }
+      }
+    }
+    res.json({ status: 'ok' });
+  } catch (err) {
+    console.error('Webhook processing error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const createBookingFromNotes = async (notes, paymentId, loggedInUser = null) => {
+  if (!notes || !notes.roomId || !notes.checkIn || !notes.checkOut) return null;
+
+  const room = await Room.findById(notes.roomId);
+  if (!room) return null;
+
+  const cIn = new Date(notes.checkIn);
+  const cOut = new Date(notes.checkOut);
+  const totalAmount = Number(notes.totalAmount || room.price);
+  const paidAmount = Number(notes.paidAmount || totalAmount);
+  const addons = notes.addons ? JSON.parse(notes.addons) : [];
+
+  let customerUser = loggedInUser || null;
+  const guestEmail = (notes.guestEmail || '').toLowerCase().trim();
+  const guestPhone = (notes.guestPhone || '').trim();
+
+  if (!customerUser && guestEmail) {
+    customerUser = await User.findOne({ email: guestEmail });
+  }
+  if (!customerUser && guestPhone) {
+    customerUser = await User.findOne({ phone: guestPhone });
+  }
+
+  // If customer user still not found, auto-create user account for customer
+  if (!customerUser && guestEmail && guestPhone) {
+    try {
+      const bcrypt = (await import('bcryptjs')).default;
+      const hashedPassword = await bcrypt.hash(guestPhone, 10);
+      customerUser = await User.create({
+        name: notes.guestName || 'Guest',
+        email: guestEmail,
+        phone: guestPhone,
+        password: hashedPassword,
+        role: 'user'
+      });
+    } catch (e) {
+      console.error('Customer account creation error:', e);
+    }
+  }
+
+  const finalUserId = customerUser ? customerUser._id : (notes.adminUserId || null);
+
+  const [newBooking] = await Booking.create([{
+    user: finalUserId,
+    adminUser: notes.adminUserId || null,
+    createdByAdmin: true,
+    guestName: notes.guestName || (customerUser ? customerUser.name : 'Guest'),
+    guestPhone: guestPhone || (customerUser ? customerUser.phone : ''),
+    guestEmail: guestEmail || (customerUser ? customerUser.email : ''),
+    room: room._id,
+    rooms: [room._id],
+    roomsCount: Number(notes.roomsCount || 1),
+    checkIn: cIn,
+    checkOut: cOut,
+    guests: Number(notes.adults || 1) + Number(notes.children || 0) + Number(notes.infants || 0),
+    adults: Number(notes.adults || 1),
+    children: Number(notes.children || 0),
+    infants: Number(notes.infants || 0),
+    totalAmount,
+    paidAmount,
+    dueAmount: 0,
+    advanceAmount: notes.paymentType === 'advance' ? paidAmount : 0,
+    paymentType: notes.paymentType || 'full',
+    paymentStatus: 'paid',
+    paymentNotes: notes.paymentNotes || 'Paid via Razorpay Link',
+    specialRequests: notes.specialRequests || '',
+    gstNumber: notes.gstNumber || '',
+    addons,
+    status: 'confirmed',
+    razorpayPaymentId: paymentId || ''
+  }]);
+
+  await syncRoomUnavailableDates();
+
+  // Send confirmation emails in background
+  try {
+    const guestObj = {
+      name: notes.guestName || (customerUser ? customerUser.name : 'Guest'),
+      email: guestEmail || (customerUser ? customerUser.email : 'thebalifiedvilla@gmail.com'),
+      phone: guestPhone || (customerUser ? customerUser.phone : '')
+    };
+    const emailHtmlUser = getGuestBookingEmailTemplate(guestObj, newBooking, room, null);
+    sendEmail({
+      email: guestObj.email,
+      subject: 'Room Booking Confirmation - The Balified Villa',
+      html: emailHtmlUser
+    }).catch(err => console.error('Error sending guest email:', err));
+
+    const adminEmail = 'thebalifiedvilla@gmail.com';
+    const emailHtmlAdmin = getAdminBookingEmailTemplate(guestObj, newBooking, room);
+    sendEmail({
+      email: adminEmail,
+      subject: `New Online Paid Booking - ${notes.guestName}`,
+      html: emailHtmlAdmin
+    }).catch(err => console.error('Error sending admin email:', err));
+  } catch (emailErr) {
+    console.error('Email sending error:', emailErr);
+  }
+
+  return newBooking;
+};
+
+export const confirmPaymentLinkBooking = async (req, res) => {
+  try {
+    const { razorpay_payment_id, razorpay_payment_link_id } = req.body;
+    if (!razorpay_payment_id && !razorpay_payment_link_id) {
+      return res.status(400).json({ message: 'Payment details required' });
+    }
+
+    if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+      const razorpay = getRazorpayInstance();
+      let entity = null;
+      if (razorpay_payment_id) {
+        try {
+          entity = await razorpay.payments.fetch(razorpay_payment_id);
+        } catch (e) {
+          entity = null;
+        }
+      }
+      if (!entity && razorpay_payment_link_id) {
+        try {
+          entity = await razorpay.paymentLink.fetch(razorpay_payment_link_id);
+        } catch (e) {
+          entity = null;
+        }
+      }
+
+      if (entity && entity.notes) {
+        let existingBooking = await Booking.findOne({ razorpayPaymentId: entity.id || razorpay_payment_id });
+
+        let customerUser = req.user || null;
+        const guestEmail = (entity.notes.guestEmail || '').toLowerCase().trim();
+        const guestPhone = (entity.notes.guestPhone || '').trim();
+
+        if (!customerUser && guestEmail) {
+          customerUser = await User.findOne({ email: guestEmail });
+        }
+        if (!customerUser && guestPhone) {
+          customerUser = await User.findOne({ phone: guestPhone });
+        }
+
+        let token = null;
+        if (customerUser) {
+          token = jwt.sign({ id: customerUser._id }, process.env.JWT_SECRET, {
+            expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+          });
+        }
+
+        if (existingBooking) {
+          // If existing booking user is not set to customer or logged in user, associate it now
+          if (customerUser && (!existingBooking.user || existingBooking.user.toString() !== customerUser._id.toString())) {
+            existingBooking.user = customerUser._id;
+            await existingBooking.save();
+          }
+          return res.json({ booking: existingBooking, token, user: customerUser });
+        }
+
+        const createdBooking = await createBookingFromNotes(entity.notes, entity.id || razorpay_payment_id, customerUser);
+        if (createdBooking) {
+          if (!customerUser && createdBooking.user) {
+            customerUser = await User.findById(createdBooking.user);
+            if (customerUser) {
+              token = jwt.sign({ id: customerUser._id }, process.env.JWT_SECRET, {
+                expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+              });
+            }
+          }
+          return res.json({ booking: createdBooking, token, user: customerUser });
+        }
+      }
+    }
+
+    res.status(400).json({ message: 'Unable to verify payment or create booking' });
+  } catch (err) {
+    console.error('confirmPaymentLinkBooking error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getUnnotifiedBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find({ status: 'confirmed', adminNotified: false })
+      .populate('room')
+      .populate('rooms');
+    res.json(bookings);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const markBookingAsNotified = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    booking.adminNotified = true;
+    await booking.save();
+    res.json({ success: true, booking });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

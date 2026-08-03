@@ -265,18 +265,25 @@ const Dashboard = () => {
   const [bookingPage, setBookingPage] = useState(1);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchStats = async (showLoading = true) => {
       try {
-        setLoading(true);
+        if (showLoading) setLoading(true);
         const res = await api.get('/bookings/stats/dashboard');
         setStats(res.data);
       } catch (err) {
         console.error('Failed to fetch dashboard stats:', err);
       } finally {
-        setLoading(false);
+        if (showLoading) setLoading(false);
       }
     };
-    fetchStats();
+
+    fetchStats(true);
+
+    const interval = setInterval(() => {
+      fetchStats(false);
+    }, 8000);
+
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
