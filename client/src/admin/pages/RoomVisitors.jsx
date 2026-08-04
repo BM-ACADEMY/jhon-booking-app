@@ -1,16 +1,40 @@
 import { useState, useEffect } from 'react';
-import { Search, Eye, Users, Calendar, Loader2, BarChart3 } from 'lucide-react';
+import { Search, Eye, Users, Calendar, Loader2, BarChart3, TrendingUp } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../api';
 
-// Shadcn UI imports
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '../../components/ui/sheet';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+// Shadcn UI Imports
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from '@/components/ui/sheet';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 
 const RoomVisitors = () => {
   const [rooms, setRooms] = useState([]);
@@ -201,7 +225,6 @@ const RoomVisitors = () => {
   };
 
   const monthWiseVisits = getMonthWiseVisits();
-
   const maxMonthCount = monthWiseVisits.length > 0 ? Math.max(...monthWiseVisits.map(m => m.count)) : 1;
 
   // Filter rooms based on search
@@ -224,67 +247,74 @@ const RoomVisitors = () => {
   const totalPages = Math.ceil(filteredRooms.length / itemsPerPage) || 1;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-6 py-6 text-left">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Room Visitors</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Monitor your property visitors and analyze traffic trends.
-        </p>
+    <div className="space-y-6 max-w-full overflow-hidden">
+      {/* Top Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+        <div className="truncate">
+          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2 truncate">
+            <Users className="w-5 h-5 text-primary-600 shrink-0" />
+            <span className="truncate">Room Visitors Stats</span>
+          </h1>
+          <p className="text-xs text-gray-500 mt-0.5 truncate">
+            Monitor your property visitors and analyze traffic trends.
+          </p>
+        </div>
       </div>
 
-      {/* Premium Statistics Panel using Standard Shadcn Cards */}
+      {/* Premium Statistics Panel */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border border-slate-100 shadow-sm bg-white">
+        <Card className="bg-gradient-to-br from-indigo-50/50 to-white border border-gray-100 rounded-2xl shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Properties</CardTitle>
-            <Calendar className="w-4 h-4 text-slate-400" />
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 truncate">Total Properties</CardTitle>
+            <Calendar className="w-4 h-4 text-indigo-600 shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{totalRooms}</div>
-            <p className="text-xs text-slate-500 mt-1">All registered rooms & villas</p>
+            <div className="text-xl font-bold text-gray-900 truncate">{totalRooms}</div>
+            <p className="text-[10px] text-gray-400 mt-1 truncate">All registered rooms & villas</p>
           </CardContent>
         </Card>
 
-        <Card className="border border-slate-100 shadow-sm bg-white">
+        <Card className="bg-gradient-to-br from-emerald-50/50 to-white border border-gray-100 rounded-2xl shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Unique Visitors</CardTitle>
-            <Users className="w-4 h-4 text-slate-400" />
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 truncate">Total Unique Visitors</CardTitle>
+            <Users className="w-4 h-4 text-emerald-600 shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{totalUniqueVisitors}</div>
-            <p className="text-xs text-slate-500 mt-1">Unique platform views recorded</p>
+            <div className="text-xl font-bold text-gray-900 truncate">{totalUniqueVisitors}</div>
+            <p className="text-[10px] text-gray-400 mt-1 truncate">Unique platform views recorded</p>
           </CardContent>
         </Card>
 
-        <Card className="border border-slate-100 shadow-sm bg-white">
+        <Card className="bg-gradient-to-br from-violet-50/50 to-white border border-gray-100 rounded-2xl shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-500">Most Visited Property</CardTitle>
-            <Eye className="w-4 h-4 text-slate-400" />
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-violet-600 truncate">Most Visited Property</CardTitle>
+            <Eye className="w-4 h-4 text-violet-600 shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold text-slate-900 truncate">
+            <div className="text-sm font-bold text-gray-900 truncate" title={mostVisitedRoom ? mostVisitedRoom.name : 'N/A'}>
               {mostVisitedRoom ? mostVisitedRoom.name : 'N/A'}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-[10px] text-gray-400 mt-1 truncate">
               {mostVisitedRoom ? `${mostVisitedRoom.visitorsCount} Unique Visitors` : 'No views recorded'}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Toolbar / Search Bar using Shadcn UI Input directly */}
-      <div className="flex items-center gap-2 max-w-sm">
+      {/* Search Input Bar */}
+      <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1 flex-1 sm:max-w-xs shadow-sm w-full">
+        <Search className="w-4 h-4 text-gray-400 shrink-0" />
         <Input
           type="text"
           placeholder="Search by property or category..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full text-slate-700 bg-white border border-slate-100"
+          className="border-0 shadow-none p-0 h-8 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-slate-900 placeholder:text-gray-400"
         />
       </div>
 
-      {/* Rooms Views Table using Shadcn UI Table */}
-      <Card className="border border-slate-100 shadow-sm overflow-hidden bg-white">
+      {/* Rooms Views Table */}
+      <Card className="overflow-hidden border border-gray-200 bg-white">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <Loader2 className="w-8 h-8 animate-spin mb-2 text-slate-900" />
@@ -292,40 +322,51 @@ const RoomVisitors = () => {
           </div>
         ) : (
           <Table>
-            <TableHeader className="bg-slate-50 border-b border-slate-100">
+            <TableHeader>
               <TableRow>
-                <TableHead className="font-semibold text-slate-700 text-xs px-6 py-4">Property Name</TableHead>
-                <TableHead className="font-semibold text-slate-700 text-xs px-6 py-4">Category</TableHead>
-                <TableHead className="font-semibold text-slate-700 text-xs px-6 py-4">Base Price</TableHead>
-                <TableHead className="font-semibold text-slate-700 text-xs px-6 py-4">Unique Visitors</TableHead>
-                <TableHead className="font-semibold text-slate-700 text-xs px-6 py-4 text-right">Action</TableHead>
+                <TableHead className="whitespace-nowrap">Property Name</TableHead>
+                <TableHead className="whitespace-nowrap">Category</TableHead>
+                <TableHead className="whitespace-nowrap">Base Price</TableHead>
+                <TableHead className="whitespace-nowrap">Unique Visitors</TableHead>
+                <TableHead className="text-right whitespace-nowrap">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentRooms.map((room) => (
-                <TableRow key={room._id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100">
-                  <TableCell className="font-medium text-slate-900 px-6 py-4 max-w-[200px] truncate" title={room.name}>
+                <TableRow key={room._id}>
+                  {/* Property Name */}
+                  <TableCell className="font-medium text-slate-900 max-w-[200px] truncate whitespace-nowrap" title={room.name}>
                     {room.name}
                   </TableCell>
-                  <TableCell className="px-6 py-4 max-w-[180px]">
-                    <Badge variant="secondary" className="truncate max-w-full block text-center" title={room.category}>
+                  
+                  {/* Category Badge */}
+                  <TableCell className="max-w-[180px] truncate whitespace-nowrap">
+                    <Badge variant="secondary" className="truncate max-w-full inline-block text-center uppercase text-[9px] px-2 py-0.5" title={room.category}>
                       {room.category}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-slate-900 font-semibold px-6 py-4">₹{room.price?.toLocaleString('en-IN')}</TableCell>
-                  <TableCell className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
+
+                  {/* Base Price */}
+                  <TableCell className="text-slate-900 font-semibold whitespace-nowrap">
+                    ₹{room.price?.toLocaleString('en-IN')}
+                  </TableCell>
+
+                  {/* Unique Visitors Counts */}
+                  <TableCell className="whitespace-nowrap truncate max-w-[250px]" title={`${room.visitorsCount || 0} total | ${room.monthVisitorsCount || 0} this month`}>
+                    <div className="flex items-center gap-2 text-xs text-slate-500 truncate">
                       <span className="font-semibold text-slate-900">{room.visitorsCount || 0}</span> total
                       <span className="text-slate-300">|</span>
                       <span className="font-semibold text-slate-900">{room.monthVisitorsCount || 0}</span> this month
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-4 text-right">
+
+                  {/* Action Button */}
+                  <TableCell className="text-right whitespace-nowrap">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleOpenDetails(room)}
-                      className="border-slate-100 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-md"
+                      className="h-8 text-xs"
                     >
                       Detail Logs
                     </Button>
@@ -343,29 +384,29 @@ const RoomVisitors = () => {
         )}
       </Card>
 
-      {/* Pagination Controls using Shadcn UI Buttons */}
+      {/* Pagination Controls */}
       {!loading && filteredRooms.length > 0 && (
-        <div className="flex items-center justify-between bg-white border border-slate-100 rounded-xl px-6 py-4 shadow-sm">
-          <div className="text-xs text-slate-500 font-medium">
-            Showing <span className="font-bold text-slate-800">{indexOfFirstItem + 1}</span> to{' '}
-            <span className="font-bold text-slate-800">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-gray-100 rounded-xl px-6 py-4 shadow-sm">
+          <div className="text-xs text-slate-600 font-medium truncate max-w-full">
+            Showing <span className="font-bold text-gray-800">{indexOfFirstItem + 1}</span> to{' '}
+            <span className="font-bold text-gray-800">
               {Math.min(indexOfLastItem, filteredRooms.length)}
             </span>{' '}
-            of <span className="font-bold text-slate-800">{filteredRooms.length}</span> properties
+            of <span className="font-bold text-gray-800">{filteredRooms.length}</span> properties
           </div>
 
           {totalPages > 1 && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0">
               <Button
                 variant="outline"
                 size="sm"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                className="text-xs font-semibold h-8 disabled:opacity-50"
+                className="h-8 text-xs font-semibold"
               >
                 Prev
               </Button>
-              <span className="flex items-center px-2 text-xs font-bold text-slate-750">
+              <span className="flex items-center px-2 text-xs font-bold text-slate-700">
                 Page {currentPage} of {totalPages}
               </span>
               <Button
@@ -373,7 +414,7 @@ const RoomVisitors = () => {
                 size="sm"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                className="text-xs font-semibold h-8 disabled:opacity-50"
+                className="h-8 text-xs font-semibold"
               >
                 Next
               </Button>
@@ -384,12 +425,12 @@ const RoomVisitors = () => {
 
       {/* Detailed Visits Sheet (Sliding from Right) */}
       <Sheet open={isSheetOpen} onOpenChange={(open) => !open && handleCloseSheet()}>
-        <SheetContent className="sm:max-w-2xl w-[90vw] overflow-y-auto p-6 flex flex-col gap-6 bg-white text-left border-l border-slate-100 shadow-2xl">
-          <SheetHeader className="pb-4 border-b border-slate-100">
-            <SheetTitle className="text-xl font-bold text-slate-900">
+        <SheetContent className="sm:max-w-2xl w-[90vw] overflow-y-auto flex flex-col gap-6">
+          <SheetHeader className="pb-4 border-b border-gray-100">
+            <SheetTitle className="text-lg font-bold text-gray-900">
               Visitor Logs
             </SheetTitle>
-            <SheetDescription className="text-xs text-slate-500">
+            <SheetDescription className="truncate text-xs">
               Property: <span className="font-semibold text-slate-900">{selectedRoom?.name}</span>
             </SheetDescription>
           </SheetHeader>
@@ -402,8 +443,8 @@ const RoomVisitors = () => {
           ) : visits.length === 0 ? (
             <div className="text-center py-16 bg-slate-50/50 border border-slate-100 rounded-xl flex-1 flex flex-col justify-center">
               <Eye className="w-12 h-12 mx-auto mb-3 text-gray-200" />
-              <h4 className="font-bold text-gray-800">No visitors logged yet</h4>
-              <p className="text-xs text-slate-450 mt-1 px-4">
+              <h4 className="font-bold text-gray-800 text-sm">No visitors logged yet</h4>
+              <p className="text-xs text-slate-400 mt-1 px-4">
                 Logs will appear here once visitors view this property's details page.
               </p>
             </div>
@@ -417,12 +458,12 @@ const RoomVisitors = () => {
               {/* Tab 1: Total Visitors Logs & Trend Chart */}
               <TabsContent value="total" className="space-y-6 flex-1 min-h-0 overflow-y-auto pr-1 outline-none">
                 {/* Traffic Trend Graph */}
-                <Card className="border border-slate-100 p-4 shadow-sm bg-white">
+                <Card className="border border-gray-100 p-4 shadow-sm bg-white">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                     <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Traffic Trend
                     </h4>
-                    <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-semibold border border-slate-100">
+                    <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-semibold border border-slate-100 shrink-0">
                       Max Volume: {maxCount} views
                     </span>
                   </div>
@@ -451,7 +492,7 @@ const RoomVisitors = () => {
                   </div>
 
                   {graphData.length === 0 ? (
-                    <div className="h-32 flex items-center justify-center border border-dashed border-slate-100 rounded-xl bg-slate-50/20 text-xs text-slate-455 font-bold">
+                    <div className="h-32 flex items-center justify-center border border-dashed border-slate-100 rounded-xl bg-slate-50/20 text-xs text-slate-400 font-bold">
                       No views recorded for this selection.
                     </div>
                   ) : (
@@ -470,16 +511,14 @@ const RoomVisitors = () => {
                         <line x1={paddingLeft} y1={paddingTop + chartH} x2={svgWidth - paddingRight} y2={paddingTop + chartH} stroke="#cbd5e1" strokeWidth="1.5" />
 
                         {/* Left Y-Axis Vertical Line */}
-                        <line x1={paddingLeft} y1={paddingTop} x2={paddingLeft} y2={paddingTop + chartH} stroke="#cbd5e1" strokeWidth="1.5" />
-
-                        {/* Left Y-Axis Labels */}
-                        <text x={paddingLeft - 8} y={paddingTop + 3} textAnchor="end" className="text-[9px] font-medium fill-slate-400 select-none">
+                        <line x1={paddingLeft} y1={paddingTop} x2={paddingLeft} y2={paddingTop + chartH} stroke="#cbd5e1" strokeWidth="1.5" />                         {/* Left Y-Axis Labels */}
+                        <text x={paddingLeft - 8} y={paddingTop + 3} textAnchor="end" className="text-[9px] font-medium fill-slate-700 select-none">
                           {maxCount}
                         </text>
-                        <text x={paddingLeft - 8} y={paddingTop + chartH / 2 + 3} textAnchor="end" className="text-[9px] font-medium fill-slate-400 select-none">
-                          {Math.round(maxCount / 2)}
+                        <text x={paddingLeft - 8} y={paddingTop + chartH / 2 + 3} textAnchor="end" className="text-[9px] font-medium fill-slate-700 select-none">
+                          {maxCount === 1 ? '0.5' : Math.round(maxCount / 2)}
                         </text>
-                        <text x={paddingLeft - 8} y={paddingTop + chartH + 3} textAnchor="end" className="text-[9px] font-medium fill-slate-400 select-none">
+                        <text x={paddingLeft - 8} y={paddingTop + chartH + 3} textAnchor="end" className="text-[9px] font-medium fill-slate-700 select-none">
                           0
                         </text>
 
@@ -508,6 +547,7 @@ const RoomVisitors = () => {
                         {/* Interactive Dots */}
                         {points.map((p, idx) => {
                           if (!p.isReal) return null;
+                          const showLabel = graphFilter === '30days' ? idx % 5 === 0 : true;
                           return (
                             <g key={idx} className="group/dot">
                               <title>{`${p.count} Views on ${p.date}`}</title>
@@ -516,9 +556,11 @@ const RoomVisitors = () => {
                               <text x={p.x} y={p.y - 8} textAnchor="middle" className="text-[9px] font-medium fill-slate-700 select-none opacity-0 group-hover/dot:opacity-100 transition-opacity duration-205">
                                 {p.count}
                               </text>
-                              <text x={p.x} y={svgHeight - 6} textAnchor="middle" className="text-[8px] font-medium fill-slate-400 select-none uppercase tracking-wider">
-                                {p.date}
-                              </text>
+                              {showLabel && (
+                                <text x={p.x} y={svgHeight - 6} textAnchor="middle" className="text-[8px] font-medium fill-slate-700 select-none uppercase tracking-wider">
+                                  {p.date}
+                                </text>
+                              )}
                             </g>
                           );
                         })}
@@ -528,20 +570,20 @@ const RoomVisitors = () => {
                 </Card>
 
                 {/* Table of detailed visits */}
-                <div className="rounded-lg border border-slate-100 overflow-hidden bg-white shadow-sm">
+                <div className="rounded-lg border border-gray-100 overflow-hidden bg-white shadow-sm">
                   <div className="max-h-[250px] overflow-y-auto">
                     <Table>
-                      <TableHeader className="bg-slate-50 border-b border-slate-100">
+                      <TableHeader className="bg-slate-50">
                         <TableRow>
-                          <TableHead className="font-semibold text-slate-500 text-[10px] w-16 py-2.5 px-4 text-left">S.No</TableHead>
-                          <TableHead className="font-semibold text-slate-500 text-[10px] py-2.5 px-4 text-left">Date</TableHead>
-                          <TableHead className="font-semibold text-slate-500 text-[10px] py-2.5 px-4 text-left">Time</TableHead>
+                          <TableHead className="font-semibold text-slate-500 text-[10px] w-16 py-2.5 px-4 text-left whitespace-nowrap">S.No</TableHead>
+                          <TableHead className="font-semibold text-slate-500 text-[10px] py-2.5 px-4 text-left whitespace-nowrap">Date</TableHead>
+                          <TableHead className="font-semibold text-slate-500 text-[10px] py-2.5 px-4 text-left whitespace-nowrap">Time</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {visits.map((visit, index) => (
-                          <TableRow key={visit._id} className="hover:bg-slate-50/50 text-xs border-b border-slate-100">
-                            <TableCell className="font-mono text-slate-400 py-2.5 px-4 text-left">{index + 1}</TableCell>
+                          <TableRow key={visit._id} className="hover:bg-slate-50/50 text-xs">
+                            <TableCell className="font-mono text-slate-450 py-2.5 px-4 text-left whitespace-nowrap">{index + 1}</TableCell>
                             <TableCell className="text-slate-800 font-semibold py-2.5 px-4 whitespace-nowrap text-left">
                               {new Date(visit.visitedAt).toLocaleDateString(undefined, {
                                 month: 'short',
@@ -549,7 +591,7 @@ const RoomVisitors = () => {
                                 year: 'numeric'
                               })}
                             </TableCell>
-                            <TableCell className="text-slate-650 py-2.5 px-4 whitespace-nowrap text-left">
+                            <TableCell className="text-slate-600 py-2.5 px-4 whitespace-nowrap text-left">
                               {new Date(visit.visitedAt).toLocaleTimeString(undefined, {
                                 hour: '2-digit',
                                 minute: '2-digit',
@@ -567,55 +609,98 @@ const RoomVisitors = () => {
 
               {/* Tab 2: Month-wise Visitors */}
               <TabsContent value="month-wise" className="space-y-6 flex-1 min-h-0 outline-none overflow-y-auto">
-                <Card className="border border-slate-100 p-4 shadow-sm bg-white text-left rounded-xl">
+                <Card className="border border-gray-100 p-4 shadow-sm bg-white text-left rounded-xl">
                   <div className="flex items-center gap-2 mb-2">
-                    <BarChart3 className="w-5 h-5 text-slate-500" />
-                    <h4 className="text-sm font-semibold text-slate-850">Monthly Traffic Insights</h4>
+                    <BarChart3 className="w-5 h-5 text-slate-500 shrink-0" />
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Monthly Traffic Insights</h4>
                   </div>
                   <p className="text-xs text-slate-400">
                     Understand performance and guest engagement month by calendar month.
                   </p>
                 </Card>
 
-                {/* Month-wise interactive visual bars list */}
-                <div className="space-y-4">
-                  {monthWiseVisits.map(({ month, count }) => {
-                    const percentage = Math.round((count / maxMonthCount) * 100);
-                    return (
-                      <div key={month} className="p-4 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-slate-205 transition-all flex flex-col gap-2.5 text-left">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-semibold text-slate-805">{month}</span>
-                          <span className="text-xs font-semibold text-violet-750 bg-violet-50 px-2.5 py-1 rounded-full border border-violet-100/50">
-                            {count} visits
-                          </span>
-                        </div>
-                        {/* Beautiful gradient progress bar */}
-                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-violet-500 rounded-full transition-all duration-500" 
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                {/* Month-wise Bar Chart */}
+                <Card className="border border-gray-100 p-4 shadow-sm bg-white">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Monthly Traffic Chart
+                    </h4>
+                    <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-semibold border border-slate-100 shrink-0">
+                      Peak month: {maxMonthCount} views
+                    </span>
+                  </div>
+
+                  {monthWiseVisits.length === 0 ? (
+                    <div className="h-32 flex items-center justify-center border border-dashed border-slate-100 rounded-xl bg-slate-50/20 text-xs text-slate-400 font-bold">
+                      No monthly visits recorded.
+                    </div>
+                  ) : (
+                    <div className="relative w-full overflow-x-auto">
+                      <svg viewBox="0 0 500 200" className="w-full min-w-[450px] h-auto">
+                        {/* Horizontal Grid Lines */}
+                        <line x1={35} y1={25} x2={480} y2={25} stroke="#e2e8f0" strokeWidth="1" />
+                        <line x1={35} y1={25 + 140 / 2} x2={480} y2={25 + 140 / 2} stroke="#e2e8f0" strokeWidth="1" />
+                        <line x1={35} y1={25 + 140} x2={480} y2={25 + 140} stroke="#cbd5e1" strokeWidth="1.5" />
+
+                        {/* Y-Axis Labels */}
+                        <text x={27} y={28} textAnchor="end" className="text-[9px] font-medium fill-slate-700 select-none">
+                          {maxMonthCount}
+                        </text>
+                        <text x={27} y={25 + 140 / 2 + 3} textAnchor="end" className="text-[9px] font-medium fill-slate-700 select-none">
+                          {maxMonthCount === 1 ? '0.5' : Math.round(maxMonthCount / 2)}
+                        </text>
+                        <text x={27} y={25 + 140 + 3} textAnchor="end" className="text-[9px] font-medium fill-slate-700 select-none">
+                          0
+                        </text>
+
+                        {/* Render Bars */}
+                        {monthWiseVisits.map(({ month, count }, idx) => {
+                          const spacing = 445 / (monthWiseVisits.length || 1);
+                          const barWidth = Math.min(35, spacing - 15);
+                          const x = 35 + idx * spacing + (spacing - barWidth) / 2;
+                          const barHeight = (count / maxMonthCount) * 140;
+                          const y = 25 + 140 - barHeight;
+
+                          return (
+                            <g key={month} className="group/bar">
+                              <title>{`${count} visits in ${month}`}</title>
+                              {/* Background highlight pill */}
+                              <rect x={x - 4} y={25} width={barWidth + 8} height={140} fill="#f1f5f9" rx="4" className="opacity-0 group-hover/bar:opacity-40 transition-opacity duration-200" />
+                              
+                              {/* Actual bar */}
+                              <rect x={x} y={y} width={barWidth} height={barHeight || 2} fill="#8b5cf6" rx="3" className="transition-all duration-300" />
+
+                              {/* Value label on top of bar */}
+                              <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" className="text-[10px] font-bold fill-slate-800 select-none">
+                                {count}
+                              </text>
+
+                              {/* Month label below bar */}
+                              <text x={x + barWidth / 2} y={25 + 140 + 15} textAnchor="middle" className="text-[9px] font-semibold fill-slate-700 select-none truncate max-w-[50px]">
+                                {month.split(' ')[0]}
+                              </text>
+                            </g>
+                          );
+                        })}
+                      </svg>
+                    </div>
+                  )}
+                </Card>
               </TabsContent>
             </Tabs>
           )}
 
-          <SheetFooter className="p-4 border-t border-slate-100 flex justify-end bg-slate-50 flex-shrink-0">
+          <SheetFooter className="p-4 border-t border-gray-100 flex justify-end bg-slate-50 flex-shrink-0">
             <Button
               variant="outline"
               onClick={handleCloseSheet}
-              className="text-xs font-semibold border-slate-100 text-slate-700 bg-white hover:bg-slate-50 cursor-pointer h-9 rounded-md"
+              className="text-xs font-semibold border-gray-200 text-slate-700 bg-white hover:bg-slate-50 cursor-pointer h-9 rounded-md shrink-0"
             >
-              Close details
+              Close Details
             </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
-
     </div>
   );
 };

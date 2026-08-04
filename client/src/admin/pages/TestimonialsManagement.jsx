@@ -1,23 +1,40 @@
 import { useState, useEffect } from 'react';
-import { Star, Plus, Edit2, Trash2, Check, X, Loader2, MessageSquare, Clock, ShieldCheck, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, Plus, Edit2, Trash2, Check, X, Loader2, MessageSquare, Clock, ShieldCheck, Quote, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../api';
 
+// Shadcn UI Imports
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+
 const AVATAR_COLORS = [
   'bg-blue-500', 'bg-rose-500', 'bg-emerald-500',
-  'bg-violet-500', 'bg-amber-500', 'bg-cyan-500', 'bg-[#4F46E5]',
+  'bg-violet-500', 'bg-amber-500', 'bg-cyan-500', 'bg-primary-600',
 ];
 
 const getInitials = (name) =>
   name?.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2) || '??';
 
 const StarRow = ({ rating, interactive = false, onRate }) => (
-  <div className="flex gap-1">
+  <div className="flex gap-0.5">
     {[1, 2, 3, 4, 5].map((s) => (
       <Star
         key={s}
-        className={`w-4 h-4 transition-all duration-300 ${
-          s <= rating ? 'fill-[#FBBF24] text-[#FBBF24]' : 'text-gray-200'
+        className={`w-3.5 h-3.5 transition-all duration-200 ${
+          s <= rating ? 'fill-amber-400 text-amber-400' : 'text-gray-255'
         } ${interactive ? 'cursor-pointer hover:scale-110' : ''}`}
         onClick={() => interactive && onRate && onRate(s)}
       />
@@ -26,9 +43,9 @@ const StarRow = ({ rating, interactive = false, onRate }) => (
 );
 
 const statusConfig = {
-  approved: { label: 'Approved', cls: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
-  pending:  { label: 'Pending',  cls: 'bg-amber-50 text-amber-600 border-amber-100' },
-  rejected: { label: 'Rejected', cls: 'bg-rose-50 text-rose-600 border-rose-100' },
+  approved: { label: 'Approved', variant: 'success' },
+  pending:  { label: 'Pending',  variant: 'warning' },
+  rejected: { label: 'Rejected', variant: 'destructive' },
 };
 
 const EMPTY_FORM = { name: '', designation: '', message: '', rating: 5, color: AVATAR_COLORS[0] };
@@ -154,332 +171,323 @@ const TestimonialsManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] p-4 sm:p-8 font-sans">
-      <div className="max-w-8xl mx-auto space-y-8">
-
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight">Testimonials</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage, moderate, and publish guest reviews.</p>
-          </div>
-          <button
-            onClick={openCreate}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-sm font-medium rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95"
-          >
-            <Plus className="w-4 h-4" /> Add Testimonial
-          </button>
+    <div className="space-y-6 max-w-full overflow-hidden">
+      {/* Top Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+        <div className="truncate">
+          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2 truncate">
+            <Quote className="w-5 h-5 text-primary-600 shrink-0" />
+            <span className="truncate">Testimonials</span>
+          </h1>
+          <p className="text-xs text-gray-500 mt-0.5 truncate">
+            Manage, moderate, and publish guest reviews.
+          </p>
         </div>
-
-        {/* Filter Tabs */}
-        <div className="flex gap-3 flex-wrap border-b border-gray-200 pb-4">
-          {[
-            { key: 'all', label: 'All', icon: MessageSquare },
-            { key: 'pending', label: 'Pending', icon: Clock },
-            { key: 'approved', label: 'Approved', icon: ShieldCheck },
-            { key: 'rejected', label: 'Rejected', icon: X },
-          ].map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setFilter(key)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
-                filter === key
-                  ? 'bg-gray-900 text-white shadow-md'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                filter === key ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
-              }`}>{counts[key]}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        {loading ? (
-          <div className="flex justify-center items-center py-32">
-            <Loader2 className="w-8 h-8 animate-spin text-[#4F46E5]" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-32 bg-white border border-gray-100 rounded-3xl shadow-sm">
-            <Quote className="w-12 h-12 mx-auto mb-4 text-gray-200" />
-            <p className="text-gray-500 font-medium">No testimonials found in this category.</p>
-          </div>
-        ) : (
-          <>
-            {/* Result count */}
-            <div className="text-sm text-gray-500 font-medium">
-              Showing <span className="text-gray-900">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)}</span> of <span className="text-gray-900">{filtered.length}</span> testimonials
-            </div>
-
-            {/* Testimonials Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {paginated.map((t) => {
-                const cfg = statusConfig[t.isApproved] || statusConfig.pending;
-                const initials = getInitials(t.name);
-
-                return (
-                  <div key={t._id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-5">
-
-                    {/* Header: Status & Source */}
-                    <div className="flex items-center justify-between">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${cfg.cls}`}>
-                        {cfg.label}
-                      </span>
-                      <span className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-md">
-                        {t.source === 'user' ? 'User Submission' : 'Admin Created'}
-                      </span>
-                    </div>
-
-                    {/* Message & Rating */}
-                    <div className="flex-1 space-y-3">
-                      <StarRow rating={t.rating} />
-                      <p className="text-gray-600 text-sm leading-relaxed italic line-clamp-3">"{t.message}"</p>
-                    </div>
-
-                    {/* Author Details */}
-                    <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                      <div className={`w-10 h-10 rounded-full ${t.color || 'bg-[#4F46E5]'} flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-inner`}>
-                        {initials}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-gray-900 font-semibold text-sm truncate">{t.name}</p>
-                        {t.designation && <p className="text-gray-500 text-xs truncate mt-0.5">{t.designation}</p>}
-                      </div>
-                    </div>
-
-                    {/* Actions Grid */}
-                    <div className="grid grid-cols-4 gap-2 pt-1 mt-auto">
-                      {t.isApproved === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => handleApprove(t._id, 'approved')}
-                            className="col-span-2 flex items-center justify-center gap-1.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-sm font-medium rounded-lg transition-colors"
-                          >
-                            <Check className="w-4 h-4" /> Approve
-                          </button>
-                          <button
-                            onClick={() => handleApprove(t._id, 'rejected')}
-                            className="col-span-2 flex items-center justify-center gap-1.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-sm font-medium rounded-lg transition-colors"
-                          >
-                            <X className="w-4 h-4" /> Reject
-                          </button>
-                        </>
-                      )}
-
-                      {t.isApproved === 'rejected' && (
-                        <button
-                          onClick={() => handleApprove(t._id, 'approved')}
-                          className="col-span-4 flex items-center justify-center gap-1.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-sm font-medium rounded-lg transition-colors"
-                        >
-                          <Check className="w-4 h-4" /> Approve
-                        </button>
-                      )}
-
-                      {t.isApproved === 'approved' && (
-                        <button
-                          onClick={() => handleApprove(t._id, 'rejected')}
-                          className="col-span-4 flex items-center justify-center gap-1.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-sm font-medium rounded-lg transition-colors"
-                        >
-                          <X className="w-4 h-4" /> Revoke Approval
-                        </button>
-                      )}
-
-                      {/* Edit & Delete (Shared across all states, pushed to a new row if buttons above exist) */}
-                      <div className="col-span-4 flex gap-2">
-                        <button
-                          onClick={() => openEdit(t)}
-                          className="flex-1 flex justify-center items-center py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(t)}
-                          className="flex-1 flex justify-center items-center py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-8">
-                <button
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all disabled:opacity-50"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                {getPageNumbers().map((page, idx) =>
-                  page === '...' ? (
-                    <span key={`ellipsis-${idx}`} className="px-3 text-gray-400">…</span>
-                  ) : (
-                    <button
-                      key={page}
-                      onClick={() => goToPage(page)}
-                      className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all ${
-                        currentPage === page
-                          ? 'bg-gray-900 text-white shadow-md'
-                          : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  )
-                )}
-                <button
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all disabled:opacity-50"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Create/Edit Modal - Glassmorphism Style */}
-        {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4">
-            <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-
-              <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                <h2 className="font-semibold text-gray-900 text-lg">{editTarget ? 'Edit Testimonial' : 'Add Testimonial'}</h2>
-                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-
-              <div className="p-6 space-y-6">
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-2">Guest Name *</label>
-                    <input
-                      type="text"
-                      value={form.name}
-                      onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
-                      placeholder="John Doe"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#4F46E5] focus:border-transparent transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-2">Title / Role</label>
-                    <input
-                      type="text"
-                      value={form.designation}
-                      onChange={(e) => setForm(p => ({ ...p, designation: e.target.value }))}
-                      placeholder="e.g. Travel Blogger"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#4F46E5] focus:border-transparent transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-2">Rating *</label>
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 w-fit">
-                    <StarRow rating={form.rating} interactive onRate={(s) => setForm(p => ({ ...p, rating: s }))} />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-3">Avatar Color</label>
-                  <div className="flex gap-3 flex-wrap">
-                    {AVATAR_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => setForm(p => ({ ...p, color: c }))}
-                        className={`w-8 h-8 rounded-full ${c} shadow-sm transition-all duration-200 ${
-                          form.color === c ? 'ring-2 ring-offset-2 ring-[#4F46E5] scale-110' : 'hover:scale-105'
-                        }`}
-                        type="button"
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-xs font-semibold text-gray-600">Review Message *</label>
-                    <span className={`text-xs font-medium ${form.message.length > 190 ? 'text-rose-500' : 'text-gray-400'}`}>
-                      {form.message.length} / 200
-                    </span>
-                  </div>
-                  <textarea
-                    value={form.message}
-                    onChange={(e) => setForm(p => ({ ...p, message: e.target.value }))}
-                    rows={4}
-                    maxLength={200}
-                    placeholder="Guest review text (max 200 characters)..."
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#4F46E5] focus:border-transparent transition-all resize-none"
-                  />
-                </div>
-
-              </div>
-
-              {/* Action Buttons */}
-              <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={submitting}
-                  className="flex-1 py-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-sm font-medium rounded-xl transition-all shadow-md shadow-indigo-500/20 disabled:opacity-70 flex items-center justify-center gap-2"
-                >
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  {editTarget ? 'Save Changes' : 'Create'}
-                </button>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* Delete Confirm Modal */}
-        {deleteTarget && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4">
-            <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-sm p-8 text-center space-y-5 animate-in zoom-in-95 duration-200">
-              <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Trash2 className="w-8 h-8 text-rose-500" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 text-xl">Delete Testimonial?</h3>
-                <p className="text-sm text-gray-500 mt-2">This will permanently remove <span className="font-medium text-gray-800">{deleteTarget.name}</span>'s review. This action cannot be undone.</p>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => setDeleteTarget(null)}
-                  className="flex-1 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-medium rounded-xl transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium rounded-xl transition-all shadow-md shadow-rose-500/20"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
+        <Button
+          onClick={openCreate}
+          className="shadow text-xs flex items-center gap-2 transition-all shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          Add Testimonial
+        </Button>
       </div>
+
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {[
+          { key: 'all', label: 'All', icon: MessageSquare },
+          { key: 'pending', label: 'Pending', icon: Clock },
+          { key: 'approved', label: 'Approved', icon: ShieldCheck },
+          { key: 'rejected', label: 'Rejected', icon: X },
+        ].map(({ key, label, icon: Icon }) => (
+          <Button
+            key={key}
+            variant={filter === key ? 'default' : 'outline'}
+            onClick={() => setFilter(key)}
+            className="rounded-full text-xs font-semibold px-4 h-9 flex items-center gap-2 transition-all border border-gray-200"
+          >
+            <Icon className="w-3.5 h-3.5" />
+            {label}
+            <Badge
+              variant={filter === key ? 'secondary' : 'default'}
+              className="ml-0.5 text-[10px] px-1.5 py-0 rounded-full scale-90"
+            >
+              {counts[key]}
+            </Badge>
+          </Button>
+        ))}
+      </div>
+
+      {/* Content */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+          <Loader2 className="w-8 h-8 animate-spin mb-2 text-primary-500" />
+          <p className="text-xs font-bold uppercase tracking-widest animate-pulse">Fetching testimonials...</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <Card className="text-center py-20 bg-white border border-gray-200 shadow-sm rounded-2xl">
+          <Quote className="w-12 h-12 mx-auto mb-3 text-gray-200" />
+          <p className="text-sm font-semibold text-gray-700">No testimonials found</p>
+          <p className="text-xs text-gray-400 mt-1">There are no client testimonials in this category.</p>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          <div className="text-xs text-slate-600 font-medium">
+            Showing <span className="font-bold text-gray-900">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)}</span> of <span className="font-bold text-gray-900">{filtered.length}</span> testimonials
+          </div>
+
+          {/* Grid of Testimonials */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {paginated.map((t) => {
+              const cfg = statusConfig[t.isApproved] || statusConfig.pending;
+              const initials = getInitials(t.name);               return (
+                <Card key={t._id} className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-4 p-5 text-left relative">
+                  {/* Header: Status & Source */}
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant={cfg.variant} className="uppercase text-[9px] font-bold px-2 py-0.5 shrink-0">
+                      {cfg.label}
+                    </Badge>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-[10px] text-gray-400 font-bold bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-full">
+                        {t.source === 'user' ? 'User Submit' : 'Admin Created'}
+                      </span>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-slate-100 rounded-full">
+                            <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-white border border-slate-200">
+                          <DropdownMenuLabel className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Moderation</DropdownMenuLabel>
+                          {t.isApproved !== 'approved' && (
+                            <DropdownMenuItem onClick={() => handleApprove(t._id, 'approved')} className="cursor-pointer text-slate-800 focus:bg-slate-100">
+                              <Check className="mr-2 h-4 w-4 text-emerald-650" />
+                              Approve
+                            </DropdownMenuItem>
+                          )}
+                          {t.isApproved !== 'rejected' && (
+                            <DropdownMenuItem onClick={() => handleApprove(t._id, 'rejected')} className="cursor-pointer text-slate-800 focus:bg-slate-100">
+                              <X className="mr-2 h-4 w-4 text-rose-500" />
+                              {t.isApproved === 'approved' ? 'Revoke Approval' : 'Reject'}
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator className="bg-slate-100" />
+                          <DropdownMenuLabel className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => openEdit(t)} className="cursor-pointer text-slate-800 focus:bg-slate-100">
+                            <Edit2 className="mr-2 h-4 w-4 text-blue-600" />
+                            Edit Testimonial
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDeleteTarget(t)} className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-700">
+                            <Trash2 className="mr-2 h-4 w-4 text-red-500" />
+                            Delete Testimonial
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  {/* Message & Rating */}
+                  <div className="flex-1 min-h-[60px] space-y-2">
+                    <StarRow rating={t.rating} />
+                    <p className="text-slate-600 text-xs leading-relaxed italic block break-words">"{t.message}"</p>
+                  </div>
+
+                  {/* Author Details */}
+                  <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
+                    <div className={`w-8 h-8 rounded-full ${t.color || 'bg-primary-600'} flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm`}>
+                      {initials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-gray-900 truncate" title={t.name}>{t.name}</p>
+                      {t.designation && <p className="text-[10px] text-gray-400 font-semibold truncate mt-0.5" title={t.designation}>{t.designation}</p>}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Pagination Navigation */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1 bg-gray-50 p-1 border border-gray-150 rounded-xl w-fit mx-auto">
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={currentPage === 1}
+                onClick={() => goToPage(currentPage - 1)}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+
+              {getPageNumbers().map((page, idx) =>
+                page === '...' ? (
+                  <span key={`ellipsis-${idx}`} className="px-2 text-xs text-gray-400 font-bold select-none">
+                    ...
+                  </span>
+                ) : (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => goToPage(page)}
+                    className="h-8 w-8 text-xs p-0"
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
+
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={currentPage === totalPages}
+                onClick={() => goToPage(currentPage + 1)}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Create / Edit Dialog */}
+      <Dialog open={showModal} onOpenChange={(open) => !open && setShowModal(false)}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>{editTarget ? 'Edit Testimonial' : 'Add Testimonial'}</DialogTitle>
+            <DialogDescription>
+              Submit custom client details and star metrics.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-4 pt-2 text-left">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs uppercase tracking-wider text-slate-400">Guest Name *</Label>
+                <Input
+                  type="text"
+                  required
+                  value={form.name}
+                  onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+                  placeholder="John Doe"
+                  className="text-slate-900 bg-white border border-gray-200"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs uppercase tracking-wider text-slate-400">Title / Role</Label>
+                <Input
+                  type="text"
+                  value={form.designation}
+                  onChange={(e) => setForm(p => ({ ...p, designation: e.target.value }))}
+                  placeholder="e.g. Travel Blogger"
+                  className="text-slate-900 bg-white border border-gray-200"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs uppercase tracking-wider text-slate-400">Rating *</Label>
+              <div className="bg-slate-50 border border-gray-200 rounded-xl px-4 py-2.5 w-fit">
+                <StarRow rating={form.rating} interactive onRate={(s) => setForm(p => ({ ...p, rating: s }))} />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-slate-400">Avatar Color</Label>
+              <div className="flex gap-2.5 flex-wrap">
+                {AVATAR_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setForm(p => ({ ...p, color: c }))}
+                    className={`w-7 h-7 rounded-full ${c} shadow-sm transition-all duration-200 border-none outline-none ${
+                      form.color === c ? 'ring-2 ring-offset-2 ring-primary-600 scale-110' : 'hover:scale-105 cursor-pointer'
+                    }`}
+                    type="button"
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between items-center">
+                <Label className="text-xs uppercase tracking-wider text-slate-400">Review Message *</Label>
+                <span className={`text-[10px] font-bold ${form.message.length > 190 ? 'text-red-500' : 'text-gray-400'}`}>
+                  {form.message.length} / 200
+                </span>
+              </div>
+              <Textarea
+                required
+                value={form.message}
+                onChange={(e) => setForm(p => ({ ...p, message: e.target.value }))}
+                rows={4}
+                maxLength={200}
+                placeholder="Guest review text (max 200 characters)..."
+                className="text-slate-900 bg-white border border-gray-200 resize-none"
+              />
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0 pt-2">
+              <Button
+                type="button"
+                onClick={() => setShowModal(false)}
+                variant="outline"
+                className="h-10"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="h-10 flex items-center gap-2"
+              >
+                {submitting && <Loader2 className="w-4 h-4 animate-spin shrink-0" />}
+                {editTarget ? 'Save Changes' : 'Create'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="sm:max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-655">
+              <Trash2 className="w-5 h-5" />
+              Delete Testimonial?
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 pt-2 text-sm text-gray-655 text-left">
+            <p className="truncate">
+              Are you sure you want to delete <span className="font-bold text-gray-800">{deleteTarget?.name}</span>'s testimonial?
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 pt-2">
+            <Button
+              onClick={() => setDeleteTarget(null)}
+              variant="outline"
+              className="h-9"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDelete}
+              variant="destructive"
+              className="h-9"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
