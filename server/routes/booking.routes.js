@@ -20,6 +20,7 @@ import {
   createPaymentLink,
   razorpayWebhook,
   confirmPaymentLinkBooking,
+  checkPaymentLinkStatus,
   getUnnotifiedBookings,
   markBookingAsNotified
 } from '../controllers/booking.controller.js';
@@ -31,6 +32,7 @@ router.get('/unnotified', protect, adminOnly, getUnnotifiedBookings);
 router.post('/:id/mark-notified', protect, adminOnly, markBookingAsNotified);
 router.post('/razorpay-webhook', razorpayWebhook);
 router.post('/confirm-link-payment', protectOptional, confirmPaymentLinkBooking);
+router.get('/payment-link-status/:linkId', protect, adminOnly, checkPaymentLinkStatus);
 router.get('/room-availability/:id', getRoomAvailabilityPublic);
 router.get('/public/:id', getBookingByIdPublic);
 router.get('/stats/dashboard', protect, adminOnly, getDashboardStats);

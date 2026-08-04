@@ -7,8 +7,8 @@ const bookingSchema = new mongoose.Schema({
   roomsCount: { type: Number, default: 1 },
   checkIn: { type: Date, required: true },
   checkOut: { type: Date, required: true },
-  guests: { type: Number, required: true, default: 1 },
-  adults: { type: Number, required: true, default: 1 },
+  guests: { type: Number, required: true, default: 2 },
+  adults: { type: Number, required: true, default: 2 },
   children: { type: Number, required: true, default: 0 },
   infants: { type: Number, required: true, default: 0 },
   totalAmount: { type: Number, required: true },
@@ -21,7 +21,7 @@ const bookingSchema = new mongoose.Schema({
   paymentNotes: { type: String, default: '' },
   paymentId: { type: String }, // Legacy field
   razorpayOrderId: { type: String },
-  razorpayPaymentId: { type: String },
+  razorpayPaymentId: { type: String, unique: true, sparse: true },
   addons: [{
     name: { type: String },
     price: { type: Number },

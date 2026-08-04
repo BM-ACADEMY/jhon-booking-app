@@ -92,7 +92,7 @@ const Navbar = () => {
     ];
   });
   const [startDate, endDate] = dateRange;
-  const [adults, setAdults] = useState(() => parseInt(sessionStorage.getItem('booking_adults')) || 1);
+  const [adults, setAdults] = useState(() => parseInt(sessionStorage.getItem('booking_adults')) || 2);
   const [children, setChildren] = useState(() => parseInt(sessionStorage.getItem('booking_children')) || 0);
   const [infants, setInfants] = useState(() => parseInt(sessionStorage.getItem('booking_infants')) || 0);
   const [roomsCount, setRoomsCount] = useState(() => parseInt(sessionStorage.getItem('booking_rooms')) || 1);
@@ -120,7 +120,7 @@ const Navbar = () => {
       const loc = sessionStorage.getItem('booking_location') || '';
       const startStr = sessionStorage.getItem('booking_start_date');
       const endStr = sessionStorage.getItem('booking_end_date');
-      const ad = parseInt(sessionStorage.getItem('booking_adults')) || 1;
+      const ad = parseInt(sessionStorage.getItem('booking_adults')) || 2;
       const ch = parseInt(sessionStorage.getItem('booking_children')) || 0;
       const inf = parseInt(sessionStorage.getItem('booking_infants')) || 0;
       const rm = parseInt(sessionStorage.getItem('booking_rooms')) || 1;
@@ -285,7 +285,7 @@ const Navbar = () => {
                     <div className="space-y-4">
                       {/* Adults */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Adults</span>
+                        <span className="text-sm font-semibold text-gray-800">Adults (13+)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button 
                             onClick={() => setAdults(Math.max(1, adults - 1))}
@@ -305,7 +305,7 @@ const Navbar = () => {
 
                       {/* Children */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Children</span>
+                        <span className="text-sm font-semibold text-gray-800">Children (3–12)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button 
                             onClick={() => setChildren(Math.max(0, children - 1))}
@@ -325,7 +325,7 @@ const Navbar = () => {
 
                       {/* Infants */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Infants</span>
+                        <span className="text-sm font-semibold text-gray-800">Infants (0–2)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button 
                             onClick={() => setInfants(Math.max(0, infants - 1))}

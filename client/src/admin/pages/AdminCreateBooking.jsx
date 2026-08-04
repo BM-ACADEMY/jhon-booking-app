@@ -42,11 +42,35 @@ const getImageUrl = (img) => {
   return u.startsWith('http') ? u : `${SERVER_URL}${u}`;
 };
 
-const getAppliedTax = (amount) => {
+const getAdvancePercent = (settingsObj, nightsCount) => {
+  if (!settingsObj) return 30;
+  if (nightsCount === 1) return settingsObj.advancePercent1Day ?? 100;
+  if (nightsCount === 2) return settingsObj.advancePercent2Day ?? 50;
+  if (nightsCount === 3) return settingsObj.advancePercent3Day ?? 40;
+  if (nightsCount === 4) return settingsObj.advancePercent4Day ?? 30;
+  if (nightsCount >= 5 && nightsCount <= 7) return settingsObj.advancePercent5To7Days ?? 25;
+  return settingsObj.advancePercentAbove7Days ?? 20;
+};
+
+const getAppliedTax = (amount, nightsCount = 1, taxRules = []) => {
   if (amount <= 0) return 0;
-  // Standard GST calculation: 12% for stays under 7500, 18% above
-  const taxRate = amount > 7500 ? 0.18 : 0.12;
-  return Math.round(amount * taxRate);
+  const perDayAmount = amount / Math.max(1, nightsCount);
+  if (!taxRules || taxRules.length === 0) {
+    const taxRate = perDayAmount > 7500 ? 0.18 : 0.12;
+    return Math.round(amount * taxRate);
+  }
+  const matchedRule = taxRules.find(r => perDayAmount >= r.minAmount && perDayAmount <= r.maxAmount);
+  return matchedRule ? Math.round(amount * (matchedRule.taxPercent / 100)) : 0;
+};
+
+const getAppliedTaxPercent = (amount, nightsCount = 1, taxRules = []) => {
+  if (amount <= 0) return 0;
+  const perDayAmount = amount / Math.max(1, nightsCount);
+  if (!taxRules || taxRules.length === 0) {
+    return perDayAmount > 7500 ? 18 : 12;
+  }
+  const matchedRule = taxRules.find(r => perDayAmount >= r.minAmount && perDayAmount <= r.maxAmount);
+  return matchedRule ? matchedRule.taxPercent : 0;
 };
 
 const AdminCreateBooking = () => {
@@ -56,8 +80,11 @@ const AdminCreateBooking = () => {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
-  const [specialRequests, setSpecialRequests] = useState('');
   const [gstNumber, setGstNumber] = useState('');
+
+  // Settings & Rules from API
+  const [settings, setSettings] = useState(null);
+  const [taxRules, setTaxRules] = useState([]);
 
   // Rooms & Addons list from API
   const [rooms, setRooms] = useState([]);
@@ -66,6 +93,7 @@ const AdminCreateBooking = () => {
 
   // Selected Booking Parameters
   const [selectedRoomId, setSelectedRoomId] = useState('');
+  const [extraRoomIds, setExtraRoomIds] = useState([]);
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [adults, setAdults] = useState(2);
@@ -73,6 +101,26 @@ const AdminCreateBooking = () => {
   const [infants, setInfants] = useState(0);
   const [roomsCount, setRoomsCount] = useState(1);
   const [selectedAddonIds, setSelectedAddonIds] = useState([]);
+
+  const handleRoomsCountChange = (newCount) => {
+    const validCount = Math.max(1, Math.min(10, newCount));
+    setRoomsCount(validCount);
+    if (validCount > 1) {
+      setExtraRoomIds(prev => {
+        const next = [...prev];
+        if (next.length < validCount - 1) {
+          while (next.length < validCount - 1) {
+            next.push('');
+          }
+        } else if (next.length > validCount - 1) {
+          next.length = validCount - 1;
+        }
+        return next;
+      });
+    } else {
+      setExtraRoomIds([]);
+    }
+  };
 
   // Interactive Calendar Popover States
   const calendarRef = useRef(null);
@@ -93,14 +141,37 @@ const AdminCreateBooking = () => {
   }, []);
 
   // Payment Options
-  const [paymentType, setPaymentType] = useState('full'); // 'full' or 'advance' or 'hotel'
+  const [paymentType, setPaymentType] = useState('full'); // 'full' or 'advance'
   const [advancePercent, setAdvancePercent] = useState(30);
-  const [paymentStatus, setPaymentStatus] = useState('unpaid'); // 'unpaid', 'partially_paid', 'paid'
-  const [paymentNotes, setPaymentNotes] = useState('');
 
   // Processing & Confirmation State
   const [submitting, setSubmitting] = useState(false);
   const [createdBookingResult, setCreatedBookingResult] = useState(null);
+  const [waitingForPayment, setWaitingForPayment] = useState(false);
+  const pollIntervalRef = useRef(null);
+
+  // Poll Razorpay payment link status; once the customer pays, redirect to the Bookings section
+  useEffect(() => {
+    const linkId = createdBookingResult?.paymentLinkId;
+    if (!linkId) return;
+
+    setWaitingForPayment(true);
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await api.get(`/bookings/payment-link-status/${linkId}`);
+        if (res.data?.paid) {
+          clearInterval(pollIntervalRef.current);
+          setWaitingForPayment(false);
+          toast.success('Payment received! Booking confirmed.');
+          navigate('/admin/bookings');
+        }
+      } catch (err) {
+        console.error('Payment link status check failed:', err);
+      }
+    }, 5000);
+
+    return () => clearInterval(pollIntervalRef.current);
+  }, [createdBookingResult?.paymentLinkId, navigate]);
 
   // Check if a specific date is booked or blocked for selected room
   const isDateBooked = (date) => {
@@ -333,9 +404,10 @@ const AdminCreateBooking = () => {
     const fetchData = async () => {
       try {
         setLoadingData(true);
-        const [roomsRes, addonsRes] = await Promise.all([
+        const [roomsRes, addonsRes, settingsRes] = await Promise.all([
           api.get('/rooms'),
-          api.get('/addons').catch(() => ({ data: [] }))
+          api.get('/addons').catch(() => ({ data: [] })),
+          api.get('/settings').catch(() => ({ data: null }))
         ]);
         
         const activeRooms = (roomsRes.data || []).filter(r => r.status !== 'archived' && r.status !== 'draft');
@@ -344,8 +416,12 @@ const AdminCreateBooking = () => {
           setSelectedRoomId(activeRooms[0]._id);
         }
         setAvailableAddons(addonsRes.data || []);
+        if (settingsRes.data) {
+          setSettings(settingsRes.data);
+          setTaxRules(settingsRes.data.taxRules || []);
+        }
       } catch (err) {
-        toast.error('Failed to load rooms or addons data');
+        toast.error('Failed to load rooms, addons or settings data');
         console.error(err);
       } finally {
         setLoadingData(false);
@@ -353,14 +429,6 @@ const AdminCreateBooking = () => {
     };
     fetchData();
 
-    // Default dates: check-in today, check-out tomorrow
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const formatD = (d) => d.toISOString().split('T')[0];
-    setCheckIn(formatD(today));
-    setCheckOut(formatD(tomorrow));
   }, []);
 
   // Selected Room Object
@@ -378,6 +446,14 @@ const AdminCreateBooking = () => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }, [checkIn, checkOut]);
 
+  // Update advance percent dynamically based on settings and nightsCount
+  useEffect(() => {
+    if (settings && nightsCount > 0) {
+      const percent = getAdvancePercent(settings, nightsCount);
+      setAdvancePercent(percent);
+    }
+  }, [settings, nightsCount]);
+
   // Calculate Addons Total
   const addonsTotal = useMemo(() => {
     return selectedAddonIds.reduce((sum, id) => {
@@ -386,21 +462,34 @@ const AdminCreateBooking = () => {
     }, 0);
   }, [selectedAddonIds, availableAddons]);
 
-  // Calculate Room Subtotal & Grand Total
-  const roomPricePerNight = selectedRoom?.price || 0;
-  const roomSubtotal = roomPricePerNight * nightsCount * roomsCount;
-  const stayTax = getAppliedTax(roomSubtotal);
+  // Calculate Room Subtotal, Dynamic GST Tax & Grand Total
+  const totalPerNightForSelectedRooms = useMemo(() => {
+    const r1Price = selectedRoom?.price || 0;
+    const extraPrices = extraRoomIds.reduce((sum, id) => {
+      const match = rooms.find(r => r._id === id);
+      return sum + (match ? (match.price || 0) : r1Price);
+    }, 0);
+    return r1Price + extraPrices;
+  }, [selectedRoom, extraRoomIds, rooms]);
+
+  const roomPricePerNight = totalPerNightForSelectedRooms;
+  const roomSubtotal = totalPerNightForSelectedRooms * nightsCount;
+  const stayTax = getAppliedTax(roomSubtotal, nightsCount, taxRules);
+  const stayTaxPercent = getAppliedTaxPercent(roomSubtotal, nightsCount, taxRules);
   const grandTotal = roomSubtotal + stayTax + addonsTotal;
 
-  // Calculate Paid vs Due Amount based on Payment Type selection
+  // Calculate Advance Amount
+  const advanceAmount = useMemo(() => {
+    return Math.round(grandTotal * (advancePercent / 100));
+  }, [grandTotal, advancePercent]);
+
+  // Calculate Paid vs Due Amount based on Payment Option
   const calculatedPaidAmount = useMemo(() => {
-    if (paymentStatus === 'paid') return grandTotal;
-    if (paymentStatus === 'unpaid') return 0;
     if (paymentType === 'advance') {
-      return Math.round(grandTotal * (advancePercent / 100));
+      return advanceAmount;
     }
-    return 0;
-  }, [paymentStatus, paymentType, grandTotal, advancePercent]);
+    return grandTotal; // Full Payment
+  }, [paymentType, grandTotal, advanceAmount]);
 
   const calculatedDueAmount = Math.max(0, grandTotal - calculatedPaidAmount);
 
@@ -415,12 +504,13 @@ const AdminCreateBooking = () => {
   const handleCreateBooking = async (e) => {
     e.preventDefault();
 
+    const phoneDigits = customerPhone.replace(/\D/g, '');
     if (!customerName.trim()) {
       toast.error('Please enter customer full name');
       return;
     }
-    if (!customerPhone.trim() || customerPhone.trim().length < 6) {
-      toast.error('Please enter a valid customer phone number');
+    if (!phoneDigits || phoneDigits.length !== 10) {
+      toast.error('Please enter a valid 10-digit phone number');
       return;
     }
     if (!selectedRoomId) {
@@ -429,6 +519,17 @@ const AdminCreateBooking = () => {
     }
     if (nightsCount <= 0) {
       toast.error('Check-out date must be after Check-in date');
+      return;
+    }
+
+    const r1Cap = selectedRoom?.maxOccupancy !== undefined && selectedRoom?.maxOccupancy !== null ? selectedRoom.maxOccupancy : (selectedRoom?.guests || 3);
+    const maxCapacityVal = r1Cap + extraRoomIds.reduce((sum, id) => {
+      const match = rooms.find(r => r._id === id);
+      return sum + (match ? (match.maxOccupancy ?? match.guests ?? 3) : r1Cap);
+    }, 0);
+
+    if (adults + children > maxCapacityVal) {
+      toast.error(`Total guests (${adults + children}) exceeds maximum capacity (${maxCapacityVal}) for ${roomsCount} room(s). Please increase number of rooms.`);
       return;
     }
 
@@ -444,13 +545,20 @@ const AdminCreateBooking = () => {
         };
       });
 
+      const resolvedExtraRoomIds = extraRoomIds.map(id => id || selectedRoomId);
+      while (resolvedExtraRoomIds.length < roomsCount - 1) {
+        resolvedExtraRoomIds.push(selectedRoomId);
+      }
+      const allSelectedRoomIds = [selectedRoomId, ...resolvedExtraRoomIds];
+
       const payload = {
         customerDetails: {
           name: customerName.trim(),
-          phone: customerPhone.trim(),
+          phone: phoneDigits,
           email: customerEmail.trim()
         },
         room: selectedRoomId,
+        selectedRoomIds: allSelectedRoomIds,
         checkIn,
         checkOut,
         adults: Number(adults),
@@ -460,10 +568,10 @@ const AdminCreateBooking = () => {
         totalAmount: grandTotal,
         paidAmount: calculatedPaidAmount,
         paymentType: paymentType,
-        paymentStatus: paymentStatus,
-        paymentNotes: paymentNotes.trim(),
+        paymentStatus: 'unpaid',
+        paymentNotes: '',
         addons: selectedAddonObjects,
-        specialRequests: specialRequests.trim(),
+        specialRequests: '',
         gstNumber: gstNumber.trim()
       };
 
@@ -480,6 +588,10 @@ const AdminCreateBooking = () => {
         const cIn = new Date(checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         const cOut = new Date(checkOut).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
+        const amountLabel = paymentType === 'advance' 
+          ? `₹${advanceAmount.toLocaleString('en-IN')} (50% Advance)` 
+          : `₹${grandTotal.toLocaleString('en-IN')} (Full Payment)`;
+
         const textMsg = 
 `Hello *${customerName}*! 👋
 
@@ -491,7 +603,7 @@ Complete your room booking payment for *The Balified Villa*! 🏨✨
 • *Check-Out:* ${cOut} (${nightsCount} Night${nightsCount > 1 ? 's' : ''})
 • *Guests:* ${adults} Adult${adults > 1 ? 's' : ''}${children > 0 ? `, ${children} Child` : ''}
 
-💳 *Payment Amount:* ₹${(calculatedDueAmount > 0 ? calculatedDueAmount : grandTotal).toLocaleString('en-IN')}
+💳 *Payment Amount:* ${amountLabel}
 
 🔗 *Razorpay Payment Link:* ${paymentUrl}
 
@@ -502,7 +614,7 @@ Thank you for choosing The Balified Villa! 🌴`;
         const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`;
         window.open(waUrl, '_blank');
       } else {
-        toast.success('Room Booking Created & Full Payment Confirmed!');
+        toast.success('Room Booking Created Successfully!');
       }
     } catch (err) {
       console.error(err);
@@ -640,6 +752,24 @@ Thank you for choosing The Balified Villa! 🌴`;
             </div>
           </div>
 
+          {selectedAddonIds.length > 0 && (
+            <div className="p-4 bg-white rounded-xl border border-gray-100">
+              <p className="text-xs text-gray-400 font-medium mb-2">Selected Add-ons ({selectedAddonIds.length})</p>
+              <ul className="space-y-1">
+                {selectedAddonIds.map(id => {
+                  const addon = availableAddons.find(a => a._id === id);
+                  if (!addon) return null;
+                  return (
+                    <li key={id} className="flex justify-between text-xs">
+                      <span className="text-gray-700 font-semibold">{addon.name}</span>
+                      <span className="text-gray-900 font-bold">₹{(addon.price || 0).toLocaleString('en-IN')}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
           {/* WhatsApp Share CTA */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl shadow-md">
             <div>
@@ -663,10 +793,23 @@ Thank you for choosing The Balified Villa! 🌴`;
             </a>
           </div>
 
+          {waitingForPayment && (
+            <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+              <Loader2 className="w-5 h-5 text-amber-600 animate-spin shrink-0" />
+              <p className="text-xs font-semibold text-amber-800">
+                Waiting for customer to complete payment... You'll be redirected to the Bookings section automatically once payment is received.
+              </p>
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 pt-2">
             <Button
               variant="outline"
-              onClick={() => setCreatedBookingResult(null)}
+              onClick={() => {
+                clearInterval(pollIntervalRef.current);
+                setWaitingForPayment(false);
+                setCreatedBookingResult(null);
+              }}
               className="rounded-xl"
             >
               Create Another Booking
@@ -720,7 +863,8 @@ Thank you for choosing The Balified Villa! 🌴`;
                       type="tel"
                       placeholder="e.g. 9876543210"
                       value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      maxLength={10}
                       required
                       className="pl-9 rounded-xl text-sm"
                     />
@@ -758,19 +902,6 @@ Thank you for choosing The Balified Villa! 🌴`;
                     />
                   </div>
                 </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Special Requests / Notes
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="e.g. Late check-in, ground floor room preferred, decoration..."
-                    value={specialRequests}
-                    onChange={(e) => setSpecialRequests(e.target.value)}
-                    className="rounded-xl text-sm"
-                  />
-                </div>
               </div>
             </Card>
 
@@ -801,7 +932,7 @@ Thank you for choosing The Balified Villa! 🌴`;
 
               {/* Selected Room Preview */}
               {selectedRoom && (
-                <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl border border-gray-100 shadow-2xs">
                   <div className="w-16 h-14 rounded-lg overflow-hidden bg-gray-200 shrink-0">
                     <img
                       src={getImageUrl(selectedRoom.images?.[0]) || 'https://via.placeholder.com/150'}
@@ -810,9 +941,11 @@ Thank you for choosing The Balified Villa! 🌴`;
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm text-gray-900 truncate">{selectedRoom.name}</h3>
+                    <h3 className="font-bold text-sm text-gray-900 truncate">
+                      {selectedRoom.name} {roomsCount > 1 ? `(1 Of ${roomsCount})` : ''}
+                    </h3>
                     <p className="text-xs text-gray-500">
-                      Category: {selectedRoom.category || 'Villa'} • Max Guests: {selectedRoom.guests || 2}
+                      Category: {selectedRoom.category || 'Villa'} • Max Guests: {selectedRoom.maxOccupancy !== undefined && selectedRoom.maxOccupancy !== null ? selectedRoom.maxOccupancy : (selectedRoom.guests || 2)}
                     </p>
                     <p className="text-xs font-bold text-primary-600 mt-0.5">
                       ₹{selectedRoom.price?.toLocaleString('en-IN')} / night
@@ -843,7 +976,7 @@ Thank you for choosing The Balified Villa! 🌴`;
                       <span className="flex items-center gap-2 truncate">
                         <Calendar className="w-4 h-4 text-primary-600 shrink-0" />
                         <span className={checkIn ? 'text-gray-900 font-bold' : 'text-gray-400'}>
-                          {checkIn ? new Date(checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Select Check-In'}
+                          {checkIn ? new Date(checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Select Date'}
                         </span>
                       </span>
                       <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
@@ -869,7 +1002,7 @@ Thank you for choosing The Balified Villa! 🌴`;
                       <span className="flex items-center gap-2 truncate">
                         <Calendar className="w-4 h-4 text-primary-600 shrink-0" />
                         <span className={checkOut ? 'text-gray-900 font-bold' : 'text-gray-400'}>
-                          {checkOut ? new Date(checkOut).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Select Check-Out'}
+                          {checkOut ? new Date(checkOut).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Select Date'}
                         </span>
                       </span>
                       <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
@@ -885,49 +1018,217 @@ Thank you for choosing The Balified Villa! 🌴`;
                 )}
               </div>
 
-              {/* Guest Counters */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Adults</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={adults}
-                    onChange={(e) => setAdults(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="rounded-xl text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Children</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={children}
-                    onChange={(e) => setChildren(Math.max(0, parseInt(e.target.value) || 0))}
-                    className="rounded-xl text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Infants</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={infants}
-                    onChange={(e) => setInfants(Math.max(0, parseInt(e.target.value) || 0))}
-                    className="rounded-xl text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Rooms</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={roomsCount}
-                    onChange={(e) => setRoomsCount(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="rounded-xl text-sm"
-                  />
-                </div>
-              </div>
+              {/* Guest & Room Counters Card matching image design */}
+              {(() => {
+                const r1Cap = selectedRoom?.maxOccupancy !== undefined && selectedRoom?.maxOccupancy !== null 
+                  ? selectedRoom.maxOccupancy 
+                  : (selectedRoom?.guests || 3);
+                const maxTotalGuests = r1Cap + extraRoomIds.reduce((sum, id) => {
+                  const match = rooms.find(r => r._id === id);
+                  return sum + (match ? (match.maxOccupancy ?? match.guests ?? 3) : r1Cap);
+                }, 0);
+                const currentGuests = adults + children;
+                const isOverCap = currentGuests > maxTotalGuests;
+
+                return (
+                  <div className="mt-3 border border-gray-200 rounded-2xl bg-white divide-y divide-gray-100 overflow-hidden shadow-sm">
+                    {/* Adults */}
+                    <div className="flex items-center justify-between p-3.5 hover:bg-gray-50/50 transition-colors">
+                      <div>
+                        <p className="text-[10px] font-extrabold text-gray-800 uppercase tracking-widest mb-0.5">ADULTS (13+)</p>
+                        <p className="text-sm font-medium text-gray-700">{adults} Adult{adults > 1 ? 's' : ''}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setAdults(Math.max(1, adults - 1))}
+                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-800 hover:text-gray-900 transition-all active:scale-95 bg-white shadow-xs"
+                        >
+                          <span className="text-lg font-light leading-none">−</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (currentGuests >= maxTotalGuests) {
+                              toast.warning(`Maximum occupancy (${maxTotalGuests}) reached for ${roomsCount} room(s). Increase Rooms to add more guests.`);
+                            } else {
+                              setAdults(prev => prev + 1);
+                            }
+                          }}
+                          className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-95 bg-white shadow-xs ${
+                            currentGuests >= maxTotalGuests
+                              ? 'border-gray-200 text-gray-300 cursor-not-allowed'
+                              : 'border-gray-300 text-gray-600 hover:border-gray-800 hover:text-gray-900'
+                          }`}
+                        >
+                          <span className="text-lg font-light leading-none">+</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Children */}
+                    <div className="flex items-center justify-between p-3.5 hover:bg-gray-50/50 transition-colors">
+                      <div>
+                        <p className="text-[10px] font-extrabold text-gray-800 uppercase tracking-widest mb-0.5">CHILDREN (3–12)</p>
+                        <p className="text-sm font-medium text-gray-700">{children} Child{children === 1 ? '' : 'ren'}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setChildren(Math.max(0, children - 1))}
+                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-800 hover:text-gray-900 transition-all active:scale-95 bg-white shadow-xs"
+                        >
+                          <span className="text-lg font-light leading-none">−</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (currentGuests >= maxTotalGuests) {
+                              toast.warning(`Maximum occupancy (${maxTotalGuests}) reached for ${roomsCount} room(s). Increase Rooms to add more guests.`);
+                            } else {
+                              setChildren(prev => prev + 1);
+                            }
+                          }}
+                          className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-95 bg-white shadow-xs ${
+                            currentGuests >= maxTotalGuests
+                              ? 'border-gray-200 text-gray-300 cursor-not-allowed'
+                              : 'border-gray-300 text-gray-600 hover:border-gray-800 hover:text-gray-900'
+                          }`}
+                        >
+                          <span className="text-lg font-light leading-none">+</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Infants */}
+                    <div className="flex items-center justify-between p-3.5 hover:bg-gray-50/50 transition-colors">
+                      <div>
+                        <p className="text-[10px] font-extrabold text-gray-800 uppercase tracking-widest mb-0.5">INFANTS (0–2)</p>
+                        <p className="text-sm font-medium text-gray-700">{infants} Infant{infants !== 1 ? 's' : ''}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setInfants(Math.max(0, infants - 1))}
+                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-800 hover:text-gray-900 transition-all active:scale-95 bg-white shadow-xs"
+                        >
+                          <span className="text-lg font-light leading-none">−</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const maxInfants = 2 * roomsCount;
+                            if (infants >= maxInfants) {
+                              toast.warning(`Maximum infants (${maxInfants}) allowed for ${roomsCount} room(s).`);
+                            } else {
+                              setInfants(prev => prev + 1);
+                            }
+                          }}
+                          className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-95 bg-white shadow-xs ${
+                            infants >= 2 * roomsCount
+                              ? 'border-gray-200 text-gray-300 cursor-not-allowed'
+                              : 'border-gray-300 text-gray-600 hover:border-gray-800 hover:text-gray-900'
+                          }`}
+                        >
+                          <span className="text-lg font-light leading-none">+</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Guests Occupancy */}
+                    <div className={`flex items-center justify-between p-3.5 ${isOverCap ? 'bg-red-50 text-red-700' : 'bg-gray-50/60'}`}>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-gray-800">Guests Occupancy</p>
+                        {isOverCap && (
+                          <span className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-md">Exceeds Capacity</span>
+                        )}
+                      </div>
+                      <p className={`text-sm font-bold ${isOverCap ? 'text-red-600 font-extrabold' : 'text-gray-900'}`}>
+                        {currentGuests} / {maxTotalGuests}
+                      </p>
+                    </div>
+
+                    {/* Rooms */}
+                    <div className="flex items-center justify-between p-3.5 hover:bg-gray-50/50 transition-colors">
+                      <div>
+                        <p className="text-[10px] font-extrabold text-gray-800 uppercase tracking-widest mb-0.5">ROOMS</p>
+                        <p className="text-sm font-medium text-gray-700">{roomsCount} Room{roomsCount > 1 ? 's' : ''}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleRoomsCountChange(roomsCount - 1)}
+                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-800 hover:text-gray-900 transition-all active:scale-95 bg-white shadow-xs"
+                        >
+                          <span className="text-lg font-light leading-none">−</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRoomsCountChange(roomsCount + 1)}
+                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-800 hover:text-gray-900 transition-all active:scale-95 bg-white shadow-xs"
+                        >
+                          <span className="text-lg font-light leading-none">+</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Additional Room Selectors (SELECT ROOM 2, SELECT ROOM 3, etc.) */}
+                    {roomsCount > 1 && Array.from({ length: roomsCount - 1 }).map((_, idx) => {
+                      const roomNum = idx + 2;
+                      const currentSelectedId = extraRoomIds[idx] || '';
+                      const extraRoomObj = rooms.find(r => r._id === currentSelectedId);
+
+                      return (
+                        <div key={`extra-room-${roomNum}`} className="p-3.5 bg-gray-50/40 hover:bg-gray-50/80 transition-colors border-t border-gray-100 space-y-2.5">
+                          <label className="block text-[10px] font-extrabold text-gray-800 uppercase tracking-widest">
+                            SELECT ROOM {roomNum}
+                          </label>
+                          <select
+                            value={currentSelectedId}
+                            onChange={(e) => {
+                              const updated = [...extraRoomIds];
+                              updated[idx] = e.target.value;
+                              setExtraRoomIds(updated);
+                            }}
+                            className="w-full h-10 px-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium text-gray-800 shadow-sm"
+                          >
+                            <option value="" disabled>Choose a room...</option>
+                            {rooms.map((r) => (
+                              <option key={r._id} value={r._id}>
+                                {r.name} • ₹{r.price?.toLocaleString('en-IN')}/night ({r.category || 'Villa'})
+                              </option>
+                            ))}
+                          </select>
+
+                          {/* Selected Extra Room Preview Card matching image */}
+                          {extraRoomObj && (
+                            <div className="flex items-center gap-4 p-3 bg-white rounded-xl border border-gray-200 shadow-2xs">
+                              <div className="w-16 h-14 rounded-lg overflow-hidden bg-gray-200 shrink-0">
+                                <img
+                                  src={getImageUrl(extraRoomObj.images?.[0]) || 'https://via.placeholder.com/150'}
+                                  alt={extraRoomObj.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-sm text-gray-900 truncate">
+                                  {extraRoomObj.name} ({roomNum} Of {roomsCount})
+                                </h3>
+                                <p className="text-xs text-gray-500">
+                                  Category: {extraRoomObj.category || 'Villa'} • Max Guests: {extraRoomObj.maxOccupancy !== undefined && extraRoomObj.maxOccupancy !== null ? extraRoomObj.maxOccupancy : (extraRoomObj.guests || 2)}
+                                </p>
+                                <p className="text-xs font-bold text-primary-600 mt-0.5">
+                                  ₹{extraRoomObj.price?.toLocaleString('en-IN')} / night
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </Card>
 
             {/* Section 3: Add-on Services Selection */}
@@ -941,31 +1242,43 @@ Thank you for choosing The Balified Villa! 🌴`;
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {availableAddons.map((addon) => {
                     const isSelected = selectedAddonIds.includes(addon._id);
+                    const addonImg = addon.image ? getImageUrl(addon.image) : null;
                     return (
                       <div
                         key={addon._id}
                         onClick={() => toggleAddon(addon._id)}
-                        className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                        className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between gap-3 ${
                           isSelected
                             ? 'border-primary-500 bg-primary-50/50 shadow-sm'
                             : 'border-gray-200 bg-white hover:border-gray-300'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => {}}
-                            className="w-4 h-4 text-primary-600 rounded border-gray-300"
+                            className="w-4 h-4 text-primary-600 rounded border-gray-300 shrink-0"
                           />
-                          <div>
-                            <p className="font-semibold text-xs text-gray-900">{addon.name}</p>
+                          {addonImg ? (
+                            <img
+                              src={addonImg}
+                              alt={addon.name}
+                              className="w-12 h-12 rounded-lg object-cover border border-gray-100 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
+                              <Layers className="w-5 h-5 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-semibold text-xs text-gray-900 truncate">{addon.name}</p>
                             {addon.description && (
                               <p className="text-[11px] text-gray-500 line-clamp-1">{addon.description}</p>
                             )}
                           </div>
                         </div>
-                        <span className="font-bold text-xs text-primary-700 bg-primary-100 px-2 py-0.5 rounded-md">
+                        <span className="font-bold text-xs text-primary-700 bg-primary-100 px-2 py-1 rounded-md shrink-0">
                           +₹{addon.price?.toLocaleString('en-IN')}
                         </span>
                       </div>
@@ -985,55 +1298,95 @@ Thank you for choosing The Balified Villa! 🌴`;
                 <h2 className="font-bold text-base text-gray-900">Pricing & Payment</h2>
               </div>
 
-              {/* Price Calculation Summary */}
-              <div className="space-y-2.5 text-xs text-gray-600 border-b border-gray-100 pb-4">
-                <div className="flex justify-between items-center">
-                  <span>
-                    Room Rate ({nightsCount} Night{nightsCount > 1 ? 's' : ''} x ₹{roomPricePerNight.toLocaleString('en-IN')})
-                  </span>
-                  <span className="font-semibold text-gray-900">₹{roomSubtotal.toLocaleString('en-IN')}</span>
-                </div>
-
-                {addonsTotal > 0 && (
-                  <div className="flex justify-between items-center text-primary-700">
-                    <span>Selected Add-ons</span>
-                    <span className="font-semibold">+₹{addonsTotal.toLocaleString('en-IN')}</span>
+              {/* Detailed Itemized Price Calculation Summary */}
+              <div className="space-y-2 text-xs text-gray-600 border-b border-gray-100 pb-4">
+                {/* Room 1 */}
+                {selectedRoom ? (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700 font-medium">
+                      1. {selectedRoom.name} <span className="text-[11px] text-gray-400">({nightsCount} Night{nightsCount !== 1 ? 's' : ''} x ₹{selectedRoom.price?.toLocaleString('en-IN')})</span>
+                    </span>
+                    <span className="font-semibold text-gray-900">
+                      ₹{((selectedRoom.price || 0) * (nightsCount || 1)).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between items-center text-gray-400">
+                    <span>1. Room Rate</span>
+                    <span>₹0</span>
                   </div>
                 )}
 
-                <div className="flex justify-between items-center">
-                  <span>GST Taxes</span>
+                {/* Extra Rooms Breakdown (Room 2, Room 3, etc.) */}
+                {roomsCount > 1 && Array.from({ length: roomsCount - 1 }).map((_, idx) => {
+                  const roomNum = idx + 2;
+                  const roomObj = rooms.find(r => r._id === extraRoomIds[idx]);
+                  const rPrice = roomObj ? (roomObj.price || 0) : (selectedRoom?.price || 0);
+                  const rName = roomObj ? roomObj.name : `Room ${roomNum}`;
+
+                  return (
+                    <div key={`breakdown-room-${roomNum}`} className="flex justify-between items-center pt-0.5">
+                      <span className="text-gray-700 font-medium">
+                        {roomNum}. {rName} <span className="text-[11px] text-gray-400">({nightsCount} Night{nightsCount !== 1 ? 's' : ''} x ₹{rPrice.toLocaleString('en-IN')})</span>
+                      </span>
+                      <span className="font-semibold text-gray-900">
+                        ₹{(rPrice * (nightsCount || 1)).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  );
+                })}
+
+                {/* Total Rooms Subtotal if multiple rooms or addons exist */}
+                {(roomsCount > 1 || addonsTotal > 0) && (
+                  <div className="flex justify-between items-center pt-1.5 border-t border-gray-100 font-bold text-gray-800">
+                    <span>Total Rooms Subtotal</span>
+                    <span>₹{roomSubtotal.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+
+                {/* Selected Add-ons Breakdown */}
+                {addonsTotal > 0 && (
+                  <div className="flex justify-between items-center text-primary-700 font-medium pt-0.5">
+                    <span>Selected Add-ons ({selectedAddonIds.length})</span>
+                    <span className="font-bold">+₹{addonsTotal.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+
+                {/* GST Taxes */}
+                <div className="flex justify-between items-center pt-1">
+                  <span className="font-medium text-gray-700">GST Taxes ({stayTaxPercent}%)</span>
                   <span className="font-semibold text-gray-900">+₹{stayTax.toLocaleString('en-IN')}</span>
                 </div>
 
-                <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-sm font-black text-gray-900">
+                {/* Grand Total */}
+                <div className="flex justify-between items-center pt-2.5 border-t border-gray-200 text-sm font-black text-gray-900">
                   <span>Grand Total</span>
-                  <span className="text-base text-primary-600">₹{grandTotal.toLocaleString('en-IN')}</span>
+                  <span className="text-base font-extrabold text-[#1d4ed8]">₹{grandTotal.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
               {/* Payment Type Selection */}
-              <div className="space-y-3">
-                <label className="block text-xs font-semibold text-gray-700">Payment Option</label>
-                <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2.5">
+                <label className="block text-xs font-bold text-gray-800">Payment Option</label>
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => { setPaymentType('full'); setPaymentStatus('unpaid'); }}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                    onClick={() => setPaymentType('full')}
+                    className={`px-6 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm ${
                       paymentType === 'full'
-                        ? 'border-primary-600 bg-primary-600 text-white shadow-sm'
-                        : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50'
+                        ? 'bg-[#1d4ed8] text-white border-transparent'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
                     }`}
                   >
                     Full Payment
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setPaymentType('advance'); setPaymentStatus('partially_paid'); }}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                    onClick={() => setPaymentType('advance')}
+                    className={`px-6 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm ${
                       paymentType === 'advance'
-                        ? 'border-primary-600 bg-primary-600 text-white shadow-sm'
-                        : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50'
+                        ? 'bg-[#1d4ed8] text-white border-transparent'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
                     }`}
                   >
                     Advance ({advancePercent}%)
@@ -1041,42 +1394,18 @@ Thank you for choosing The Balified Villa! 🌴`;
                 </div>
               </div>
 
-              {/* Payment Status Selection */}
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-gray-700">Payment Status</label>
-                <select
-                  value={paymentStatus}
-                  onChange={(e) => setPaymentStatus(e.target.value)}
-                  className="w-full h-9 px-3 border border-gray-200 rounded-xl text-xs bg-white font-medium focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="unpaid">Unpaid (Send Razorpay Payment Link)</option>
-                  <option value="partially_paid">Partially Paid (Advance Received)</option>
-                  <option value="paid">Paid (Mark Full Payment Completed)</option>
-                </select>
-              </div>
-
               {/* Amount Breakdown */}
-              <div className="p-3 bg-gray-50 rounded-xl space-y-1 text-xs">
+              <div className="p-3.5 bg-gray-50 rounded-xl space-y-1.5 text-xs">
                 <div className="flex justify-between font-semibold text-gray-700">
-                  <span>To Collect Now / Paid:</span>
-                  <span className="text-emerald-600">₹{calculatedPaidAmount.toLocaleString('en-IN')}</span>
+                  <span>{paymentType === 'advance' ? `Amount to Collect (Advance ${advancePercent}%):` : 'Amount to Collect (Full):'}</span>
+                  <span className="text-emerald-600 font-bold">₹{calculatedPaidAmount.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between font-semibold text-gray-700">
-                  <span>Remaining Due Balance:</span>
-                  <span className="text-amber-600">₹{calculatedDueAmount.toLocaleString('en-IN')}</span>
-                </div>
-              </div>
-
-              {/* Payment Notes */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Internal Payment Notes</label>
-                <Input
-                  type="text"
-                  placeholder="e.g. Cash collected by manager, UPI transfer pending..."
-                  value={paymentNotes}
-                  onChange={(e) => setPaymentNotes(e.target.value)}
-                  className="rounded-xl text-xs"
-                />
+                {paymentType === 'advance' && (
+                  <div className="flex justify-between font-semibold text-gray-700 pt-1 border-t border-gray-200/60">
+                    <span>Remaining Balance (Due at Check-in):</span>
+                    <span className="text-amber-600 font-bold">₹{calculatedDueAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
               </div>
 
               {/* Submit CTA */}

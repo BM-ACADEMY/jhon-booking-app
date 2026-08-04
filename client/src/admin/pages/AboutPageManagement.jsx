@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Save, Loader2, Trash2, Eye, Layout, FileText, Image as ImageIcon } from 'lucide-react';
+import { Upload, Save, Loader2, Trash2, Eye, Layout, FileText, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../api';
 import { Button } from '@/components/ui/button';
@@ -148,30 +148,30 @@ const AboutPageManagement = () => {
   }
 
   return (
-    <div className="space-y-8 p-6 max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 p-4 sm:p-6 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
             <Layout className="w-6 h-6 text-primary-600" /> About Page Content
           </h1>
-          <p className="text-sm text-gray-500">Configure and customize your website's About Us page elements.</p>
+          <p className="text-xs sm:text-sm text-gray-500">Configure and customize your website's About Us page elements.</p>
         </div>
       </div>
 
-      <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {/* Editor panel */}
         <div className="lg:col-span-2 space-y-6">
           {/* Banner Section Card */}
           <Card className="border-gray-200/80 shadow-sm">
-            <CardHeader className="border-b border-gray-100 bg-gray-50/50">
-              <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+            <CardHeader className="border-b border-gray-100 bg-gray-50/50 p-4 sm:p-5">
+              <CardTitle className="text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                 <ImageIcon className="w-4 h-4 text-primary-600" /> Hero Banner Section
               </CardTitle>
-              <CardDescription>Configure the main title, description, and background banner image.</CardDescription>
+              <CardDescription className="text-xs">Configure the main title, description, and background banner image.</CardDescription>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="p-4 sm:p-6 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="bannerTitle">Banner Title</Label>
+                <Label htmlFor="bannerTitle" className="text-xs font-bold">Banner Title</Label>
                 <Input
                   id="bannerTitle"
                   value={content.bannerTitle}
@@ -183,7 +183,7 @@ const AboutPageManagement = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="bannerSubtitle">Banner Subtitle</Label>
+                <Label htmlFor="bannerSubtitle" className="text-xs font-bold">Banner Subtitle</Label>
                 <Textarea
                   id="bannerSubtitle"
                   value={content.bannerSubtitle}
@@ -194,8 +194,12 @@ const AboutPageManagement = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Hero Banner Image</Label>
+              {/* Compact Banner Image Upload Dropzone */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <Label className="text-xs font-bold text-gray-700">Hero Banner Image</Label>
+                  <span className="text-[10px] text-gray-400">Max 5MB (16:9 recommended)</span>
+                </div>
                 <input
                   type="file"
                   ref={bannerInputRef}
@@ -204,22 +208,22 @@ const AboutPageManagement = () => {
                   className="hidden"
                 />
                 <div 
-                  onClick={() => bannerInputRef.current.click()}
-                  className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary-500 transition-all bg-white overflow-hidden relative group"
+                  onClick={() => bannerInputRef.current?.click()}
+                  className="border border-dashed border-gray-300 rounded-xl p-2 text-center cursor-pointer hover:border-primary-500 transition-all bg-white overflow-hidden relative group h-24 flex flex-col items-center justify-center"
                 >
                   {bannerPreview ? (
-                    <div className="w-full h-36 relative">
+                    <div className="w-full h-full relative">
                       <img src={bannerPreview} alt="Banner Preview" className="w-full h-full object-cover rounded-lg" />
-                      <div className="absolute inset-0 bg-black/45 flex flex-col items-center justify-center rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
-                        <Upload className="w-6 h-6 text-white mb-1" />
-                        <span className="text-xs text-white font-bold uppercase tracking-wider">Change Image</span>
+                      <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+                        <Upload className="w-4 h-4 text-white mb-0.5" />
+                        <span className="text-[10px] text-white font-bold uppercase tracking-wider">Change Banner Image</span>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <Upload className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                      <Upload className="w-5 h-5 mx-auto mb-1 text-gray-400" />
                       <p className="text-xs font-semibold text-gray-700">Click to upload Banner Image</p>
-                      <p className="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP up to 5MB</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">PNG, JPG, WEBP up to 5MB</p>
                     </>
                   )}
                 </div>
@@ -229,15 +233,15 @@ const AboutPageManagement = () => {
 
           {/* Our Story Section Card */}
           <Card className="border-gray-200/80 shadow-sm">
-            <CardHeader className="border-b border-gray-100 bg-gray-50/50">
-              <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+            <CardHeader className="border-b border-gray-100 bg-gray-50/50 p-4 sm:p-5">
+              <CardTitle className="text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                 <FileText className="w-4 h-4 text-primary-600" /> Our Story Section
               </CardTitle>
-              <CardDescription>Edit the story title, content paragraphs, and grid images.</CardDescription>
+              <CardDescription className="text-xs">Edit the story title, content paragraphs, and grid images.</CardDescription>
             </CardHeader>
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-4 sm:p-6 space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="storyTitle">Section Title</Label>
+                <Label htmlFor="storyTitle" className="text-xs font-bold">Section Title</Label>
                 <Input
                   id="storyTitle"
                   value={content.storyTitle}
@@ -249,8 +253,8 @@ const AboutPageManagement = () => {
               </div>
 
               {content.storyContent.map((para, index) => (
-                <div key={index} className="space-y-2">
-                  <Label htmlFor={`para-${index}`}>Paragraph {index + 1}</Label>
+                <div key={index} className="space-y-1.5">
+                  <Label htmlFor={`para-${index}`} className="text-xs font-bold text-gray-700">Paragraph {index + 1}</Label>
                   <Textarea
                     id={`para-${index}`}
                     value={para}
@@ -260,20 +264,20 @@ const AboutPageManagement = () => {
                       setContent({ ...content, storyContent: updated });
                     }}
                     placeholder={`Paragraph ${index + 1} details...`}
-                    rows={3}
+                    rows={2}
                     required
-                    className="bg-white font-medium text-gray-900"
+                    className="bg-white font-medium text-gray-900 text-xs sm:text-sm"
                   />
                 </div>
               ))}
 
-              {/* Story Images Grid Upload */}
-              <div className="space-y-3">
-                <Label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Story Image Grid (4 Images)</Label>
-                <div className="grid grid-cols-2 gap-4">
+              {/* Story Images Compact Grid Upload */}
+              <div className="space-y-2.5">
+                <Label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">Story Image Grid (4 Images)</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[0, 1, 2, 3].map((idx) => (
-                    <div key={idx} className="space-y-2 border border-gray-200/60 p-3 rounded-xl bg-gray-50/40">
-                      <Label className="text-[10px] text-gray-400 font-bold uppercase">Image {idx + 1}</Label>
+                    <div key={idx} className="space-y-1 border border-gray-200/80 p-2 rounded-xl bg-gray-50/50">
+                      <span className="text-[10px] text-gray-500 font-bold uppercase block">Image {idx + 1}</span>
                       <input
                         type="file"
                         ref={storyInputRefs[idx]}
@@ -282,21 +286,21 @@ const AboutPageManagement = () => {
                         className="hidden"
                       />
                       <div 
-                        onClick={() => storyInputRefs[idx].current.click()}
-                        className="h-24 border border-dashed border-gray-200 rounded-lg flex flex-col justify-center items-center cursor-pointer hover:border-primary-500 transition-all bg-white overflow-hidden relative group"
+                        onClick={() => storyInputRefs[idx].current?.click()}
+                        className="h-20 border border-dashed border-gray-300 rounded-lg flex flex-col justify-center items-center cursor-pointer hover:border-primary-500 transition-all bg-white overflow-hidden relative group"
                       >
                         {storyPreviews[idx] ? (
                           <div className="w-full h-full relative">
-                            <img src={storyPreviews[idx]} alt={`Story ${idx + 1}`} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/45 flex flex-col items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
-                              <Upload className="w-4 h-4 text-white mb-1" />
-                              <span className="text-[10px] text-white font-bold uppercase tracking-wider">Change Image</span>
+                            <img src={storyPreviews[idx]} alt={`Story ${idx + 1}`} className="w-full h-full object-cover rounded-md" />
+                            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 rounded-md">
+                              <Upload className="w-3.5 h-3.5 text-white mb-0.5" />
+                              <span className="text-[9px] text-white font-bold uppercase tracking-wider">Change</span>
                             </div>
                           </div>
                         ) : (
                           <>
-                            <Upload className="w-4 h-4 text-gray-400 mb-1" />
-                            <span className="text-[10px] text-gray-500 font-semibold">Upload Image {idx + 1}</span>
+                            <Upload className="w-3.5 h-3.5 text-gray-400 mb-1" />
+                            <span className="text-[10px] text-gray-600 font-semibold">Upload #{idx + 1}</span>
                           </>
                         )}
                       </div>
@@ -308,7 +312,7 @@ const AboutPageManagement = () => {
           </Card>
 
           <div className="flex justify-end">
-            <Button type="submit" disabled={saving} className="min-w-[150px] font-bold gap-2">
+            <Button type="submit" disabled={saving} className="min-w-[150px] font-bold gap-2 text-xs sm:text-sm">
               {saving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" /> Saving...
@@ -325,30 +329,30 @@ const AboutPageManagement = () => {
         {/* Live Preview Sidebar */}
         <div className="space-y-6">
           <Card className="border-gray-200/80 shadow-sm sticky top-6">
-            <CardHeader className="border-b border-gray-100 bg-gray-50/50">
-              <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+            <CardHeader className="border-b border-gray-100 bg-gray-50/50 p-4">
+              <CardTitle className="text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                 <Eye className="w-4 h-4 text-primary-600" /> Live Preview
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 space-y-6">
+            <CardContent className="p-4 space-y-5">
               {/* Preview Hero Banner */}
-              <div className="w-full aspect-video rounded-xl bg-gray-900 overflow-hidden relative flex flex-col justify-center items-center p-4">
+              <div className="w-full aspect-video rounded-xl bg-slate-950 overflow-hidden relative flex flex-col justify-center items-center p-4 border border-slate-800 shadow-sm">
                 {bannerPreview ? (
                   <img src={bannerPreview} alt="Banner Preview" className="absolute inset-0 w-full h-full object-cover opacity-60" />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-800" />
                 )}
                 <div className="absolute inset-0 bg-black/30" />
                 <div className="relative z-10 text-center">
-                  <h2 className="text-white text-lg font-bold font-serif leading-tight">{content.bannerTitle || 'Banner Title'}</h2>
+                  <h2 className="text-white text-base sm:text-lg font-bold font-serif leading-tight">{content.bannerTitle || 'Banner Title'}</h2>
                   <p className="text-gray-200 text-[10px] font-light mt-1 max-w-[200px] mx-auto truncate">{content.bannerSubtitle}</p>
                 </div>
               </div>
 
               {/* Preview Story details */}
-              <div className="space-y-3 border-t border-gray-100 pt-4">
+              <div className="space-y-2.5 border-t border-gray-100 pt-4">
                 <span className="text-[10px] font-bold text-amber-700 uppercase tracking-widest block">Our Story</span>
-                <h4 className="font-serif text-sm font-bold text-gray-900">{content.storyTitle || 'Story Title'}</h4>
+                <h4 className="font-serif text-xs sm:text-sm font-bold text-gray-900">{content.storyTitle || 'Story Title'}</h4>
                 <p className="text-[11px] text-gray-500 line-clamp-3 leading-relaxed font-light">
                   {content.storyContent[0]}
                 </p>
@@ -356,7 +360,7 @@ const AboutPageManagement = () => {
                 {/* Images grid mini preview */}
                 <div className="grid grid-cols-4 gap-1.5 mt-2">
                   {[0, 1, 2, 3].map((idx) => (
-                    <div key={idx} className="aspect-square bg-gray-100 rounded-md overflow-hidden border border-gray-200/50">
+                    <div key={idx} className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200/60">
                       {storyPreviews[idx] && (
                         <img src={storyPreviews[idx]} alt="Grid thumb" className="w-full h-full object-cover" />
                       )}

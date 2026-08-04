@@ -33,6 +33,8 @@ import {
   Eye,
   ChevronsUpDown,
   LogOut,
+  ChevronDown,
+  FileText,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -42,8 +44,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-import { ChevronDown, FileText } from 'lucide-react';
 
 const mainNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
@@ -91,7 +91,7 @@ const Sidebar = () => {
 
   return (
     <ShadcnSidebar collapsible="icon" className="border-r border-white/10 bg-sidebar text-sidebar-foreground">
-      {/* Header - Brand (sidebar-07) */}
+      {/* Header - Brand */}
       <SidebarHeader className="border-b border-white/10 p-2 flex items-center justify-center">
         <SidebarMenu className="w-full">
           <SidebarMenuItem className="flex justify-center">
@@ -112,10 +112,46 @@ const Sidebar = () => {
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* Main Navigation (sidebar-07) */}
+      {/* Main Navigation */}
       <SidebarContent className="px-2 py-3 space-y-2">
         
-        {/* PAGES EDIT COLLAPSIBLE SECTION */}
+        {/* 1. MAIN MENU SECTION (ON TOP) */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-gray-400 font-bold text-xs uppercase tracking-wider px-2 mb-1">
+            MAIN MENU
+          </SidebarGroupLabel>
+          <SidebarMenu>
+            {mainNavItems.map(({ label, icon: Icon, path }) => {
+              const isActive =
+                path === '/admin'
+                  ? location.pathname === '/admin'
+                  : location.pathname.startsWith(path);
+
+              return (
+                <SidebarMenuItem key={path} className="flex justify-center">
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    tooltip={label}
+                    className={state === 'collapsed' ? 'justify-center p-2' : ''}
+                  >
+                    <NavLink to={path} className={`flex items-center gap-3 w-full ${state === 'collapsed' ? 'justify-center' : ''}`}>
+                      <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-primary-400' : 'text-gray-400'}`} />
+                      {state !== 'collapsed' && <span className="flex-1 font-semibold truncate">{label}</span>}
+                      {label === 'Messages' && unreadCount > 0 && state !== 'collapsed' && (
+                        <Badge variant="default" className="bg-primary-500 text-white font-bold text-[10px] px-2 py-0.5 ml-auto">
+                          {unreadCount}
+                        </Badge>
+                      )}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroup>
+
+        {/* 2. PAGES EDIT COLLAPSIBLE SECTION (BELOW MAIN MENU) */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-gray-400 font-bold text-xs uppercase tracking-wider px-2 mb-1">
             PAGES EDIT
@@ -162,44 +198,9 @@ const Sidebar = () => {
           </SidebarMenu>
         </SidebarGroup>
 
-        {/* MAIN MENU SECTION */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-400 font-bold text-xs uppercase tracking-wider px-2 mb-1">
-            MAIN MENU
-          </SidebarGroupLabel>
-          <SidebarMenu>
-            {mainNavItems.map(({ label, icon: Icon, path }) => {
-              const isActive =
-                path === '/admin'
-                  ? location.pathname === '/admin'
-                  : location.pathname.startsWith(path);
-
-              return (
-                <SidebarMenuItem key={path} className="flex justify-center">
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive}
-                    tooltip={label}
-                    className={state === 'collapsed' ? 'justify-center p-2' : ''}
-                  >
-                    <NavLink to={path} className={`flex items-center gap-3 w-full ${state === 'collapsed' ? 'justify-center' : ''}`}>
-                      <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-primary-400' : 'text-gray-400'}`} />
-                      {state !== 'collapsed' && <span className="flex-1 font-semibold truncate">{label}</span>}
-                      {label === 'Messages' && unreadCount > 0 && state !== 'collapsed' && (
-                        <Badge variant="default" className="bg-primary-500 text-white font-bold text-[10px] px-2 py-0.5 ml-auto">
-                          {unreadCount}
-                        </Badge>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            })}
-          </SidebarMenu>
-        </SidebarGroup>
       </SidebarContent>
 
-      {/* Footer User Profile (sidebar-07 pattern) */}
+      {/* Footer User Profile */}
       <SidebarFooter className="border-t border-white/10 p-2 flex items-center justify-center">
         <SidebarMenu className="w-full">
           <SidebarMenuItem className="flex justify-center">
@@ -255,7 +256,7 @@ const Sidebar = () => {
                   <LogOut className="w-4 h-4" />
                   Log out
                 </DropdownMenuItem>
-              </DropdownMenuContent>
+                </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>

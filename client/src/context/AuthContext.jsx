@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import { toast } from 'react-hot-toast';
 
@@ -10,11 +10,11 @@ export const AuthProvider = ({ children }) => {
     return stored ? JSON.parse(stored) : null;
   });
 
-  const login = (userData, token) => {
+  const login = useCallback((userData, token) => {
     localStorage.setItem('admin_token', token);
     localStorage.setItem('admin_user', JSON.stringify(userData));
     setUser(userData);
-  };
+  }, []);
 
   const logout = () => {
     localStorage.removeItem('admin_token');

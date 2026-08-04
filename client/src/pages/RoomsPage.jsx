@@ -177,7 +177,7 @@ const RoomsPage = () => {
   // URL Query parameters states
   const queryCheckIn = searchParams.get('checkIn');
   const queryCheckOut = searchParams.get('checkOut');
-  const queryAdults = searchParams.get('adults') || '1';
+  const queryAdults = searchParams.get('adults') || '2';
   const queryChildren = searchParams.get('children') || '0';
   const queryInfants = searchParams.get('infants') || '0';
   const queryRoomsCount = searchParams.get('roomsCount') || searchParams.get('rooms') || '1';
@@ -199,7 +199,7 @@ const RoomsPage = () => {
     const query = searchParams.get('adults');
     if (query) return parseInt(query, 10);
     const session = sessionStorage.getItem('booking_adults');
-    return session ? parseInt(session, 10) : 1;
+    return session ? parseInt(session, 10) : 2;
   });
   const [childrenInput, setChildrenInput] = useState(() => {
     const query = searchParams.get('children');
@@ -242,7 +242,7 @@ const RoomsPage = () => {
     setCheckInInput(qIn || (startStr ? new Date(startStr) : null));
     setCheckOutInput(qOut || (endStr ? new Date(endStr) : null));
 
-    const adVal = parseInt(queryAdults, 10) || parseInt(sessionStorage.getItem('booking_adults')) || 1;
+    const adVal = parseInt(queryAdults, 10) || parseInt(sessionStorage.getItem('booking_adults')) || 2;
     setAdultsInput(adVal);
 
     const chVal = parseInt(queryChildren, 10) || parseInt(sessionStorage.getItem('booking_children')) || 0;
@@ -271,7 +271,7 @@ const RoomsPage = () => {
     const handleSync = () => {
       const startStr = sessionStorage.getItem('booking_start_date');
       const endStr = sessionStorage.getItem('booking_end_date');
-      const ad = parseInt(sessionStorage.getItem('booking_adults')) || 1;
+      const ad = parseInt(sessionStorage.getItem('booking_adults')) || 2;
       const ch = parseInt(sessionStorage.getItem('booking_children')) || 0;
       const inf = parseInt(sessionStorage.getItem('booking_infants')) || 0;
       const rm = parseInt(sessionStorage.getItem('booking_rooms')) || 1;
@@ -682,7 +682,7 @@ const RoomsPage = () => {
     return true;
   });
 
-  const searchAdults = parseInt(queryAdults, 10) || 1;
+  const searchAdults = parseInt(queryAdults, 10) || 2;
   const searchChildren = parseInt(queryChildren, 10) || 0;
   const requestedRoomsCount = parseInt(queryRoomsCount, 10) || 1;
 

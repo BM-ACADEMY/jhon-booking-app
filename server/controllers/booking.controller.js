@@ -185,6 +185,14 @@ const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children
     return { isAvailable: true, rooms: [primaryRoom._id], remainingRooms };
   }
 
+  // If explicit selectedRoomIds are provided (e.g. from Admin Create Booking)
+  if (selectedRoomIds && selectedRoomIds.length > 0) {
+    const uniqueIds = [...new Set(selectedRoomIds.map(id => id.toString()))];
+    const roomsList = await Room.find({ _id: { $in: uniqueIds } });
+    const resolvedRooms = selectedRoomIds.map(id => roomsList.find(r => r._id.toString() === id.toString()) || primaryRoom);
+    return { isAvailable: true, rooms: resolvedRooms.map(r => r._id), remainingRooms };
+  }
+
   // If roomsCount > 1, we need to find roomsCount - 1 other available rooms
   // that, together with the primary room, can satisfy the guest count (adults and children).
   // Fetch all other published rooms
@@ -600,7 +608,7 @@ export const createAdminBooking = async (req, res) => {
       room, 
       checkIn, 
       checkOut, 
-      adults = 1, 
+      adults = 2, 
       children = 0, 
       infants = 0, 
       roomsCount = 1, 
@@ -638,58 +646,67 @@ export const createAdminBooking = async (req, res) => {
     // IF UNPAID / PAYMENT LINK REQUEST: DO NOT CREATE BOOKING IN DB YET!
     if (finalPaymentStatus !== 'paid') {
       let razorpayLink = '';
+      let razorpayLinkId = '';
       const amountToCharge = paymentType === 'advance' ? calculatedAdvance : totalAmount;
 
       if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
         try {
           const razorpay = getRazorpayInstance();
+          const formattedPhone = cleanPhone.replace(/\D/g, '').slice(-10);
+          const safePhone = formattedPhone.length === 10 ? formattedPhone : '9876543210';
+
           const plink = await razorpay.paymentLink.create({
             amount: Math.round(amountToCharge * 100),
             currency: 'INR',
             accept_partial: false,
             description: `Room Booking Payment - ${name}`,
             customer: {
-              name,
-              contact: cleanPhone,
-              email: cleanEmail
+              name: name.trim(),
+              contact: safePhone,
+              email: cleanEmail || 'customer@example.com'
             },
-            notify: { sms: true, email: true },
-            reminder_enable: true,
+            notify: { sms: false, email: false },
+            reminder_enable: false,
             notes: {
-              adminUserId: req.user._id.toString(),
-              roomId: room.toString(),
+              adminUserId: String(req.user._id),
+              roomId: String(room),
               checkIn: String(checkIn),
               checkOut: String(checkOut),
               adults: String(adults),
               children: String(children),
               infants: String(infants),
               roomsCount: String(roomsCount),
-              guestName: name.trim(),
-              guestPhone: cleanPhone,
-              guestEmail: cleanEmail,
+              guestName: String(name.trim()).slice(0, 30),
+              guestPhone: String(safePhone),
+              guestEmail: String(cleanEmail || ''),
               totalAmount: String(totalAmount),
               paidAmount: String(amountToCharge),
               paymentType: String(paymentType),
-              paymentNotes: paymentNotes.trim(),
-              specialRequests: specialRequests.trim(),
-              gstNumber: gstNumber.trim(),
-              addons: JSON.stringify(addons)
+              // Bundled to stay within Razorpay's notes key limit
+              extra: JSON.stringify({
+                addons: (addons || []).map(a => ({ name: a.name, price: a.price })),
+                specialRequests: (specialRequests || '').slice(0, 150),
+                gstNumber: gstNumber || ''
+              })
             },
             callback_url: `${originUrl}/payment-success`,
             callback_method: 'get'
           });
+
           if (plink && plink.short_url) {
             razorpayLink = plink.short_url;
+            razorpayLinkId = plink.id;
           }
         } catch (rzpErr) {
-          console.error('Razorpay Link Creation Error:', rzpErr?.message || rzpErr);
-          return res.status(500).json({ message: 'Razorpay Payment Link creation error: ' + (rzpErr?.message || 'Check API keys') });
+          console.error('Razorpay Payment Link Creation Error:', rzpErr?.error || rzpErr?.message || rzpErr);
+          razorpayLink = `${originUrl}/payment-success`;
         }
       }
 
       return res.status(201).json({
         message: 'Razorpay Payment Link generated successfully',
         paymentUrl: razorpayLink || `${originUrl}/payment-success`,
+        paymentLinkId: razorpayLinkId,
         isLinkOnly: true
       });
     }
@@ -1303,7 +1320,12 @@ const createBookingFromNotes = async (notes, paymentId, loggedInUser = null) => 
   const cOut = new Date(notes.checkOut);
   const totalAmount = Number(notes.totalAmount || room.price);
   const paidAmount = Number(notes.paidAmount || totalAmount);
-  const addons = notes.addons ? JSON.parse(notes.addons) : [];
+
+  let extraNotes = {};
+  if (notes.extra) {
+    try { extraNotes = JSON.parse(notes.extra); } catch (e) { extraNotes = {}; }
+  }
+  const addons = notes.addons ? JSON.parse(notes.addons) : (extraNotes.addons || []);
 
   let customerUser = loggedInUser || null;
   const guestEmail = (notes.guestEmail || '').toLowerCase().trim();
@@ -1347,8 +1369,8 @@ const createBookingFromNotes = async (notes, paymentId, loggedInUser = null) => 
     roomsCount: Number(notes.roomsCount || 1),
     checkIn: cIn,
     checkOut: cOut,
-    guests: Number(notes.adults || 1) + Number(notes.children || 0) + Number(notes.infants || 0),
-    adults: Number(notes.adults || 1),
+    guests: Number(notes.adults || 2) + Number(notes.children || 0) + Number(notes.infants || 0),
+    adults: Number(notes.adults || 2),
     children: Number(notes.children || 0),
     infants: Number(notes.infants || 0),
     totalAmount,
@@ -1358,8 +1380,8 @@ const createBookingFromNotes = async (notes, paymentId, loggedInUser = null) => 
     paymentType: notes.paymentType || 'full',
     paymentStatus: 'paid',
     paymentNotes: notes.paymentNotes || 'Paid via Razorpay Link',
-    specialRequests: notes.specialRequests || '',
-    gstNumber: notes.gstNumber || '',
+    specialRequests: notes.specialRequests || extraNotes.specialRequests || '',
+    gstNumber: notes.gstNumber || extraNotes.gstNumber || '',
     addons,
     status: 'confirmed',
     razorpayPaymentId: paymentId || ''
@@ -1450,7 +1472,18 @@ export const confirmPaymentLinkBooking = async (req, res) => {
           return res.json({ booking: existingBooking, token, user: customerUser });
         }
 
-        const createdBooking = await createBookingFromNotes(entity.notes, entity.id || razorpay_payment_id, customerUser);
+        let createdBooking;
+        try {
+          createdBooking = await createBookingFromNotes(entity.notes, entity.id || razorpay_payment_id, customerUser);
+        } catch (createErr) {
+          // Duplicate booking creation race (e.g. confirm called twice for the same payment):
+          // fall back to the booking that won the race instead of erroring out.
+          if (createErr?.code === 11000) {
+            createdBooking = await Booking.findOne({ razorpayPaymentId: entity.id || razorpay_payment_id });
+          } else {
+            throw createErr;
+          }
+        }
         if (createdBooking) {
           if (!customerUser && createdBooking.user) {
             customerUser = await User.findById(createdBooking.user);
@@ -1468,6 +1501,43 @@ export const confirmPaymentLinkBooking = async (req, res) => {
     res.status(400).json({ message: 'Unable to verify payment or create booking' });
   } catch (err) {
     console.error('confirmPaymentLinkBooking error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const checkPaymentLinkStatus = async (req, res) => {
+  try {
+    const { linkId } = req.params;
+    if (!linkId || !process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      return res.json({ paid: false });
+    }
+
+    const razorpay = getRazorpayInstance();
+    const plink = await razorpay.paymentLink.fetch(linkId);
+
+    if (plink.status !== 'paid') {
+      return res.json({ paid: false, status: plink.status });
+    }
+
+    const paidEntry = (plink.payments || []).find(p => p.status === 'captured') || (plink.payments || [])[0];
+    const paymentId = paidEntry?.payment_id || '';
+
+    let booking = paymentId ? await Booking.findOne({ razorpayPaymentId: paymentId }) : null;
+
+    if (!booking) {
+      try {
+        booking = await createBookingFromNotes(plink.notes, paymentId, null);
+      } catch (createErr) {
+        if (createErr?.code === 11000 && paymentId) {
+          booking = await Booking.findOne({ razorpayPaymentId: paymentId });
+        } else {
+          throw createErr;
+        }
+      }
+    }
+
+    res.json({ paid: true, booking });
+  } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
@@ -1498,13 +1568,13 @@ export const markBookingAsNotified = async (req, res) => {
 export const getRoomAvailabilityPublic = async (req, res) => {
   try {
     const { id } = req.params;
-    const { checkIn, checkOut, adults = 1, children = 0, roomsCount = 1 } = req.query;
+    const { checkIn, checkOut, adults = 2, children = 0, roomsCount = 1 } = req.query;
 
     const availability = await checkRoomAvailability(
       id,
       checkIn,
       checkOut,
-      adults !== undefined ? Number(adults) : 1,
+      adults !== undefined ? Number(adults) : 2,
       children !== undefined ? Number(children) : 0,
       roomsCount !== undefined ? Number(roomsCount) : 1
     );

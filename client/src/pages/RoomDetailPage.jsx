@@ -244,7 +244,7 @@ const RoomDetailPage = () => {
 
   const checkInQuery = getQueryParam('checkIn');
   const checkOutQuery = getQueryParam('checkOut');
-  const adultsQuery = parseInt(getQueryParam('adults') || getQueryParam('guests') || '1', 10);
+  const adultsQuery = parseInt(getQueryParam('adults') || getQueryParam('guests') || '2', 10);
   const childrenQuery = parseInt(getQueryParam('children') || '0', 10);
   const infantsQuery = parseInt(getQueryParam('infants') || '0', 10);
   const roomsCountQuery = parseInt(getQueryParam('roomsCount') || getQueryParam('rooms') || '1', 10);
@@ -533,7 +533,7 @@ const RoomDetailPage = () => {
     if (checkInQuery) setCheckIn(checkInQuery);
     if (checkOutQuery) setCheckOut(checkOutQuery);
     if (getQueryParam('adults') || getQueryParam('guests')) {
-      setAdults(parseInt(getQueryParam('adults') || getQueryParam('guests') || '1', 10));
+      setAdults(parseInt(getQueryParam('adults') || getQueryParam('guests') || '2', 10));
     }
     if (getQueryParam('children')) {
       setChildren(parseInt(getQueryParam('children') || '0', 10));
