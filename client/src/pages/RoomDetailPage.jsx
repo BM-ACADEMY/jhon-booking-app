@@ -441,14 +441,14 @@ const RoomDetailPage = () => {
 
   const validateClientOccupancy = () => {
     if (!room) return { isAllowed: true };
-    const maxTotal = (room.guests || 2) * roomsCount;
-    const maxInf = (((room.maxInfants !== undefined && room.maxInfants !== null) ? room.maxInfants : 2) + (room.allowExtraInfant ? 1 : 0)) * roomsCount;
+    const maxOccupancy = room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2);
+    const maxTotal = maxOccupancy * roomsCount;
 
     if (adults + children > maxTotal) {
       return { isAllowed: false, message: `Maximum ${maxTotal} guests (Adults + Children) allowed for this room.` };
     }
-    if (infants > maxInf) {
-      return { isAllowed: false, message: `Maximum ${maxInf} infants allowed.` };
+    if (infants > 2 * roomsCount) {
+      return { isAllowed: false, message: `Maximum ${2 * roomsCount} infants allowed.` };
     }
     return { isAllowed: true };
   };
@@ -457,15 +457,17 @@ const RoomDetailPage = () => {
 
   useEffect(() => {
     if (!room) return;
-    const maxAdultsAllowed = ((room.maxAdults !== undefined && room.maxAdults !== null) ? room.maxAdults : (room.guests || 10)) * roomsCount;
-    if (adults > maxAdultsAllowed) {
-      setAdults(maxAdultsAllowed);
+    const maxOccupancy = room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2);
+    const maxOccupancyVal = maxOccupancy * roomsCount;
+    
+    if (adults + children > maxOccupancyVal) {
+      const nextChildren = Math.max(0, maxOccupancyVal - adults);
+      setChildren(nextChildren);
+      if (adults > maxOccupancyVal) {
+        setAdults(maxOccupancyVal);
+      }
     }
-    const maxChildrenAllowed = ((room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 10) * roomsCount;
-    if (children > maxChildrenAllowed) {
-      setChildren(maxChildrenAllowed);
-    }
-  }, [roomsCount, room]);
+  }, [roomsCount, room, adults, children]);
 
   const isDateBooked = (date) => {
     if (!room) return false;
@@ -1504,7 +1506,7 @@ const RoomDetailPage = () => {
                   <div className="flex flex-wrap items-center gap-2 lg:gap-3">
                     {[
                       room.size && { icon: Maximize, label: room.size },
-                      (room.maxAdults || room.maxChildren) && { icon: Users, label: `Max: ${room.maxAdults || 2} Adults${(room.maxChildren || 0) > 0 ? ` · ${room.maxChildren} Children` : ''}` },
+                      { icon: Users, label: `Max Occupancy: ${room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)} Guests` },
                       room.allowExtraBed && room.extraBedCount > 0 && { icon: BedDouble, label: `Extra Bed: Max ${room.extraBedCount} beds (₹${room.extraBedPrice}/bed)` },
                       room.bathrooms > 0 && { icon: Bath, label: `${room.bathrooms} Bath${room.bathrooms > 1 ? 's' : ''}` },
                       room.showers > 0 && { icon: ShowerHead, label: `${room.showers} Shower${room.showers > 1 ? 's' : ''}` }
@@ -1554,12 +1556,12 @@ const RoomDetailPage = () => {
                 
                 <div className="grid grid-cols-2 gap-4 bg-white p-4 rounded-2xl border border-zinc-100 shadow-sm">
                   <div className="text-center sm:text-left">
-                    <span className="text-[10px] font-black uppercase text-zinc-550 tracking-wider block">Max Guests (Non-Infants)</span>
-                    <span className="text-sm font-black text-gray-900">{room.guests || 2} Guests</span>
+                    <span className="text-[10px] font-black uppercase text-zinc-550 tracking-wider block">Max Occupancy</span>
+                    <span className="text-sm font-black text-gray-900">{room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)} Guests</span>
                   </div>
                   <div className="text-center sm:text-left border-l border-zinc-100 pl-4">
-                    <span className="text-[10px] font-black uppercase text-zinc-550 tracking-wider block">Max Infants</span>
-                    <span className="text-sm font-black text-gray-900">{(room.maxInfants !== undefined && room.maxInfants !== null ? room.maxInfants : 2) + (room.allowExtraInfant ? 1 : 0)} Infants</span>
+                    <span className="text-[10px] font-black uppercase text-zinc-550 tracking-wider block">Infants</span>
+                    <span className="text-sm font-black text-gray-900">Allowed (Not counted toward occupancy)</span>
                   </div>
                 </div>
 
@@ -2164,36 +2166,45 @@ const RoomDetailPage = () => {
                   </div>
                   <div className="p-3 flex items-center justify-between border-b border-gray-300">
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Adults</label>
+                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Adults (13+)</label>
                       <span className="text-sm text-gray-700">{adults} Adult{adults > 1 ? 's' : ''}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <button onClick={() => setAdults(g => Math.max(1, g - 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">−</button>
-                      <button onClick={() => setAdults(g => Math.min((room.guests || 2) * roomsCount - children, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
+                      <button onClick={() => setAdults(g => Math.min((room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)) * roomsCount - children, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
                     </div>
                   </div>
                   <div className="p-3 flex items-center justify-between border-b border-gray-300">
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Children</label>
+                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Children (3–12)</label>
                       <span className="text-sm text-gray-700">{children} Child{children !== 1 ? 'ren' : ''}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <button onClick={() => setChildren(g => Math.max(0, g - 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">−</button>
-                      <button onClick={() => setChildren(g => Math.min((room.guests || 2) * roomsCount - adults, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
+                      <button onClick={() => setChildren(g => Math.min((room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)) * roomsCount - adults, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
                     </div>
                   </div>
                   <div className="p-3 flex items-center justify-between border-b border-gray-300">
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Infants</label>
+                      <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-1">Infants (0–2)</label>
                       <span className="text-sm text-gray-700">{infants} Infant{infants !== 1 ? 's' : ''}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <button onClick={() => setInfants(g => Math.max(0, g - 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">−</button>
-                      <button onClick={() => setInfants(g => {
-                        const maxInfLimit = ((room.maxInfants !== undefined && room.maxInfants !== null ? room.maxInfants : 2) + (room.allowExtraInfant ? 1 : 0)) * roomsCount;
-                        return Math.min(maxInfLimit, g + 1);
-                      })} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
+                      <button onClick={() => setInfants(g => Math.min(2 * roomsCount, g + 1))} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">+</button>
                     </div>
+                  </div>
+                  <div className="p-3 bg-gray-50 border-b border-gray-300 space-y-2">
+                    <div className="flex justify-between items-center text-xs font-bold text-gray-700">
+                      <span>Guests Occupancy</span>
+                      <span>{adults + children} / {(room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)) * roomsCount}</span>
+                    </div>
+                    {infants > 0 && (
+                      <div className="flex justify-between items-center text-[10px] text-gray-400 font-bold">
+                        <span>Infants</span>
+                        <span>{infants} (Not counted toward occupancy)</span>
+                      </div>
+                    )}
                   </div>
                   <div className={`p-3 flex items-center justify-between ${roomsCount > 1 ? 'border-b border-gray-300' : ''}`}>
                     <div>
@@ -2391,13 +2402,13 @@ const RoomDetailPage = () => {
               <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80">
                 <Users className="w-6 h-6 text-gray-400" />
                 <div className="flex flex-col flex-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Adults</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Adults (13+)</label>
                   <select
                     value={adults}
                     onChange={e => setAdults(parseInt(e.target.value, 10))}
-                    className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none"
+                    className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none cursor-pointer"
                   >
-                    {[...Array(Math.max(0, ((room.guests || 2) * roomsCount) - children))].map((_, i) => (
+                    {[...Array(Math.max(0, (room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)) * roomsCount - children))].map((_, i) => (
                       <option key={i+1} value={i+1}>{i+1} Adult{i+1 > 1 ? 's' : ''}</option>
                     ))}
                   </select>
@@ -2409,13 +2420,13 @@ const RoomDetailPage = () => {
               <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80">
                 <Icons.Users className="w-6 h-6 text-gray-400" />
                 <div className="flex flex-col flex-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Children</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Children (3–12)</label>
                   <select
                     value={children}
                     onChange={e => setChildren(parseInt(e.target.value, 10))}
-                    className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none"
+                    className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none cursor-pointer"
                   >
-                    {[...Array(Math.max(0, ((room.guests || 2) * roomsCount) - adults) + 1)].map((_, i) => (
+                    {[...Array(Math.max(0, (room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)) * roomsCount - adults) + 1)].map((_, i) => (
                       <option key={i} value={i}>{i} Child{i !== 1 ? 'ren' : ''}</option>
                     ))}
                   </select>
@@ -2427,18 +2438,32 @@ const RoomDetailPage = () => {
               <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80">
                 <Users className="w-6 h-6 text-gray-400" />
                 <div className="flex flex-col flex-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Infants</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Infants (0–2)</label>
                   <select
                     value={infants}
                     onChange={e => setInfants(parseInt(e.target.value, 10))}
-                    className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none"
+                    className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none cursor-pointer"
                   >
-                    {[...Array((((room.maxInfants !== undefined && room.maxInfants !== null ? room.maxInfants : 2) + (room.allowExtraInfant ? 1 : 0)) * roomsCount) + 1)].map((_, i) => (
+                    {[...Array(2 * roomsCount + 1)].map((_, i) => (
                       <option key={i} value={i}>{i} Infant{i !== 1 ? 's' : ''}</option>
                     ))}
                   </select>
                 </div>
                 <ChevronDown className="w-5 h-5 text-gray-900 mr-1" />
+              </div>
+
+              {/* Dynamic Occupancy Display for Mobile */}
+              <div className="bg-[#F8F9FA] rounded-2xl p-4 border border-gray-100/80 space-y-2">
+                <div className="flex justify-between items-center text-sm font-bold text-gray-900">
+                  <span>Guests</span>
+                  <span>{adults + children} / {(room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)) * roomsCount}</span>
+                </div>
+                {infants > 0 && (
+                  <div className="flex justify-between items-center text-xs text-gray-500 font-medium">
+                    <span>Infants</span>
+                    <span>{infants} (Not counted toward occupancy)</span>
+                  </div>
+                )}
               </div>
 
               {/* Rooms Card */}

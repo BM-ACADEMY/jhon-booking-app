@@ -7,7 +7,7 @@ async function main() {
   const rooms = await res.json();
   console.log('Total rooms from API:', rooms.length);
   rooms.forEach(r => {
-    console.log(`Room: "${r.name}" | maxAdults: ${r.maxAdults} (type: ${typeof r.maxAdults}) | maxChildren: ${r.maxChildren} (type: ${typeof r.maxChildren}) | guests: ${r.guests}`);
+    console.log(`Room: "${r.name}" | maxOccupancy: ${r.maxOccupancy} (type: ${typeof r.maxOccupancy})`);
   });
 }
 

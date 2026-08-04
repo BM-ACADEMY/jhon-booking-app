@@ -613,19 +613,12 @@ const RoomsPage = () => {
       }
 
       const room = roomsList[index];
-      const maxAd = (room.maxAdults !== undefined && room.maxAdults !== null) ? room.maxAdults : (room.guests || 2);
-      const maxCh = (room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 0;
-      const maxTotalGuests = (room.guests !== undefined && room.guests !== null) ? room.guests : (maxAd + maxCh);
+      const maxOccupancy = room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2);
 
-      const upperA = Math.min(maxAd, remainingAdults);
+      const upperA = Math.min(maxOccupancy, remainingAdults);
       for (let a = 1; a <= upperA; a++) {
-        if (a > maxTotalGuests) continue;
-        const maxChForThisRoom = maxCh + (maxAd - a);
-        const upperC = Math.min(maxChForThisRoom, maxTotalGuests - a, remainingChildren);
+        const upperC = Math.min(maxOccupancy - a, remainingChildren);
         for (let c = 0; c <= upperC; c++) {
-          // Comfort check: if adults are at maximum limit for the room, children must be 0
-          if (a === maxAd && c > 0) continue;
-
           if (backtrack(index + 1, remainingAdults - a, remainingChildren - c)) {
             return true;
           }
@@ -695,7 +688,7 @@ const RoomsPage = () => {
 
   const filteredRooms = basicFilteredPool.filter(room => {
     const res = isRoomInValidCombination(room, basicFilteredPool, requestedRoomsCount, searchAdults, searchChildren);
-    console.log(`[Filter Debug] Room: "${room.name}" | searchAdults: ${searchAdults} | searchChildren: ${searchChildren} | roomsCount: ${requestedRoomsCount} | maxAdults: ${room.maxAdults} | maxChildren: ${room.maxChildren} | Match Result: ${res}`);
+    console.log(`[Filter Debug] Room: "${room.name}" | searchAdults: ${searchAdults} | searchChildren: ${searchChildren} | roomsCount: ${requestedRoomsCount} | maxOccupancy: ${room.maxOccupancy} | Match Result: ${res}`);
     return res;
   });
 
@@ -1059,7 +1052,7 @@ const RoomsPage = () => {
                     <div className="space-y-4">
                       {/* Adults */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Adults</span>
+                        <span className="text-sm font-semibold text-gray-800">Adults (13+)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button
                             onClick={() => setAdultsInput(Math.max(1, adultsInput - 1))}
@@ -1079,7 +1072,7 @@ const RoomsPage = () => {
 
                       {/* Children */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Children</span>
+                        <span className="text-sm font-semibold text-gray-800">Children (3–12)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button
                             onClick={() => setChildrenInput(Math.max(0, childrenInput - 1))}
@@ -1099,7 +1092,7 @@ const RoomsPage = () => {
 
                       {/* Infants */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Infants</span>
+                        <span className="text-sm font-semibold text-gray-800">Infants (0–2)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button
                             onClick={() => setInfantsInput(Math.max(0, infantsInput - 1))}
@@ -1209,7 +1202,7 @@ const RoomsPage = () => {
                 <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
                   <Users className="w-6 h-6 text-gray-400" />
                   <div className="flex-1 flex items-center justify-between">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Adults</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Adults (13+)</p>
                     <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
                       <button onClick={() => setAdultsInput(Math.max(1, adultsInput - 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
                         <span className="text-2xl font-light leading-none">−</span>
@@ -1224,7 +1217,7 @@ const RoomsPage = () => {
                 <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
                   <Users className="w-6 h-6 text-gray-400" />
                   <div className="flex-1 flex items-center justify-between">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Children</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Children (3–12)</p>
                     <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
                       <button onClick={() => setChildrenInput(Math.max(0, childrenInput - 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
                         <span className="text-2xl font-light leading-none">−</span>
@@ -1239,7 +1232,7 @@ const RoomsPage = () => {
                 <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
                   <Users className="w-6 h-6 text-gray-400" />
                   <div className="flex-1 flex items-center justify-between">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Infants</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Infants (0–2)</p>
                     <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
                       <button onClick={() => setInfantsInput(Math.max(0, infantsInput - 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
                         <span className="text-2xl font-light leading-none">−</span>
@@ -1420,14 +1413,9 @@ const RoomsPage = () => {
                             <div className="flex items-center gap-1.5">
                               <Users className="w-3.5 h-3.5 text-gray-400" />
                               <span>
-                                Max: {(room.maxAdults !== undefined && room.maxAdults !== null)
-                                  ? room.maxAdults
-                                  : (room.guests || 2)} Adults
-                                {((room.maxChildren !== undefined && room.maxChildren !== null)
-                                  ? room.maxChildren
-                                  : 0) > 0
-                                  ? `   ${room.maxChildren} Children`
-                                  : ''}
+                                Max Occupancy: {room.maxOccupancy !== undefined && room.maxOccupancy !== null
+                                  ? room.maxOccupancy
+                                  : (room.guests || 2)} Guests
                               </span>
                             </div>
                             <div className="flex items-center gap-1.5">

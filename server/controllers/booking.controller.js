@@ -116,6 +116,9 @@ const validateOccupancy = (room, adults, children, infants) => {
   if (occupiedGuests > maxOccupancy) {
     return { isAllowed: false, message: `Maximum ${maxOccupancy} guests (Adults + Children) allowed for this room.` };
   }
+  if (Number(infants) > 2) {
+    return { isAllowed: false, message: `Maximum 2 infants allowed for this room.` };
+  }
   return { isAllowed: true };
 };
 
@@ -213,12 +216,9 @@ const checkRoomAvailability = async (roomId, checkIn, checkOut, adults, children
   } else {
     availableOtherRooms.push(...allRooms);
   }
-
-  const maxInf = (primaryRoom.maxInfants !== undefined && primaryRoom.maxInfants !== null) ? primaryRoom.maxInfants : 2;
-  if (Number(infants) > roomsCount * maxInf) {
-    return { isAvailable: false, message: `Maximum ${roomsCount * maxInf} infants allowed for ${roomsCount} rooms.`, remainingRooms };
+  if (Number(infants) > roomsCount * 2) {
+    return { isAvailable: false, message: `Maximum ${roomsCount * 2} infants allowed for ${roomsCount} rooms.`, remainingRooms };
   }
-
   // We need to find if there is a subset of size (roomsCount - 1) from availableOtherRooms
   // that, together with primaryRoom, can accommodate adults and children.
   const requiredOtherCount = roomsCount - 1;

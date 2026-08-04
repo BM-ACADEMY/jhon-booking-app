@@ -15,15 +15,11 @@ const canAccommodateCombination = (roomsList, adults, children) => {
     }
 
     const room = roomsList[index];
-    const maxAd = (room.maxAdults !== undefined && room.maxAdults !== null) ? room.maxAdults : (room.guests || 2);
-    const maxCh = (room.maxChildren !== undefined && room.maxChildren !== null) ? room.maxChildren : 0;
-    const maxTotalGuests = (room.guests !== undefined && room.guests !== null) ? room.guests : (maxAd + maxCh);
+    const maxOccupancy = room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2);
 
-    const upperA = Math.min(maxAd, remainingAdults);
+    const upperA = Math.min(maxOccupancy, remainingAdults);
     for (let a = 1; a <= upperA; a++) {
-      if (a > maxTotalGuests) continue;
-      const maxChForThisRoom = maxCh + (maxAd - a);
-      const upperC = Math.min(maxChForThisRoom, maxTotalGuests - a, remainingChildren);
+      const upperC = Math.min(maxOccupancy - a, remainingChildren);
       for (let c = 0; c <= upperC; c++) {
         if (backtrack(index + 1, remainingAdults - a, remainingChildren - c)) {
           return true;
@@ -48,7 +44,7 @@ async function main() {
   console.log(`Testing 1 Adult, 0 Children, 1 Room:`);
   rooms.forEach(r => {
     const res = isRoomInValidCombination(r, rooms, 1, 1, 0);
-    console.log(`Room: "${r.name}" | maxAdults: ${r.maxAdults} | guests: ${r.guests} | Match: ${res}`);
+    console.log(`Room: "${r.name}" | maxOccupancy: ${r.maxOccupancy} | Match: ${res}`);
   });
   await mongoose.disconnect();
 }

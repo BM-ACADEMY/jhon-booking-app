@@ -26,7 +26,7 @@ const RoomPreviewDialog = ({ room, onOpenChange, onConfigure, categories = [] })
   if (!room || !form) return null;
 
   const stats = [
-    { icon: Users, value: room.guests || room.capacity || '–', label: 'Guests' },
+    { icon: Users, value: room.maxOccupancy || room.guests || room.capacity || '–', label: 'Guests' },
     { icon: BedDouble, value: room.allowExtraBed && room.extraBedCount ? `Max ${room.extraBedCount}` : 'No', label: 'Extra Bed' },
     { icon: Bath, value: room.bathrooms ?? '–', label: 'Bathrooms' },
     { icon: ShowerHead, value: room.showers || 0, label: 'Showers' },

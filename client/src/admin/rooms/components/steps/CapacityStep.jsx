@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
 const CAPACITY_FIELDS = [
-  { id: 'guests', label: 'Max Guests (Non-Infants)', icon: Users },
+  { id: 'maxOccupancy', label: 'Max Occupancy', icon: Users },
   { id: 'bathrooms', label: 'Bathrooms', icon: Bath },
   { id: 'showers', label: 'Showers', icon: ShowerHead },
 ];
@@ -176,28 +176,17 @@ export const CapacityFields = ({ form, patch, readOnly = false, showAvailability
 
       {/* Additional Occupancy Rules & Notes Section */}
       <div className="rounded-2xl border border-zinc-200 bg-zinc-50/40 p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-zinc-200 rounded-xl">
-              <Users className="h-4 w-4 text-zinc-700" />
-            </div>
-            <div>
-              <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900">
-                Additional Occupancy Rules
-              </h4>
-              <p className="text-[11px] text-zinc-500 font-medium">
-                Configure extra infant permissions and booking details
-              </p>
-            </div>
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 bg-zinc-200 rounded-xl">
+            <Users className="h-4 w-4 text-zinc-700" />
           </div>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="allow-extra-infant" className="text-xs font-bold text-gray-700">Allow Extra Infant</Label>
-            <Switch
-              id="allow-extra-infant"
-              checked={!!form.allowExtraInfant}
-              disabled={readOnly}
-              onCheckedChange={(v) => patch({ allowExtraInfant: v })}
-            />
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900">
+              Additional Occupancy Rules
+            </h4>
+            <p className="text-[11px] text-zinc-500 font-medium">
+              Configure guest capacity guidelines and occupancy notes
+            </p>
           </div>
         </div>
 
