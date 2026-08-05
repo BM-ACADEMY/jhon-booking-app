@@ -102,12 +102,6 @@ const ContactPage = () => {
       value: settings.address,
       description: 'Come say hello at our reception.',
     },
-    {
-      icon: <Clock className="w-5 h-5" />,
-      label: 'Working Hours',
-      value: `Check-in: ${settings.checkInTime} / Check-out: ${settings.checkOutTime}`,
-      description: 'Standard timings for your comfort.',
-    },
   ];
 
   const socialLinks = [

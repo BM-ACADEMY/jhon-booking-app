@@ -22,12 +22,16 @@ import {
   confirmPaymentLinkBooking,
   checkPaymentLinkStatus,
   getUnnotifiedBookings,
-  markBookingAsNotified
+  markBookingAsNotified,
+  getNewBookingsCount,
+  markBookingsAsViewed
 } from '../controllers/booking.controller.js';
 import { protect, adminOnly, protectOptional } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
+router.get('/new-count', protect, adminOnly, getNewBookingsCount);
+router.patch('/mark-viewed', protect, adminOnly, markBookingsAsViewed);
 router.get('/unnotified', protect, adminOnly, getUnnotifiedBookings);
 router.post('/:id/mark-notified', protect, adminOnly, markBookingAsNotified);
 router.post('/razorpay-webhook', razorpayWebhook);

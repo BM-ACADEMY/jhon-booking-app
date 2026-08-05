@@ -38,19 +38,19 @@ const Header = () => {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200/80 flex items-center justify-between px-4 lg:px-6 shrink-0">
+    <header className="sticky top-0 z-40 h-16 bg-white/95 backdrop-blur-md border-b border-gray-200/80 flex items-center justify-between px-4 lg:px-6 shrink-0">
       {/* Left: Sidebar Trigger & Breadcrumb (shadcn sidebar-07 pattern) */}
-      <div className="flex items-center gap-3">
-        <SidebarTrigger />
-        <div className="h-4 w-[1px] bg-gray-200" />
+      <div className="flex items-center gap-3 min-w-0">
+        <SidebarTrigger className="shrink-0" />
+        <div className="h-4 w-[1px] bg-gray-200 shrink-0" />
         
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-sm">
-          <Link to="/admin" className="text-gray-400 hover:text-gray-700 font-medium transition-colors">
+        <nav className="flex items-center gap-1.5 text-sm min-w-0">
+          <Link to="/admin" className="text-gray-400 hover:text-gray-700 font-medium transition-colors truncate max-w-[110px] sm:max-w-none shrink-0">
             Admin Dashboard
           </Link>
-          <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
-          <span className="font-bold text-gray-900">{pageTitle}</span>
+          <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+          <span className="font-bold text-gray-900 truncate max-w-[120px] sm:max-w-none">{pageTitle}</span>
         </nav>
       </div>
 

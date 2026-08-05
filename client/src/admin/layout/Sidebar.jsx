@@ -25,16 +25,20 @@ import {
   CalendarPlus,
   Users,
   Star,
+  Quote,
   Film,
-  Layers,
+  Sparkles,
   Settings,
   User,
-  MessageSquare,
+  Mail,
   Eye,
   ChevronsUpDown,
   LogOut,
   ChevronDown,
   FileText,
+  Info,
+  PhoneCall,
+  Inbox
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -45,49 +49,106 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const mainNavItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
-  { label: 'Rooms & Categories', icon: BedDouble, path: '/admin/rooms' },
-  { label: 'Bookings', icon: CalendarCheck, path: '/admin/bookings' },
-  { label: 'Create Booking', icon: CalendarPlus, path: '/admin/create-booking' },
-  { label: 'Room Visitors', icon: Eye, path: '/admin/visitors' },
-  { label: 'Users', icon: Users, path: '/admin/users' },
-  { label: 'Rooms Review', icon: Star, path: '/admin/reviews' },
-  { label: 'Testimonials', icon: Star, path: '/admin/testimonials' },
-  { label: 'Add-on Services', icon: Layers, path: '/admin/addons' },
-  { label: 'Messages', icon: MessageSquare, path: '/admin/messages' },
-  { label: 'Settings', icon: Settings, path: '/admin/settings' },
-  { label: 'Profile', icon: User, path: '/admin/profile' },
+const navSections = [
+  {
+    title: 'OVERVIEW',
+    items: [
+      { label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
+    ]
+  },
+  {
+    title: 'BOOKING & GUESTS',
+    items: [
+      { label: 'Bookings', icon: CalendarCheck, path: '/admin/bookings' },
+      { label: 'Create Booking', icon: CalendarPlus, path: '/admin/create-booking' },
+      { label: 'Room Visitors', icon: Eye, path: '/admin/visitors' },
+      { label: 'Users', icon: Users, path: '/admin/users' },
+    ]
+  },
+  {
+    title: 'PROPERTY & SERVICES',
+    items: [
+      { label: 'Rooms & Categories', icon: BedDouble, path: '/admin/rooms' },
+      { label: 'Add-on Services', icon: Sparkles, path: '/admin/addons' },
+    ]
+  },
+  {
+    title: 'COMMUNICATION & REVIEWS',
+    items: [
+      { label: 'Contact Form', icon: Mail, path: '/admin/messages', badge: true },
+      { label: 'Rooms Review', icon: Star, path: '/admin/reviews' },
+      { label: 'Testimonials', icon: Quote, path: '/admin/testimonials' },
+    ]
+  },
+  {
+    title: 'SYSTEM',
+    items: [
+      { label: 'Settings', icon: Settings, path: '/admin/settings' },
+      { label: 'Profile', icon: User, path: '/admin/profile' },
+    ]
+  }
 ];
 
 const pagesEditItems = [
   { label: 'Hero Section', icon: Film, path: '/admin/hero' },
-  { label: 'About Page', icon: FileText, path: '/admin/about-page' },
-  { label: 'Contact Page', icon: FileText, path: '/admin/contact-page' },
+  { label: 'About Page', icon: Info, path: '/admin/about-page' },
+  { label: 'Contact Page', icon: PhoneCall, path: '/admin/contact-page' },
 ];
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [newBookingsCount, setNewBookingsCount] = useState(0);
   const [pagesEditOpen, setPagesEditOpen] = useState(true);
 
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchUnreadCount = async () => {
+    // Instant clear when visiting Bookings page
+    if (location.pathname.startsWith('/admin/bookings')) {
+      api.patch('/bookings/mark-viewed').catch(err => console.error(err));
+      setNewBookingsCount(0);
+    }
+
+    // Instant clear when visiting Contact Form (Messages) page
+    if (location.pathname.startsWith('/admin/messages')) {
+      api.patch('/messages/mark-all-read').catch(err => console.error(err));
+      setUnreadCount(0);
+    }
+
+    const fetchCounts = async () => {
       try {
-        const res = await api.get('/messages');
-        const count = res.data.filter(m => !m.read).length;
-        setUnreadCount(count);
+        const [msgRes, bookingRes] = await Promise.all([
+          api.get('/messages'),
+          api.get('/bookings/new-count')
+        ]);
+        
+        if (!location.pathname.startsWith('/admin/messages')) {
+          const count = msgRes.data.filter(m => !m.read).length;
+          setUnreadCount(count);
+        }
+        
+        if (!location.pathname.startsWith('/admin/bookings')) {
+          if (bookingRes.data && bookingRes.data.count !== undefined) {
+            setNewBookingsCount(bookingRes.data.count);
+          }
+        }
       } catch (err) {
-        console.error('Failed to fetch unread messages count', err);
+        console.error('Failed to fetch unread notifications count', err);
       }
     };
-    fetchUnreadCount();
 
-    const interval = setInterval(fetchUnreadCount, 30000);
+    fetchCounts();
+
+    const interval = setInterval(fetchCounts, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [location.pathname]);
 
   return (
     <ShadcnSidebar collapsible="icon" className="border-r border-white/10 bg-sidebar text-sidebar-foreground">
@@ -96,7 +157,7 @@ const Sidebar = () => {
         <SidebarMenu className="w-full">
           <SidebarMenuItem className="flex justify-center">
             <SidebarMenuButton size="lg" asChild className="hover:bg-transparent justify-center p-0">
-              <Link to="/" className="flex items-center justify-center gap-3 w-full">
+              <Link to="/" onClick={handleLinkClick} className="flex items-center justify-center gap-3 w-full">
                 <div className="w-8 h-8 rounded-xl overflow-hidden bg-white flex items-center justify-center shrink-0 shadow-sm">
                   <img src={logoImg} className="w-full h-full object-cover" alt="The Balified Villa" />
                 </div>
@@ -113,49 +174,75 @@ const Sidebar = () => {
       </SidebarHeader>
 
       {/* Main Navigation */}
-      <SidebarContent className="px-2 py-3 space-y-2">
+      <SidebarContent className="px-2 py-3 space-y-4">
         
-        {/* 1. MAIN MENU SECTION (ON TOP) */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-400 font-bold text-xs uppercase tracking-wider px-2 mb-1">
-            MAIN MENU
-          </SidebarGroupLabel>
-          <SidebarMenu>
-            {mainNavItems.map(({ label, icon: Icon, path }) => {
-              const isActive =
-                path === '/admin'
-                  ? location.pathname === '/admin'
-                  : location.pathname.startsWith(path);
+        {/* Render Formatted Sections */}
+        {navSections.map((section) => (
+          <SidebarGroup key={section.title} className="p-0">
+            {state !== 'collapsed' && (
+              <SidebarGroupLabel className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-2 mb-1">
+                {section.title}
+              </SidebarGroupLabel>
+            )}
+            <SidebarMenu>
+              {section.items.map(({ label, icon: Icon, path, badge }) => {
+                const isActive =
+                  path === '/admin'
+                    ? location.pathname === '/admin'
+                    : location.pathname.startsWith(path);
 
-              return (
-                <SidebarMenuItem key={path} className="flex justify-center">
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive}
-                    tooltip={label}
-                    className={state === 'collapsed' ? 'justify-center p-2' : ''}
-                  >
-                    <NavLink to={path} className={`flex items-center gap-3 w-full ${state === 'collapsed' ? 'justify-center' : ''}`}>
-                      <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-primary-400' : 'text-gray-400'}`} />
-                      {state !== 'collapsed' && <span className="flex-1 font-semibold truncate">{label}</span>}
-                      {label === 'Messages' && unreadCount > 0 && state !== 'collapsed' && (
-                        <Badge variant="default" className="bg-primary-500 text-white font-bold text-[10px] px-2 py-0.5 ml-auto">
-                          {unreadCount}
-                        </Badge>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            })}
-          </SidebarMenu>
-        </SidebarGroup>
+                const isBookingsItem = label === 'Bookings';
+                const showBookingsBadge = isBookingsItem && newBookingsCount > 0;
+                const showMessagesBadge = badge && unreadCount > 0;
 
-        {/* 2. PAGES EDIT COLLAPSIBLE SECTION (BELOW MAIN MENU) */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-400 font-bold text-xs uppercase tracking-wider px-2 mb-1">
-            PAGES EDIT
-          </SidebarGroupLabel>
+                return (
+                  <SidebarMenuItem key={path} className="flex justify-center">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={label}
+                      className={state === 'collapsed' ? 'justify-center p-2' : ''}
+                    >
+                      <NavLink to={path} onClick={handleLinkClick} className={`flex items-center gap-3 w-full ${state === 'collapsed' ? 'justify-center' : ''}`}>
+                        <div className="relative flex items-center justify-center">
+                          <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-primary-400 font-bold' : 'text-gray-400'}`} />
+                          {(showBookingsBadge || showMessagesBadge) && state === 'collapsed' && (
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-sidebar animate-pulse" />
+                          )}
+                        </div>
+                        {state !== 'collapsed' && <span className="flex-1 font-medium text-xs sm:text-sm truncate">{label}</span>}
+                        
+                        {/* Red Bookings Indicator Badge with Count */}
+                        {showBookingsBadge && state !== 'collapsed' && (
+                          <Badge variant="default" className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-[10px] px-2 py-0.5 ml-auto gap-1 rounded-full shadow-sm animate-pulse">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                            {newBookingsCount} NEW
+                          </Badge>
+                        )}
+
+                        {/* Red Contact Form Badge with Count */}
+                        {showMessagesBadge && state !== 'collapsed' && (
+                          <Badge variant="default" className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-[10px] px-2 py-0.5 ml-auto gap-1 rounded-full shadow-sm animate-pulse">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                            {unreadCount} NEW
+                          </Badge>
+                        )}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+        ))}
+
+        {/* PAGES EDIT COLLAPSIBLE SECTION */}
+        <SidebarGroup className="p-0">
+          {state !== 'collapsed' && (
+            <SidebarGroupLabel className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-2 mb-1">
+              WEBSITE CONTENT
+            </SidebarGroupLabel>
+          )}
           <SidebarMenu>
             <SidebarMenuItem className="flex flex-col justify-center">
               <SidebarMenuButton
@@ -164,15 +251,15 @@ const Sidebar = () => {
                 className={`flex items-center justify-between w-full text-white/90 hover:bg-white/10 ${state === 'collapsed' ? 'justify-center p-2' : ''}`}
               >
                 <div className={`flex items-center gap-3 ${state === 'collapsed' ? 'justify-center' : ''}`}>
-                  <FileText className="w-5 h-5 shrink-0 text-primary-400" />
-                  {state !== 'collapsed' && <span className="font-semibold text-sm">Pages Edit</span>}
+                  <FileText className="w-4 h-4 shrink-0 text-primary-400" />
+                  {state !== 'collapsed' && <span className="font-medium text-xs sm:text-sm">Pages Edit</span>}
                 </div>
                 {state !== 'collapsed' && (
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${pagesEditOpen ? 'rotate-180' : ''}`} />
                 )}
               </SidebarMenuButton>
 
-              {/* Dropdown Items */}
+              {/* Dropdown Sub-Items */}
               {(pagesEditOpen || state === 'collapsed') && (
                 <div className={`space-y-1 mt-1 ${state !== 'collapsed' ? 'pl-4 border-l border-white/10 ml-4' : ''}`}>
                   {pagesEditItems.map(({ label, icon: Icon, path }) => {
@@ -185,9 +272,9 @@ const Sidebar = () => {
                         tooltip={label}
                         className={state === 'collapsed' ? 'justify-center p-2' : ''}
                       >
-                        <NavLink to={path} className={`flex items-center gap-3 w-full ${state === 'collapsed' ? 'justify-center' : ''}`}>
-                          <Icon className={`w-4.5 h-4.5 shrink-0 ${isActive ? 'text-primary-400' : 'text-gray-400'}`} />
-                          {state !== 'collapsed' && <span className="flex-1 font-semibold text-xs truncate">{label}</span>}
+                        <NavLink to={path} onClick={handleLinkClick} className={`flex items-center gap-3 w-full ${state === 'collapsed' ? 'justify-center' : ''}`}>
+                          <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-primary-400' : 'text-gray-400'}`} />
+                          {state !== 'collapsed' && <span className="flex-1 font-medium text-xs truncate">{label}</span>}
                         </NavLink>
                       </SidebarMenuButton>
                     );
@@ -240,13 +327,13 @@ const Sidebar = () => {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/admin/profile" className="flex items-center gap-2.5 cursor-pointer">
+                  <Link to="/admin/profile" onClick={handleLinkClick} className="flex items-center gap-2.5 cursor-pointer">
                     <User className="w-4 h-4 text-gray-500" />
                     Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/admin/settings" className="flex items-center gap-2.5 cursor-pointer">
+                  <Link to="/admin/settings" onClick={handleLinkClick} className="flex items-center gap-2.5 cursor-pointer">
                     <Settings className="w-4 h-4 text-gray-500" />
                     Settings
                   </Link>
@@ -256,7 +343,7 @@ const Sidebar = () => {
                   <LogOut className="w-4 h-4" />
                   Log out
                 </DropdownMenuItem>
-                </DropdownMenuContent>
+              </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>

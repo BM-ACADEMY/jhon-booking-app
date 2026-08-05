@@ -879,19 +879,109 @@ export const updateBookingStatus = async (req, res) => {
 
 export const getDashboardStats = async (req, res) => {
   try {
-    const totalBookings = await Booking.countDocuments();
+    const { range, startDate, endDate, month } = req.query;
 
-    // Sum totalAmount of all bookings except cancelled ones
+    let filterStart = null;
+    let filterEnd = new Date();
+    let isDailyTrend = false;
+
+    // Parse date filters
+    if (range === '7days') {
+      filterStart = new Date();
+      filterStart.setDate(filterStart.getDate() - 6);
+      filterStart.setHours(0, 0, 0, 0);
+      isDailyTrend = true;
+    } else if (range === '30days') {
+      filterStart = new Date();
+      filterStart.setDate(filterStart.getDate() - 29);
+      filterStart.setHours(0, 0, 0, 0);
+      isDailyTrend = true;
+    } else if (range === 'this_month') {
+      filterStart = new Date();
+      filterStart.setDate(1);
+      filterStart.setHours(0, 0, 0, 0);
+      isDailyTrend = true;
+    } else if (range === 'last_month') {
+      filterStart = new Date();
+      filterStart.setMonth(filterStart.getMonth() - 1);
+      filterStart.setDate(1);
+      filterStart.setHours(0, 0, 0, 0);
+
+      filterEnd = new Date(filterStart);
+      filterEnd.setMonth(filterEnd.getMonth() + 1);
+      filterEnd.setDate(0);
+      filterEnd.setHours(23, 59, 59, 999);
+      isDailyTrend = true;
+    } else if (range === '3months') {
+      filterStart = new Date();
+      filterStart.setMonth(filterStart.getMonth() - 2);
+      filterStart.setDate(1);
+      filterStart.setHours(0, 0, 0, 0);
+    } else if (range === '1year') {
+      filterStart = new Date();
+      filterStart.setFullYear(filterStart.getFullYear() - 1);
+      filterStart.setDate(1);
+      filterStart.setHours(0, 0, 0, 0);
+    } else if (range === 'all_time') {
+      const oldestBooking = await Booking.findOne({}).sort({ createdAt: 1 });
+      if (oldestBooking) {
+        filterStart = new Date(oldestBooking.createdAt);
+        filterStart.setDate(1);
+        filterStart.setHours(0, 0, 0, 0);
+      } else {
+        filterStart = new Date();
+        filterStart.setMonth(filterStart.getMonth() - 11);
+        filterStart.setDate(1);
+        filterStart.setHours(0, 0, 0, 0);
+      }
+    } else if (month) {
+      // YYYY-MM
+      const [y, m] = month.split('-').map(Number);
+      if (y && m) {
+        filterStart = new Date(y, m - 1, 1, 0, 0, 0, 0);
+        filterEnd = new Date(y, m, 0, 23, 59, 59, 999);
+        isDailyTrend = true;
+      }
+    } else if (startDate && endDate) {
+      filterStart = new Date(startDate);
+      filterStart.setHours(0, 0, 0, 0);
+      filterEnd = new Date(endDate);
+      filterEnd.setHours(23, 59, 59, 999);
+      const diffDays = Math.ceil(Math.abs(filterEnd - filterStart) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 31) isDailyTrend = true;
+    } else {
+      // Default: Last 6 months
+      filterStart = new Date();
+      filterStart.setMonth(filterStart.getMonth() - 5);
+      filterStart.setDate(1);
+      filterStart.setHours(0, 0, 0, 0);
+    }
+
+    // Build Match query for date filter
+    const dateMatch = {};
+    if (filterStart) dateMatch.$gte = filterStart;
+    if (filterEnd) dateMatch.$lte = filterEnd;
+
+    const bookingDateFilter = Object.keys(dateMatch).length > 0 ? { createdAt: dateMatch } : {};
+    const nonCancelledDateFilter = {
+      status: { $ne: 'cancelled' },
+      ...(Object.keys(dateMatch).length > 0 ? { createdAt: dateMatch } : {})
+    };
+
+    // Current period total bookings & revenue
+    const totalBookings = await Booking.countDocuments(bookingDateFilter);
+
     const revenueResult = await Booking.aggregate([
-      { $match: { status: { $ne: 'cancelled' } } },
+      { $match: nonCancelledDateFilter },
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
     const totalRevenue = revenueResult[0]?.total || 0;
 
     const totalRooms = await Room.countDocuments();
-    // Total guests from bookings (sum of adults + children or guests field in non-cancelled bookings)
+
+    // Guests in filtered period
     const guestsAgg = await Booking.aggregate([
-      { $match: { status: { $ne: 'cancelled' } } },
+      { $match: nonCancelledDateFilter },
       {
         $group: {
           _id: null,
@@ -910,7 +1000,6 @@ export const getDashboardStats = async (req, res) => {
     const totalGuests = guestsAgg[0]?.total || 0;
 
     // Calculate Occupancy today
-    // Use UTC start of day for accurate occupancy calculation across timezones
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -926,10 +1015,18 @@ export const getDashboardStats = async (req, res) => {
     const occupiedRoomsCount = occupiedRoomIds.length;
     const occupancyRate = totalRooms > 0 ? Math.round((occupiedRoomsCount / totalRooms) * 100) : 0;
 
-    const pendingBookings   = await Booking.countDocuments({ status: 'pending' });
-    const confirmedBookings = await Booking.countDocuments({ status: 'confirmed' });
-    const completedBookings = await Booking.countDocuments({ status: 'completed' });
-    const cancelledBookings = await Booking.countDocuments({ status: 'cancelled' });
+    // Status breakdown for filtered period
+    const statusAgg = await Booking.aggregate([
+      ...(Object.keys(dateMatch).length > 0 ? [{ $match: { createdAt: dateMatch } }] : []),
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    const statusCounts = { pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
+    statusAgg.forEach(item => {
+      if (item._id && statusCounts[item._id] !== undefined) {
+        statusCounts[item._id] = item.count;
+      }
+    });
 
     // Check-ins / check-outs today
     const todayCheckIns = await Booking.countDocuments({
@@ -942,8 +1039,8 @@ export const getDashboardStats = async (req, res) => {
       status: { $ne: 'cancelled' }
     });
 
-    // Recent bookings for dashboard table (paginated client-side)
-    const recentBookings = await Booking.find()
+    // Recent bookings for table
+    const recentBookings = await Booking.find(bookingDateFilter)
       .populate('user', 'name')
       .populate('room', 'name')
       .sort({ createdAt: -1 })
@@ -951,62 +1048,122 @@ export const getDashboardStats = async (req, res) => {
 
     const formattedRecent = recentBookings.map(b => ({
       id: b._id,
-      guest: b.user?.name || 'Deleted User',
+      guest: b.user?.name || 'Guest User',
       room: b.room?.name || 'Deleted Room',
       checkIn: b.checkIn ? new Date(b.checkIn).toISOString().split('T')[0] : 'N/A',
       checkOut: b.checkOut ? new Date(b.checkOut).toISOString().split('T')[0] : 'N/A',
       amount: `₹${b.totalAmount?.toLocaleString('en-IN')}`,
-      status: b.status || 'pending'
+      rawAmount: b.totalAmount || 0,
+      status: b.status || 'pending',
+      createdAt: b.createdAt
     }));
 
-    // Calculate monthly stats for the last 6 months
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-    sixMonthsAgo.setDate(1);
-    sixMonthsAgo.setHours(0, 0, 0, 0);
-
-    const monthlyStatsAgg = await Booking.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: sixMonthsAgo },
-          status: { $ne: 'cancelled' }
-        }
-      },
-      {
-        $group: {
-          _id: {
-            year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' }
-          },
-          revenue: { $sum: '$totalAmount' },
-          bookings: { $sum: 1 }
-        }
-      },
-      {
-        $sort: { '_id.year': 1, '_id.month': 1 }
-      }
-    ]);
-
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const last6Months = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(1); // Prevent day-of-month overflow (e.g., Feb 30th -> March 2nd)
-      d.setMonth(d.getMonth() - i);
-      const year = d.getFullYear();
-      const monthIndex = d.getMonth();
-      const label = `${monthNames[monthIndex]} ${year}`;
-
-      const match = monthlyStatsAgg.find(item => item._id.year === year && item._id.month === (monthIndex + 1));
-
-      last6Months.push({
-        name: label,
-        revenue: match ? match.revenue : 0,
-        bookings: match ? match.bookings : 0
-      });
+    // Previous Period Percentage Comparison
+    let prevStart = null;
+    let prevEnd = null;
+    if (filterStart) {
+      const durationMs = (filterEnd.getTime() - filterStart.getTime()) || (30 * 24 * 60 * 60 * 1000);
+      prevEnd = new Date(filterStart.getTime() - 1);
+      prevStart = new Date(prevEnd.getTime() - durationMs);
+    } else {
+      prevEnd = new Date();
+      prevEnd.setMonth(prevEnd.getMonth() - 6);
+      prevStart = new Date(prevEnd);
+      prevStart.setMonth(prevStart.getMonth() - 6);
     }
 
-    // Top performing rooms by revenue (non-cancelled bookings)
+    const prevMatch = { status: { $ne: 'cancelled' }, createdAt: { $gte: prevStart, $lte: prevEnd } };
+    const prevRevenueAgg = await Booking.aggregate([
+      { $match: prevMatch },
+      { $group: { _id: null, total: { $sum: '$totalAmount' }, count: { $sum: 1 } } }
+    ]);
+    const prevRevenue = prevRevenueAgg[0]?.total || 0;
+    const prevBookings = prevRevenueAgg[0]?.count || 0;
+
+    const calcChange = (current, prev) => {
+      if (prev === 0) return current > 0 ? 100 : 0;
+      return Math.round(((current - prev) / prev) * 100);
+    };
+
+    const revenueChange = calcChange(totalRevenue, prevRevenue);
+    const bookingsChange = calcChange(totalBookings, prevBookings);
+
+    // Trend Graph Data (Daily vs Monthly)
+    let trendData = [];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    if (isDailyTrend && filterStart) {
+      // Group by Day
+      const dailyAgg = await Booking.aggregate([
+        { $match: nonCancelledDateFilter },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$createdAt' },
+              month: { $month: '$createdAt' },
+              day: { $dayOfMonth: '$createdAt' }
+            },
+            revenue: { $sum: '$totalAmount' },
+            bookings: { $sum: 1 }
+          }
+        }
+      ]);
+
+      const cur = new Date(filterStart);
+      while (cur <= filterEnd) {
+        const y = cur.getFullYear();
+        const m = cur.getMonth() + 1;
+        const d = cur.getDate();
+        const label = `${monthNames[m - 1]} ${d}`;
+
+        const match = dailyAgg.find(i => i._id.year === y && i._id.month === m && i._id.day === d);
+        trendData.push({
+          name: label,
+          revenue: match ? match.revenue : 0,
+          bookings: match ? match.bookings : 0
+        });
+
+        cur.setDate(cur.getDate() + 1);
+      }
+    } else {
+      // Group by Month
+      const monthlyAgg = await Booking.aggregate([
+        { $match: nonCancelledDateFilter },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$createdAt' },
+              month: { $month: '$createdAt' }
+            },
+            revenue: { $sum: '$totalAmount' },
+            bookings: { $sum: 1 }
+          }
+        },
+        { $sort: { '_id.year': 1, '_id.month': 1 } }
+      ]);
+
+      const startMonthDate = filterStart ? new Date(filterStart) : new Date(new Date().setMonth(new Date().getMonth() - 5));
+      const endMonthDate = new Date(filterEnd);
+
+      const cur = new Date(startMonthDate);
+      cur.setDate(1);
+      while (cur <= endMonthDate) {
+        const y = cur.getFullYear();
+        const m = cur.getMonth();
+        const label = `${monthNames[m]} ${y}`;
+
+        const match = monthlyAgg.find(i => i._id.year === y && i._id.month === (m + 1));
+        trendData.push({
+          name: label,
+          revenue: match ? match.revenue : 0,
+          bookings: match ? match.bookings : 0
+        });
+
+        cur.setMonth(cur.getMonth() + 1);
+      }
+    }
+
+    // Top performing rooms with enriched details (always calculated all-time)
     const topRoomsAgg = await Booking.aggregate([
       { $match: { status: { $ne: 'cancelled' }, room: { $exists: true, $ne: null } } },
       {
@@ -1017,7 +1174,7 @@ export const getDashboardStats = async (req, res) => {
         }
       },
       { $sort: { revenue: -1 } },
-      { $limit: 5 },
+      { $limit: 6 },
       {
         $lookup: {
           from: 'rooms',
@@ -1032,12 +1189,22 @@ export const getDashboardStats = async (req, res) => {
           _id: 0,
           id: '$_id',
           name: { $ifNull: ['$room.name', 'Deleted Room'] },
-          category: { $ifNull: ['$room.category', ''] },
+          category: { $ifNull: ['$room.category', 'Standard'] },
+          price: { $ifNull: ['$room.price', 0] },
+          images: { $ifNull: ['$room.images', []] },
+          maxOccupancy: { $ifNull: ['$room.maxOccupancy', 2] },
           revenue: 1,
           bookings: 1
         }
       }
     ]);
+
+    // Calculate Average Daily Rate (ADR) for top rooms
+    const topRoomsEnriched = topRoomsAgg.map(r => ({
+      ...r,
+      adr: r.bookings > 0 ? Math.round(r.revenue / r.bookings) : r.price,
+      imageUrl: r.images && r.images.length > 0 ? r.images[0].url : null
+    }));
 
     res.json({
       totalBookings,
@@ -1046,15 +1213,17 @@ export const getDashboardStats = async (req, res) => {
       totalGuests,
       occupancyRate,
       occupiedRoomsCount,
-      pendingBookings,
-      confirmedBookings,
-      completedBookings,
-      cancelledBookings,
+      pendingBookings: statusCounts.pending,
+      confirmedBookings: statusCounts.confirmed,
+      completedBookings: statusCounts.completed,
+      cancelledBookings: statusCounts.cancelled,
       todayCheckIns,
       todayCheckOuts,
+      revenueChange,
+      bookingsChange,
       recentBookings: formattedRecent,
-      monthlyStats: last6Months,
-      topRooms: topRoomsAgg
+      monthlyStats: trendData,
+      topRooms: topRoomsEnriched
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -1618,4 +1787,23 @@ export const getRoomAvailabilityPublic = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const getNewBookingsCount = async (req, res) => {
+  try {
+    const count = await Booking.countDocuments({ viewedByAdmin: false });
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const markBookingsAsViewed = async (req, res) => {
+  try {
+    await Booking.updateMany({ viewedByAdmin: false }, { viewedByAdmin: true });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 

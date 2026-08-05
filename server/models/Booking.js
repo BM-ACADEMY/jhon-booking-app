@@ -24,8 +24,7 @@ const bookingSchema = new mongoose.Schema({
   razorpayPaymentId: { type: String, unique: true, sparse: true },
   addons: [{
     name: { type: String },
-    price: { type: Number },
-    iconType: { type: String }
+    price: { type: Number }
   }],
   specialRequests: { type: String },
   gstNumber: { type: String, default: '' },
@@ -35,6 +34,7 @@ const bookingSchema = new mongoose.Schema({
   createdByAdmin: { type: Boolean, default: false },
   adminUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   adminNotified: { type: Boolean, default: false },
+  viewedByAdmin: { type: Boolean, default: false },
 }, { timestamps: true });
 
 export default mongoose.model('Booking', bookingSchema);

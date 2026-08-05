@@ -540,8 +540,7 @@ const AdminCreateBooking = () => {
         const item = availableAddons.find(a => a._id === id);
         return {
           name: item?.name || 'Addon',
-          price: item?.price || 0,
-          iconType: item?.iconType || ''
+          price: item?.price || 0
         };
       });
 
@@ -638,23 +637,17 @@ Thank you for choosing The Balified Villa! 🌴`;
     const bookingIdLine = booking?._id ? `• *Booking ID:* #${booking._id.slice(-6).toUpperCase()}\n` : '';
 
     const textMsg = 
-`Hello *${customerName}*! 👋
+`Hello *${customerName}*,
 
-Complete your room booking payment for *The Balified Villa*! 🏨✨
+Please complete your booking payment for *The Balified Villa*:
 
-📋 *Booking Details:*
-${bookingIdLine}• *Room:* ${roomName} (${roomsCount} Room${roomsCount > 1 ? 's' : ''})
-• *Check-In:* ${cIn}
-• *Check-Out:* ${cOut} (${nightsCount} Night${nightsCount > 1 ? 's' : ''})
-• *Guests:* ${adults} Adult${adults > 1 ? 's' : ''}${children > 0 ? `, ${children} Child` : ''}
+• *Room:* ${roomName}
+• *Dates:* ${cIn} - ${cOut}
+• *Amount:* ₹${(calculatedDueAmount > 0 ? calculatedDueAmount : grandTotal).toLocaleString('en-IN')}
 
-💳 *Payment Amount:* ₹${(calculatedDueAmount > 0 ? calculatedDueAmount : grandTotal).toLocaleString('en-IN')}
+🔗 *Payment Link:* ${paymentUrl}
 
-🔗 *Razorpay Payment Link:* ${paymentUrl}
-
-Please complete your payment using the link above. Once payment is completed, your room booking will instantly be confirmed!
-
-Thank you for choosing The Balified Villa! 🌴`;
+Thank you!`;
 
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`;
   };
@@ -708,118 +701,142 @@ Thank you for choosing The Balified Villa! 🌴`;
 
       {/* Confirmation Card when Booking Created */}
       {createdBookingResult ? (
-        <Card className="p-8 border border-green-200 bg-emerald-50/40 rounded-2xl shadow-sm space-y-6">
-          <div className="flex items-center gap-4 border-b border-green-200/60 pb-6">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md">
-              <CheckCircle2 className="w-8 h-8" />
+        <Card className="max-w-3xl mx-auto bg-white border border-gray-200 shadow-xl rounded-3xl overflow-hidden p-0">
+          {/* Top Clean Light Header */}
+          <div className="bg-white text-slate-900 p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0 shadow-sm">
+                <CheckCircle2 className="w-7 h-7" />
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-0.5 rounded-full">
+                  Booking Created & Ready
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 mt-1.5 tracking-tight">
+                  Payment Link Sent via WhatsApp
+                </h2>
+                <p className="text-xs text-gray-600 mt-0.5 flex items-center gap-2">
+                  <span>Guest: <strong className="text-gray-900 font-bold">{customerName}</strong></span>
+                  <span className="text-gray-400">&bull;</span>
+                  <span className="font-mono text-gray-700">+91 {customerPhone}</span>
+                </p>
+              </div>
             </div>
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                Booking Created Successfully
+
+            <div className="sm:text-right shrink-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Reference ID</span>
+              <span className="text-sm font-black font-mono text-gray-800 tracking-widest bg-gray-100 px-3 py-1 rounded-xl border border-gray-200 inline-block mt-0.5">
+                #{createdBookingResult.booking ? createdBookingResult.booking._id.slice(-6).toUpperCase() : 'PENDING'}
               </span>
-              <h2 className="text-2xl font-black text-gray-900 mt-1">
-                {createdBookingResult.booking ? `Booking ID: #${createdBookingResult.booking._id.slice(-6).toUpperCase()}` : 'Payment Link Sent via WhatsApp'}
-              </h2>
-              <p className="text-xs text-gray-600 mt-0.5">
-                Customer: <span className="font-bold text-gray-900">{customerName}</span> ({customerPhone})
-              </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-white rounded-xl border border-gray-100">
-              <p className="text-xs text-gray-400 font-medium">Room Reserved</p>
-              <p className="text-sm font-bold text-gray-900 mt-1">{selectedRoom?.name}</p>
-              <p className="text-xs text-gray-500">{nightsCount} Nights ({checkIn} to {checkOut})</p>
+          <div className="p-6 sm:p-8 space-y-6">
+            {/* 3 Column Details Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 bg-slate-50 rounded-2xl border border-gray-200/80">
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Room Reserved</p>
+                <p className="text-sm font-black text-gray-900 mt-1 truncate">{selectedRoom?.name}</p>
+                <p className="text-xs text-gray-500 font-medium mt-0.5">{nightsCount} Night{nightsCount > 1 ? 's' : ''} ({checkIn} &rarr; {checkOut})</p>
+              </div>
+
+              <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200/80">
+                <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Total Amount</p>
+                <p className="text-xl font-black text-emerald-700 mt-1">₹{grandTotal.toLocaleString('en-IN')}</p>
+                <p className="text-xs text-emerald-600 font-medium mt-0.5">Paid: ₹{calculatedPaidAmount.toLocaleString('en-IN')} | Due: ₹{calculatedDueAmount.toLocaleString('en-IN')}</p>
+              </div>
+
+              <div className="p-4 bg-slate-50 rounded-2xl border border-gray-200/80 flex flex-col justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Razorpay Payment Link</p>
+                  <p className="text-xs font-mono truncate text-gray-800 font-bold mt-1" title={createdBookingResult.paymentUrl}>
+                    {createdBookingResult.paymentUrl || 'N/A'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(createdBookingResult.paymentUrl)}
+                  className="text-xs font-extrabold text-primary-600 hover:text-primary-700 flex items-center gap-1.5 mt-2 transition-colors cursor-pointer"
+                >
+                  <Copy className="w-3.5 h-3.5" /> Copy Payment Link
+                </button>
+              </div>
             </div>
-            <div className="p-4 bg-white rounded-xl border border-gray-100">
-              <p className="text-xs text-gray-400 font-medium">Total Amount</p>
-              <p className="text-lg font-black text-emerald-600 mt-1">₹{grandTotal.toLocaleString('en-IN')}</p>
-              <p className="text-xs text-gray-500">Paid: ₹{calculatedPaidAmount.toLocaleString('en-IN')} | Due: ₹{calculatedDueAmount.toLocaleString('en-IN')}</p>
-            </div>
-            <div className="p-4 bg-white rounded-xl border border-gray-100">
-              <p className="text-xs text-gray-400 font-medium">Payment Link Generated</p>
-              <p className="text-xs font-mono truncate text-gray-700 font-semibold mt-1">
-                {createdBookingResult.paymentUrl || 'N/A'}
-              </p>
-              <button
-                type="button"
-                onClick={() => copyToClipboard(createdBookingResult.paymentUrl)}
-                className="text-xs font-semibold text-primary-600 hover:underline flex items-center gap-1 mt-1"
+
+            {/* Selected Addons Breakdown */}
+            {selectedAddonIds.length > 0 && (
+              <div className="p-4 bg-slate-50 rounded-2xl border border-gray-200/80">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Selected Add-on Services ({selectedAddonIds.length})</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {selectedAddonIds.map(id => {
+                    const addon = availableAddons.find(a => a._id === id);
+                    if (!addon) return null;
+                    return (
+                      <div key={id} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-gray-200 text-xs">
+                        <span className="text-gray-800 font-semibold">{addon.name}</span>
+                        <span className="text-gray-900 font-black">₹{(addon.price || 0).toLocaleString('en-IN')}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* WhatsApp Share CTA Banner */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl shadow-lg">
+              <div className="space-y-0.5">
+                <h3 className="font-extrabold text-base flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-emerald-200" /> Share Booking Details & Link
+                </h3>
+                <p className="text-xs text-emerald-100">
+                  Sends pre-formatted WhatsApp message with Razorpay link to <strong>+91 {customerPhone}</strong>
+                </p>
+              </div>
+              
+              <a
+                href={getWhatsAppShareUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-6 py-3 bg-white text-emerald-800 font-black text-xs sm:text-sm rounded-xl hover:bg-emerald-50 transition-all flex items-center justify-center gap-2 shadow-md shrink-0 cursor-pointer"
               >
-                <Copy className="w-3 h-3" /> Copy Payment Link
-              </button>
+                <Share2 className="w-4 h-4 text-emerald-700" />
+                Share on WhatsApp
+                <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+              </a>
             </div>
-          </div>
 
-          {selectedAddonIds.length > 0 && (
-            <div className="p-4 bg-white rounded-xl border border-gray-100">
-              <p className="text-xs text-gray-400 font-medium mb-2">Selected Add-ons ({selectedAddonIds.length})</p>
-              <ul className="space-y-1">
-                {selectedAddonIds.map(id => {
-                  const addon = availableAddons.find(a => a._id === id);
-                  if (!addon) return null;
-                  return (
-                    <li key={id} className="flex justify-between text-xs">
-                      <span className="text-gray-700 font-semibold">{addon.name}</span>
-                      <span className="text-gray-900 font-bold">₹{(addon.price || 0).toLocaleString('en-IN')}</span>
-                    </li>
-                  );
-                })}
-              </ul>
+            {/* Live Waiting Indicator */}
+            {waitingForPayment && (
+              <div className="flex items-center gap-3 p-4 bg-amber-50/80 border border-amber-200 rounded-2xl">
+                <Loader2 className="w-5 h-5 text-amber-600 animate-spin shrink-0" />
+                <p className="text-xs font-semibold text-amber-800">
+                  Waiting for customer payment... System will automatically redirect to Bookings once payment is completed.
+                </p>
+              </div>
+            )}
+
+            {/* Footer Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2 border-t border-gray-100">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  clearInterval(pollIntervalRef.current);
+                  setWaitingForPayment(false);
+                  setCreatedBookingResult(null);
+                }}
+                className="w-full sm:w-auto rounded-xl font-bold border-gray-300"
+              >
+                Create Another Booking
+              </Button>
+              <Button
+                type="button"
+                onClick={() => navigate('/admin/bookings')}
+                className="w-full sm:w-auto bg-slate-900 hover:bg-slate-950 text-white rounded-xl font-bold"
+              >
+                Go to Bookings List
+              </Button>
             </div>
-          )}
-
-          {/* WhatsApp Share CTA */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl shadow-md">
-            <div>
-              <h3 className="font-bold text-base flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" /> Share Booking Details & Payment Link on WhatsApp
-              </h3>
-              <p className="text-xs text-emerald-100 mt-0.5">
-                Directly sends pre-formatted message with Razorpay link to {customerPhone}
-              </p>
-            </div>
-            
-            <a
-              href={getWhatsAppShareUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3 bg-white text-emerald-800 font-extrabold rounded-xl hover:bg-emerald-50 transition-all flex items-center gap-2 shadow-sm shrink-0"
-            >
-              <Share2 className="w-4 h-4 text-emerald-700" />
-              Share on WhatsApp
-              <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-            </a>
-          </div>
-
-          {waitingForPayment && (
-            <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
-              <Loader2 className="w-5 h-5 text-amber-600 animate-spin shrink-0" />
-              <p className="text-xs font-semibold text-amber-800">
-                Waiting for customer to complete payment... You'll be redirected to the Bookings section automatically once payment is received.
-              </p>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                clearInterval(pollIntervalRef.current);
-                setWaitingForPayment(false);
-                setCreatedBookingResult(null);
-              }}
-              className="rounded-xl"
-            >
-              Create Another Booking
-            </Button>
-            <Button
-              onClick={() => navigate('/admin/bookings')}
-              className="bg-gray-900 hover:bg-black text-white rounded-xl"
-            >
-              Go to Bookings List
-            </Button>
           </div>
         </Card>
       ) : (

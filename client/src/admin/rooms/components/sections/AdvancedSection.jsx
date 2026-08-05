@@ -12,47 +12,6 @@ import { parseGoogleMapLink } from '../../utils';
 export const LocationFields = ({ form, patch, readOnly = false, onMapLinkChange }) => (
   <div className="space-y-5">
     <div className="space-y-1.5">
-      <Label htmlFor="room-address">Address</Label>
-      <Input
-        id="room-address"
-        value={form.address}
-        disabled={readOnly}
-        onChange={(e) => patch({ address: e.target.value })}
-        placeholder="Street / landmark"
-      />
-    </div>
-
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="room-city">City</Label>
-        <Input
-          id="room-city"
-          value={form.city}
-          disabled={readOnly}
-          onChange={(e) => patch({ city: e.target.value })}
-        />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="room-state">State</Label>
-        <Input
-          id="room-state"
-          value={form.state}
-          disabled={readOnly}
-          onChange={(e) => patch({ state: e.target.value })}
-        />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="room-country">Country</Label>
-        <Input
-          id="room-country"
-          value={form.country}
-          disabled={readOnly}
-          onChange={(e) => patch({ country: e.target.value })}
-        />
-      </div>
-    </div>
-
-    <div className="space-y-1.5">
       <Label htmlFor="room-map">Google Map Link / URL</Label>
       <Textarea
         id="room-map"

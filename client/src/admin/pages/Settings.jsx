@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Hotel, Save, Globe, Loader2, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Linkedin, Clock, Percent } from 'lucide-react';
+import {
+  Settings as SettingsIcon, Hotel, Save, Globe, Loader2, Mail, Phone,
+  MapPin, Facebook, Instagram, Twitter, Linkedin, Clock, Percent,
+  Edit2, X, Check, ShieldCheck, Plus, Trash2, HelpCircle
+} from 'lucide-react';
 import api from '../../api';
 import { toast } from 'react-hot-toast';
+
+// Shadcn UI Imports
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 const parse24h = (timeStr) => {
   if (!timeStr) return { hour: '12', minute: '00', ampm: 'PM' };
@@ -24,6 +36,14 @@ const convertTo24h = (hour, minute, ampm) => {
 };
 
 const Settings = () => {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Original data backup for Cancel action
+  const [originalData, setOriginalData] = useState(null);
+
+  // Form states
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -40,6 +60,7 @@ const Settings = () => {
   const [instagram, setInstagram] = useState('');
   const [twitter, setTwitter] = useState('');
   const [linkedin, setLinkedin] = useState('');
+
   const [cancelDurationHrs, setCancelDurationHrs] = useState(24);
   const [advancePercent1Day, setAdvancePercent1Day] = useState(100);
   const [advancePercent2Day, setAdvancePercent2Day] = useState(50);
@@ -48,53 +69,64 @@ const Settings = () => {
   const [advancePercent5To7Days, setAdvancePercent5To7Days] = useState(25);
   const [advancePercentAbove7Days, setAdvancePercentAbove7Days] = useState(20);
   const [taxRules, setTaxRules] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+
+  const populateForm = (d) => {
+    setEmail(d.email || '');
+    setPhone(d.phone || '');
+    setAddress(d.address || '');
+
+    const checkInParsed = parse24h(d.checkInTime);
+    setCheckInHour(checkInParsed.hour);
+    setCheckInMinute(checkInParsed.minute);
+    setCheckInAmPm(checkInParsed.ampm);
+
+    const checkOutParsed = parse24h(d.checkOutTime);
+    setCheckOutHour(checkOutParsed.hour);
+    setCheckOutMinute(checkOutParsed.minute);
+    setCheckOutAmPm(checkOutParsed.ampm);
+
+    setFacebook(d.facebook || '');
+    setInstagram(d.instagram || '');
+    setTwitter(d.twitter || '');
+    setLinkedin(d.linkedin || '');
+    setCancelDurationHrs(d.cancelDurationHrs !== undefined ? d.cancelDurationHrs : 24);
+    setAdvancePercent1Day(d.advancePercent1Day !== undefined ? d.advancePercent1Day : 100);
+    setAdvancePercent2Day(d.advancePercent2Day !== undefined ? d.advancePercent2Day : 50);
+    setAdvancePercent3Day(d.advancePercent3Day !== undefined ? d.advancePercent3Day : 40);
+    setAdvancePercent4Day(d.advancePercent4Day !== undefined ? d.advancePercent4Day : 30);
+    setAdvancePercent5To7Days(d.advancePercent5To7Days !== undefined ? d.advancePercent5To7Days : 25);
+    setAdvancePercentAbove7Days(d.advancePercentAbove7Days !== undefined ? d.advancePercentAbove7Days : 20);
+    setTaxRules(d.taxRules ? JSON.parse(JSON.stringify(d.taxRules)) : []);
+  };
+
+  const fetchSettings = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/settings');
+      const d = res.data;
+      setOriginalData(d);
+      populateForm(d);
+    } catch (err) {
+      toast.error('Failed to load settings');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get('/settings');
-        const d = res.data;
-        setEmail(d.email || '');
-        setPhone(d.phone || '');
-        setAddress(d.address || '');
-
-        const checkInParsed = parse24h(d.checkInTime);
-        setCheckInHour(checkInParsed.hour);
-        setCheckInMinute(checkInParsed.minute);
-        setCheckInAmPm(checkInParsed.ampm);
-
-        const checkOutParsed = parse24h(d.checkOutTime);
-        setCheckOutHour(checkOutParsed.hour);
-        setCheckOutMinute(checkOutParsed.minute);
-        setCheckOutAmPm(checkOutParsed.ampm);
-
-        setFacebook(d.facebook || '');
-        setInstagram(d.instagram || '');
-        setTwitter(d.twitter || '');
-        setLinkedin(d.linkedin || '');
-        setCancelDurationHrs(d.cancelDurationHrs !== undefined ? d.cancelDurationHrs : 24);
-        setAdvancePercent1Day(d.advancePercent1Day !== undefined ? d.advancePercent1Day : 100);
-        setAdvancePercent2Day(d.advancePercent2Day !== undefined ? d.advancePercent2Day : 50);
-        setAdvancePercent3Day(d.advancePercent3Day !== undefined ? d.advancePercent3Day : 40);
-        setAdvancePercent4Day(d.advancePercent4Day !== undefined ? d.advancePercent4Day : 30);
-        setAdvancePercent5To7Days(d.advancePercent5To7Days !== undefined ? d.advancePercent5To7Days : 25);
-        setAdvancePercentAbove7Days(d.advancePercentAbove7Days !== undefined ? d.advancePercentAbove7Days : 20);
-        setTaxRules(d.taxRules || []);
-      } catch (err) {
-        toast.error('Failed to load settings');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchSettings();
   }, []);
 
+  const handleCancelEdit = () => {
+    if (originalData) {
+      populateForm(originalData);
+    }
+    setIsEditing(false);
+  };
+
   const handleSave = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     try {
       setSaving(true);
       const checkInTime = convertTo24h(checkInHour, checkInMinute, checkInAmPm);
@@ -106,7 +138,7 @@ const Settings = () => {
         taxPercent: r.taxPercent === '' ? 0 : Number(r.taxPercent)
       }));
 
-      await api.put('/settings', {
+      const payload = {
         email,
         phone,
         address,
@@ -124,8 +156,13 @@ const Settings = () => {
         advancePercent5To7Days: advancePercent5To7Days === '' ? 25 : Number(advancePercent5To7Days),
         advancePercentAbove7Days: advancePercentAbove7Days === '' ? 20 : Number(advancePercentAbove7Days),
         taxRules: cleanedTaxRules
-      });
-      toast.success('Settings saved successfully');
+      };
+
+      const res = await api.put('/settings', payload);
+      setOriginalData(res.data);
+      populateForm(res.data);
+      setIsEditing(false);
+      toast.success('Configuration settings updated successfully!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save settings');
       console.error(err);
@@ -134,11 +171,27 @@ const Settings = () => {
     }
   };
 
+  const handleAddTaxRule = () => {
+    setTaxRules(prev => [...prev, { minAmount: 0, maxAmount: 10000, taxPercent: 12 }]);
+  };
+
+  const handleRemoveTaxRule = (index) => {
+    setTaxRules(prev => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleTaxRuleChange = (index, field, value) => {
+    setTaxRules(prev => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [field]: value };
+      return copy;
+    });
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8F9FA] flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-8 h-8 animate-spin text-[#4F46E5]" />
-        <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest">Loading Settings...</p>
+      <div className="flex flex-col items-center justify-center h-80 gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Loading Settings...</p>
       </div>
     );
   }
@@ -146,469 +199,454 @@ const Settings = () => {
   const hoursList = Array.from({ length: 12 }, (_, i) => String(i + 1));
   const minutesList = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
-  const inputClass = "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#4F46E5] focus:border-transparent transition-all";
-  const labelClass = "block text-xs font-semibold text-gray-600 mb-2";
-
   return (
-    <div className="min-h-screen bg-[#F8F9FA] p-4 sm:p-8 font-sans">
-      <div className="max-w-7xl space-y-8">
-
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight">Configuration Settings</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your hotel details, booking timings, and social presence.</p>
+    <div className="space-y-6 max-w-6xl mx-auto p-4 sm:p-6 pb-20">
+      {/* Top Sticky Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2 whitespace-nowrap truncate">
+              <SettingsIcon className="w-5 h-5 text-primary-600 shrink-0" />
+              <span className="truncate whitespace-nowrap">Configuration Settings</span>
+            </h1>
+            <Badge variant="secondary" className={`whitespace-nowrap shrink-0 ${isEditing ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+              {isEditing ? 'Editing Mode' : 'Read-Only Mode'}
+            </Badge>
+          </div>
+          <p className="text-xs text-gray-500 mt-1 truncate">
+            Manage contact details, social media links, advance rules, and tax slabs.
+          </p>
         </div>
 
-        {/* Form Layout: Side by Side on Desktop */}
-        <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        {/* Edit / Save Action Controls */}
+        <div className="flex items-center gap-3 shrink-0">
+          {!isEditing ? (
+            <Button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="gap-2 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs shadow-sm"
+            >
+              <Edit2 className="w-4 h-4" />
+              Edit Settings
+            </Button>
+          ) : (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancelEdit}
+                disabled={saving}
+                className="gap-1.5 text-xs font-semibold border-gray-300"
+              >
+                <X className="w-4 h-4" />
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Save Changes
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
 
-          {/* Left Column (Hotel Info & Booking Settings) */}
-          <div className="lg:col-span-8 space-y-6 lg:space-y-8">
+      <form onSubmit={handleSave} className="space-y-6">
 
-            {/* Hotel Information Card */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                <div className="p-2.5 bg-indigo-50 rounded-xl">
-                  <Hotel className="w-5 h-5 text-[#4F46E5]" />
-                </div>
-                <h2 className="text-lg font-semibold text-gray-900">Hotel Information</h2>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className={labelClass}>Contact Email</label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="contact@yourhotel.com"
-                      required
-                      className={`${inputClass} pl-10`}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className={labelClass}>Contact Phone</label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+1 (555) 000-0000"
-                      required
-                      className={`${inputClass} pl-10`}
-                    />
-                  </div>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className={labelClass}>Complete Address</label>
-                  <div className="relative">
-                    <MapPin className="w-4 h-4 text-gray-400 absolute left-4 top-4" />
-                    <textarea
-                      rows={3}
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="123 Luxury Avenue, Resort City..."
-                      required
-                      className={`${inputClass} pl-10 resize-none`}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Booking Settings Card */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                <div className="p-2.5 bg-indigo-50 rounded-xl">
-                  <SettingsIcon className="w-5 h-5 text-[#4F46E5]" />
-                </div>
-                <h2 className="text-lg font-semibold text-gray-900">Booking & Timings</h2>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                {/* Check-in Time */}
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4">
-                    <Clock className="w-4 h-4 text-gray-500" /> Default Check-in
-                  </label>
-                  <div className="flex gap-2">
-                    <select
-                      value={checkInHour}
-                      onChange={(e) => setCheckInHour(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-lg px-2 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-[#4F46E5] transition-all cursor-pointer"
-                    >
-                      {hoursList.map(h => <option key={h} value={h}>{h.padStart(2, '0')}</option>)}
-                    </select>
-                    <span className="flex items-center font-bold text-gray-400">:</span>
-                    <select
-                      value={checkInMinute}
-                      onChange={(e) => setCheckInMinute(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-lg px-2 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-[#4F46E5] transition-all cursor-pointer"
-                    >
-                      {minutesList.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                    <select
-                      value={checkInAmPm}
-                      onChange={(e) => setCheckInAmPm(e.target.value)}
-                      className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#4F46E5] transition-all cursor-pointer"
-                    >
-                      <option value="AM">AM</option>
-                      <option value="PM">PM</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Check-out Time */}
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4">
-                    <Clock className="w-4 h-4 text-gray-500" /> Default Check-out
-                  </label>
-                  <div className="flex gap-2">
-                    <select
-                      value={checkOutHour}
-                      onChange={(e) => setCheckOutHour(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-lg px-2 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-[#4F46E5] transition-all cursor-pointer"
-                    >
-                      {hoursList.map(h => <option key={h} value={h}>{h.padStart(2, '0')}</option>)}
-                    </select>
-                    <span className="flex items-center font-bold text-gray-400">:</span>
-                    <select
-                      value={checkOutMinute}
-                      onChange={(e) => setCheckOutMinute(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-lg px-2 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-[#4F46E5] transition-all cursor-pointer"
-                    >
-                      {minutesList.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                    <select
-                      value={checkOutAmPm}
-                      onChange={(e) => setCheckOutAmPm(e.target.value)}
-                      className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#4F46E5] transition-all cursor-pointer"
-                    >
-                      <option value="AM">AM</option>
-                      <option value="PM">PM</option>
-                    </select>
-                  </div>
-                </div>
-                {/* Cancel Duration (hours) */}
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 sm:col-span-2">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4">
-                    <Clock className="w-4 h-4 text-gray-500" /> Cancel Duration (Hours before Check-In)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    value={cancelDurationHrs}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setCancelDurationHrs(val === '' ? '' : Math.max(1, parseInt(val, 10) || 1));
-                    }}
-                    className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-[#4F46E5] transition-all"
+        {/* 1. Contact Details & Footer Info */}
+        <Card className="border border-gray-200 shadow-sm rounded-2xl bg-white overflow-hidden">
+          <CardHeader className="bg-gray-50/50 border-b border-gray-200 p-5">
+            <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary-600" />
+              Contact Details & Footer Info
+            </CardTitle>
+            <CardDescription className="text-xs text-gray-500">
+              Official email address, phone number, and physical address shown on website footer and contact page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-5 sm:p-6 space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Contact Email */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-gray-400" />
+                  Official Email Address
+                </Label>
+                {isEditing ? (
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="e.g. info@balifiedvilla.com"
+                    className="border-gray-300 text-sm font-medium"
                   />
-                  <p className="text-xs text-gray-400 mt-2">Specify the minimum number of hours before check-in time that a guest can cancel their booking for a full refund.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Advance Payment Configuration Card */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                <div className="p-2.5 bg-indigo-50 rounded-xl">
-                  <Percent className="w-5 h-5 text-[#4F46E5]" />
-                </div>
-                <h2 className="text-lg font-semibold text-gray-900">Advance Payment Rules</h2>
-              </div>
-
-              <p className="text-xs text-gray-400 mb-6">Configure the percentage of the total stay price that users must pay in advance, based on the duration of their stay.</p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div>
-                  <label className={labelClass}>1 Night Stay (%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    required
-                    value={advancePercent1Day}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setAdvancePercent1Day(val === '' ? '' : Math.min(100, Math.max(0, parseInt(val, 10) || 0)));
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>2 Nights Stay (%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    required
-                    value={advancePercent2Day}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setAdvancePercent2Day(val === '' ? '' : Math.min(100, Math.max(0, parseInt(val, 10) || 0)));
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>3 Nights Stay (%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    required
-                    value={advancePercent3Day}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setAdvancePercent3Day(val === '' ? '' : Math.min(100, Math.max(0, parseInt(val, 10) || 0)));
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>4 Nights Stay (%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    required
-                    value={advancePercent4Day}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setAdvancePercent4Day(val === '' ? '' : Math.min(100, Math.max(0, parseInt(val, 10) || 0)));
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>5 to 7 Nights Stay (%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    required
-                    value={advancePercent5To7Days}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setAdvancePercent5To7Days(val === '' ? '' : Math.min(100, Math.max(0, parseInt(val, 10) || 0)));
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>7+ Nights Stay (%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    required
-                    value={advancePercentAbove7Days}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setAdvancePercentAbove7Days(val === '' ? '' : Math.min(100, Math.max(0, parseInt(val, 10) || 0)));
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Tax Slabs Configuration Card */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                <div className="p-2.5 bg-indigo-50 rounded-xl">
-                  <Percent className="w-5 h-5 text-[#4F46E5]" />
-                </div>
-                <h2 className="text-lg font-semibold text-gray-900">Tax Slabs Configuration</h2>
-              </div>
-
-              <p className="text-xs text-gray-400 mb-6 font-medium">Define slab-based tax percentages. The tax percent will apply to the total booking amount based on where the per-day average room amount falls in the min/max range.</p>
-
-              {/* Dynamic tax rule builder */}
-              <div className="space-y-4">
-                {taxRules.map((rule, idx) => (
-                  <div key={idx} className="flex flex-col sm:flex-row items-center gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100 relative">
-                    <div className="flex-1 w-full">
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Min Amount (₹)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={rule.minAmount}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          const updated = [...taxRules];
-                          updated[idx].minAmount = val === '' ? '' : Number(val);
-                          setTaxRules(updated);
-                        }}
-                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-950 outline-none focus:ring-2 focus:ring-[#4F46E5]"
-                        placeholder="0"
-                        required
-                      />
-                    </div>
-                    <div className="flex-1 w-full">
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Max Amount (₹)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={rule.maxAmount}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          const updated = [...taxRules];
-                          updated[idx].maxAmount = val === '' ? '' : Number(val);
-                          setTaxRules(updated);
-                        }}
-                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-950 outline-none focus:ring-2 focus:ring-[#4F46E5]"
-                        placeholder="10000"
-                        required
-                      />
-                    </div>
-                    <div className="flex-1 w-full">
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tax Percent (%)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        value={rule.taxPercent}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          const updated = [...taxRules];
-                          updated[idx].taxPercent = val === '' ? '' : Number(val);
-                          setTaxRules(updated);
-                        }}
-                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-950 outline-none focus:ring-2 focus:ring-[#4F46E5]"
-                        placeholder="18"
-                        required
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTaxRules(taxRules.filter((_, i) => i !== idx));
-                      }}
-                      className="mt-5 px-3 py-2 text-xs font-semibold text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer border-none bg-transparent"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ))}
-
-                {taxRules.length === 0 && (
-                  <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-                    <p className="text-xs text-gray-400 font-semibold">No tax slabs configured yet. 0% tax will be applied by default.</p>
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-primary-600 shrink-0" />
+                    {email || 'Not provided'}
                   </div>
                 )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTaxRules([...taxRules, { minAmount: 0, maxAmount: 999999, taxPercent: 18 }]);
-                  }}
-                  className="w-full py-2.5 border border-dashed border-[#4F46E5] text-[#4F46E5] hover:bg-indigo-50/50 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer bg-transparent"
-                >
-                  + Add New Tax Slab
-                </button>
               </div>
+
+              {/* Phone Number */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-gray-400" />
+                  Phone Number
+                </Label>
+                {isEditing ? (
+                  <Input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. +91 98765 43210"
+                    className="border-gray-300 text-sm font-medium"
+                  />
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-primary-600 shrink-0" />
+                    {phone || 'Not provided'}
+                  </div>
+                )}
+              </div>
+
             </div>
 
-          </div>
-
-          {/* Right Column (Social Media & Actions) - Sticky on Desktop */}
-          <div className="lg:col-span-4 space-y-6 sticky top-8">
-
-            {/* Social Links Card */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                <div className="p-2 bg-indigo-50 rounded-lg">
-                  <Globe className="w-5 h-5 text-[#4F46E5]" />
+            {/* Physical Address */}
+            <div className="space-y-2 pt-2">
+              <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                Physical Property Address
+              </Label>
+              {isEditing ? (
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  rows={3}
+                  placeholder="Enter complete villa location address..."
+                  className="w-full bg-white border border-gray-300 rounded-xl p-3 text-xs sm:text-sm text-gray-900 outline-none focus:border-primary-500 font-medium resize-none"
+                />
+              ) : (
+                <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-900 flex items-start gap-2.5 leading-relaxed">
+                  <MapPin className="w-4 h-4 text-primary-600 shrink-0 mt-0.5" />
+                  <span>{address || 'Not provided'}</span>
                 </div>
-                <h2 className="text-base font-semibold text-gray-900">Social Media</h2>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className={labelClass}>Facebook</label>
-                  <div className="relative">
-                    <Facebook className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="url"
-                      value={facebook}
-                      onChange={(e) => setFacebook(e.target.value)}
-                      placeholder="facebook.com/yourpage"
-                      className={`${inputClass} pl-10`}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className={labelClass}>Instagram</label>
-                  <div className="relative">
-                    <Instagram className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="url"
-                      value={instagram}
-                      onChange={(e) => setInstagram(e.target.value)}
-                      placeholder="instagram.com/yourpage"
-                      className={`${inputClass} pl-10`}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className={labelClass}>Twitter / X</label>
-                  <div className="relative">
-                    <Twitter className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="url"
-                      value={twitter}
-                      onChange={(e) => setTwitter(e.target.value)}
-                      placeholder="twitter.com/yourpage"
-                      className={`${inputClass} pl-10`}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className={labelClass}>LinkedIn</label>
-                  <div className="relative">
-                    <Linkedin className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="url"
-                      value={linkedin}
-                      onChange={(e) => setLinkedin(e.target.value)}
-                      placeholder="linkedin.com/company/..."
-                      className={`${inputClass} pl-10`}
-                    />
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Action Card */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-3">
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-indigo-500/20 disabled:opacity-70 active:scale-[0.98] cursor-pointer"
+          </CardContent>
+        </Card>
+
+        {/* 3. Social Media Links */}
+        <Card className="border border-gray-200 shadow-sm rounded-2xl bg-white overflow-hidden">
+          <CardHeader className="bg-gray-50/50 border-b border-gray-200 p-5">
+            <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Globe className="w-5 h-5 text-primary-600" />
+              Social Media & Footer Handles
+            </CardTitle>
+            <CardDescription className="text-xs text-gray-500">
+              Configure official social media profile URLs linked in the website header and footer.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-5 sm:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Instagram */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Instagram className="w-4 h-4 text-pink-600" />
+                  Instagram URL
+                </Label>
+                {isEditing ? (
+                  <Input
+                    value={instagram}
+                    onChange={(e) => setInstagram(e.target.value)}
+                    placeholder="https://instagram.com/yourhandle"
+                    className="border-gray-300 text-xs sm:text-sm font-medium"
+                  />
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 truncate">
+                    {instagram || 'Not configured'}
+                  </div>
+                )}
+              </div>
+
+              {/* Facebook */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Facebook className="w-4 h-4 text-blue-600" />
+                  Facebook URL
+                </Label>
+                {isEditing ? (
+                  <Input
+                    value={facebook}
+                    onChange={(e) => setFacebook(e.target.value)}
+                    placeholder="https://facebook.com/yourpage"
+                    className="border-gray-300 text-xs sm:text-sm font-medium"
+                  />
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 truncate">
+                    {facebook || 'Not configured'}
+                  </div>
+                )}
+              </div>
+
+              {/* Twitter / X */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Twitter className="w-4 h-4 text-sky-500" />
+                  Twitter / X URL
+                </Label>
+                {isEditing ? (
+                  <Input
+                    value={twitter}
+                    onChange={(e) => setTwitter(e.target.value)}
+                    placeholder="https://x.com/yourhandle"
+                    className="border-gray-300 text-xs sm:text-sm font-medium"
+                  />
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 truncate">
+                    {twitter || 'Not configured'}
+                  </div>
+                )}
+              </div>
+
+              {/* LinkedIn */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Linkedin className="w-4 h-4 text-blue-700" />
+                  LinkedIn URL
+                </Label>
+                {isEditing ? (
+                  <Input
+                    value={linkedin}
+                    onChange={(e) => setLinkedin(e.target.value)}
+                    placeholder="https://linkedin.com/company/yourhandle"
+                    className="border-gray-300 text-xs sm:text-sm font-medium"
+                  />
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 truncate">
+                    {linkedin || 'Not configured'}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 4. Advance Payment Percentage Rules */}
+        <Card className="border border-gray-200 shadow-sm rounded-2xl bg-white overflow-hidden">
+          <CardHeader className="bg-gray-50/50 border-b border-gray-200 p-5">
+            <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Percent className="w-5 h-5 text-primary-600" />
+              Advance Payment Percentage Rules
+            </CardTitle>
+            <CardDescription className="text-xs text-gray-500">
+              Define advance payment percentages collected during Razorpay online checkout based on stay duration.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-5 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              
+              <div className="space-y-2 p-4 bg-gray-50/80 border border-gray-200 rounded-xl">
+                <Label className="text-xs font-bold text-gray-700">1 Night Stay Advance (%)</Label>
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={advancePercent1Day}
+                    onChange={(e) => setAdvancePercent1Day(e.target.value)}
+                    className="border-gray-300 font-bold text-sm bg-white"
+                  />
+                ) : (
+                  <div className="text-lg font-black text-gray-900">{advancePercent1Day}%</div>
+                )}
+              </div>
+
+              <div className="space-y-2 p-4 bg-gray-50/80 border border-gray-200 rounded-xl">
+                <Label className="text-xs font-bold text-gray-700">2 Nights Stay Advance (%)</Label>
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={advancePercent2Day}
+                    onChange={(e) => setAdvancePercent2Day(e.target.value)}
+                    className="border-gray-300 font-bold text-sm bg-white"
+                  />
+                ) : (
+                  <div className="text-lg font-black text-gray-900">{advancePercent2Day}%</div>
+                )}
+              </div>
+
+              <div className="space-y-2 p-4 bg-gray-50/80 border border-gray-200 rounded-xl">
+                <Label className="text-xs font-bold text-gray-700">3 Nights Stay Advance (%)</Label>
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={advancePercent3Day}
+                    onChange={(e) => setAdvancePercent3Day(e.target.value)}
+                    className="border-gray-300 font-bold text-sm bg-white"
+                  />
+                ) : (
+                  <div className="text-lg font-black text-gray-900">{advancePercent3Day}%</div>
+                )}
+              </div>
+
+              <div className="space-y-2 p-4 bg-gray-50/80 border border-gray-200 rounded-xl">
+                <Label className="text-xs font-bold text-gray-700">4 Nights Stay Advance (%)</Label>
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={advancePercent4Day}
+                    onChange={(e) => setAdvancePercent4Day(e.target.value)}
+                    className="border-gray-300 font-bold text-sm bg-white"
+                  />
+                ) : (
+                  <div className="text-lg font-black text-gray-900">{advancePercent4Day}%</div>
+                )}
+              </div>
+
+              <div className="space-y-2 p-4 bg-gray-50/80 border border-gray-200 rounded-xl">
+                <Label className="text-xs font-bold text-gray-700">5 – 7 Nights Stay Advance (%)</Label>
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={advancePercent5To7Days}
+                    onChange={(e) => setAdvancePercent5To7Days(e.target.value)}
+                    className="border-gray-300 font-bold text-sm bg-white"
+                  />
+                ) : (
+                  <div className="text-lg font-black text-gray-900">{advancePercent5To7Days}%</div>
+                )}
+              </div>
+
+              <div className="space-y-2 p-4 bg-gray-50/80 border border-gray-200 rounded-xl">
+                <Label className="text-xs font-bold text-gray-700">8+ Nights Stay Advance (%)</Label>
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={advancePercentAbove7Days}
+                    onChange={(e) => setAdvancePercentAbove7Days(e.target.value)}
+                    className="border-gray-300 font-bold text-sm bg-white"
+                  />
+                ) : (
+                  <div className="text-lg font-black text-gray-900">{advancePercentAbove7Days}%</div>
+                )}
+              </div>
+
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 5. Tax & GST Rules */}
+        <Card className="border border-gray-200 shadow-sm rounded-2xl bg-white overflow-hidden">
+          <CardHeader className="bg-gray-50/50 border-b border-gray-200 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-primary-600" />
+                GST & Tax Rules Slabs
+              </CardTitle>
+              <CardDescription className="text-xs text-gray-500 mt-0.5">
+                Dynamic tax percentage rules applied automatically based on daily per-room rates.
+              </CardDescription>
+            </div>
+            {isEditing && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddTaxRule}
+                className="gap-1.5 text-xs font-bold border-gray-300 shrink-0"
               >
-                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                {saving ? 'Saving Changes...' : 'Save All Settings'}
-              </button>
-              <p className="text-center text-xs text-gray-400 mt-1">Changes will apply immediately across the system.</p>
-            </div>
+                <Plus className="w-4 h-4" />
+                Add Tax Rule
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="p-0">
+            {taxRules.length === 0 ? (
+              <div className="text-center py-10 text-xs text-gray-400">
+                No tax rules configured. Click "Add Tax Rule" to set up GST slabs.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table className="w-full">
+                  <TableHeader>
+                    <TableRow className="bg-gray-50/60">
+                      <TableHead className="py-3 px-4 font-bold text-xs">Min Amount (₹)</TableHead>
+                      <TableHead className="py-3 px-4 font-bold text-xs">Max Amount (₹)</TableHead>
+                      <TableHead className="py-3 px-4 font-bold text-xs">Tax Percentage (%)</TableHead>
+                      {isEditing && <TableHead className="py-3 px-4 text-right w-20">Actions</TableHead>}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {taxRules.map((rule, idx) => (
+                      <TableRow key={idx} className="hover:bg-gray-50/50">
+                        <TableCell className="py-3 px-4">
+                          {isEditing ? (
+                            <Input
+                              type="number"
+                              value={rule.minAmount}
+                              onChange={(e) => handleTaxRuleChange(idx, 'minAmount', e.target.value)}
+                              className="border-gray-300 text-xs sm:text-sm font-semibold h-9"
+                            />
+                          ) : (
+                            <span className="font-bold text-gray-900">₹{Number(rule.minAmount).toLocaleString('en-IN')}</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-3 px-4">
+                          {isEditing ? (
+                            <Input
+                              type="number"
+                              value={rule.maxAmount}
+                              onChange={(e) => handleTaxRuleChange(idx, 'maxAmount', e.target.value)}
+                              className="border-gray-300 text-xs sm:text-sm font-semibold h-9"
+                            />
+                          ) : (
+                            <span className="font-bold text-gray-900">₹{Number(rule.maxAmount).toLocaleString('en-IN')}</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-3 px-4">
+                          {isEditing ? (
+                            <Input
+                              type="number"
+                              value={rule.taxPercent}
+                              onChange={(e) => handleTaxRuleChange(idx, 'taxPercent', e.target.value)}
+                              className="border-gray-300 text-xs sm:text-sm font-bold h-9"
+                            />
+                          ) : (
+                            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-bold">
+                              {rule.taxPercent}% Tax
+                            </Badge>
+                          )}
+                        </TableCell>
+                        {isEditing && (
+                          <TableCell className="py-3 px-4 text-right">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveTaxRule(idx)}
+                              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          </div>
-
-        </form>
-      </div>
+      </form>
     </div>
   );
 };

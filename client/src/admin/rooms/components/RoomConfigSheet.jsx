@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Check, CloudOff, Image as ImageIcon, Info, Loader2, MapPin, Shield,
+  Check, Clock, CloudOff, Image as ImageIcon, Info, Loader2, MapPin, Shield,
   Sparkles, Tag, Users
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -22,6 +22,7 @@ import AvailabilitySection from './sections/AvailabilitySection';
 import GallerySection from './sections/GallerySection';
 import AdvancedSection from './sections/AdvancedSection';
 import WhatThisPlaceOffers from './sections/WhatThisPlaceOffers';
+import TimingsSection from './sections/TimingsSection';
 import { CapacityFields } from './steps/CapacityStep';
 
 /**
@@ -142,6 +143,10 @@ const RoomConfigSheet = ({
     {
       id: 'policies', label: 'Policies & Capacity', icon: Users,
       content: <CapacityFields form={roomForm} patch={patch} readOnly={readOnly} />,
+    },
+    {
+      id: 'timings', label: 'Check-In & Check-Out Timings', icon: Clock,
+      content: <TimingsSection form={roomForm} patch={patch} readOnly={readOnly} />,
     },
     {
       id: 'gallery', label: 'Gallery', icon: ImageIcon,

@@ -56,7 +56,7 @@ export const updateAddon = async (req, res) => {
       if (existing.image) deleteLocalFile(existing.image);
     }
 
-    const addon = await AddonService.findByIdAndUpdate(req.params.id, data, { new: true });
+    const addon = await AddonService.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true });
     res.json(addon);
   } catch (err) {
     if (req.file) deleteLocalFile(`/uploads/${req.file.filename}`);

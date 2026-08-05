@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Bath, BedDouble, Check, Info, Image as ImageIcon, MapPin, ShowerHead, Sparkles, Star, Users } from 'lucide-react';
+import { Bath, BedDouble, Check, Clock, Info, MapPin, ShowerHead, Sparkles, Star, Users } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle
 } from '@/components/ui/dialog';
@@ -8,14 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger
 } from '@/components/ui/accordion';
-import { roomToForm } from '../utils';
+import { roomToForm, parseGoogleMapLink, getIconComp } from '../utils';
 import GeneralSection from './sections/GeneralSection';
-import GallerySection from './sections/GallerySection';
-import FeaturesSection from './sections/FeaturesSection';
-import AmenitiesSection from './sections/AmenitiesSection';
-import AdvancedSection from './sections/AdvancedSection';
-
-const noop = () => {};
 
 /**
  * Read-only property preview. Reuses the same section components in
@@ -51,72 +45,104 @@ const RoomPreviewDialog = ({ room, onOpenChange, onConfigure, categories = [] })
           </div>
         </DialogHeader>
 
-        <div className="rounded-2xl border border-gray-100 bg-gray-900 p-5 text-white">
-          <p className="text-[10px] font-black uppercase tracking-widest text-primary-400">Live Pricing</p>
+        <div className="rounded-2xl border border-border bg-muted/40 p-5 text-card-foreground">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Live Pricing</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black">₹{room.price}</span>
+            <span className="text-3xl font-extrabold text-foreground">₹{room.price}</span>
             {room.originalPrice ? (
-              <span className="text-sm text-gray-500 line-through">₹{room.originalPrice}</span>
+              <span className="text-sm text-muted-foreground line-through">₹{room.originalPrice}</span>
             ) : null}
           </div>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+          <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             per {room.priceUnit || 'night'}
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-4 sm:grid-cols-5">
+        <div className="grid grid-cols-3 gap-3 rounded-2xl border border-border bg-muted/20 p-4 sm:grid-cols-5">
           {stats.map((s) => (
             <div key={s.label} className="text-center">
-              <s.icon className="mx-auto mb-1 h-4 w-4 text-primary-500" />
-              <p className="text-sm font-black text-gray-900">{s.value}</p>
-              <p className="text-[9px] font-bold uppercase text-gray-400">{s.label}</p>
+              <s.icon className="mx-auto mb-1 h-4 w-4 text-primary" />
+              <p className="text-sm font-bold text-foreground">{s.value}</p>
+              <p className="text-[9px] font-bold uppercase text-muted-foreground">{s.label}</p>
             </div>
           ))}
         </div>
 
-        <Accordion type="multiple" defaultValue={['general', 'gallery']}>
+        <Accordion type="multiple" defaultValue={['general', 'offers']}>
           <AccordionItem value="general">
             <AccordionTrigger>
-              <span className="flex items-center gap-2"><Info className="h-4 w-4 text-primary-500" /> General</span>
+              <span className="flex items-center gap-2"><Info className="h-4 w-4 text-primary" /> General Information</span>
             </AccordionTrigger>
             <AccordionContent>
-              <GeneralSection form={form} patch={noop} categories={categories} readOnly />
+              <GeneralSection form={form} patch={() => {}} categories={categories} readOnly />
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="gallery">
+          <AccordionItem value="offers">
             <AccordionTrigger>
-              <span className="flex items-center gap-2"><ImageIcon className="h-4 w-4 text-primary-500" /> Gallery</span>
+              <span className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> What this place offers</span>
             </AccordionTrigger>
             <AccordionContent>
-              <GallerySection form={form} patch={noop} readOnly />
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="features">
-            <AccordionTrigger>
-              <span className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary-500" /> Highlights</span>
-            </AccordionTrigger>
-            <AccordionContent>
-              <FeaturesSection form={form} patch={noop} readOnly />
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="amenities">
-            <AccordionTrigger>
-              <span className="flex items-center gap-2"><Check className="h-4 w-4 text-primary-500" /> Amenities</span>
-            </AccordionTrigger>
-            <AccordionContent>
-              <AmenitiesSection form={form} patch={noop} readOnly />
+              {room.amenities && room.amenities.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+                  {room.amenities.map((a, idx) => {
+                    const IconComponent = getIconComp(a.icon);
+                    return (
+                      <div key={idx} className="flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2 bg-muted/5">
+                        <IconComponent className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="text-xs font-medium text-foreground">{a.name}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-xs text-muted-foreground">No amenities specified.</div>
+              )}
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="location">
             <AccordionTrigger>
-              <span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary-500" /> Location</span>
+              <span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Location</span>
             </AccordionTrigger>
             <AccordionContent>
-              <AdvancedSection form={form} patch={noop} readOnly onMapLinkChange={noop} />
+              {room.mapLink ? (
+                <div className="h-48 w-full overflow-hidden rounded-xl border border-border shadow-inner mt-1">
+                  <iframe
+                    title="Map preview"
+                    src={parseGoogleMapLink(room.mapLink)}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen=""
+                    loading="lazy"
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-6 text-xs text-muted-foreground">No Google Map link specified.</div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="timings">
+            <AccordionTrigger>
+              <span className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> Check-In &amp; Check-Out Timings</span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="grid grid-cols-2 gap-4 rounded-xl border border-border bg-muted/10 p-4">
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Check-In Time</p>
+                  <p className="text-sm font-bold text-foreground mt-1">
+                    {room.checkInTime || '14:00 (Standard)'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Check-Out Time</p>
+                  <p className="text-sm font-bold text-foreground mt-1">
+                    {room.checkOutTime || '11:00 (Standard)'}
+                  </p>
+                </div>
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>

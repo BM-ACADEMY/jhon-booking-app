@@ -64,18 +64,6 @@ const CategoryDialog = ({ open, onOpenChange, editTarget, onSaved }) => {
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="cat-desc">Description</Label>
-            <Textarea
-              id="cat-desc"
-              rows={2}
-              value={catForm.description}
-              onChange={(e) => setCatForm((p) => ({ ...p, description: e.target.value }))}
-              className="resize-none"
-              placeholder="Short description..."
-            />
-          </div>
-
           <div className="space-y-2">
             <Label>Label Color</Label>
             <div className="flex flex-wrap gap-2">

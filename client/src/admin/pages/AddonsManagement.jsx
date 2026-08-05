@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Layers, Plus, Trash2, Edit2, Utensils, Bell, Car, Sparkles, Heart, Loader2, ImagePlus, X } from 'lucide-react';
+import { Layers, Plus, Trash2, Edit2, Loader2, ImagePlus, X, MoreVertical, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../../api';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -15,12 +14,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableHeader,
@@ -29,14 +27,6 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-
-const categoryIcons = {
-  'food': Utensils,
-  'room services': Bell,
-  'transport': Car,
-  'Special Arrangements': Sparkles,
-  'Guest Services': Heart,
-};
 
 const baseUrl = import.meta.env.VITE_BASE_URL && import.meta.env.VITE_BASE_URL !== 'undefined' ? import.meta.env.VITE_BASE_URL : '';
 
@@ -54,9 +44,12 @@ const AddonsManagement = () => {
   const [deleting, setDeleting] = useState(false);
   const [showEditConfirm, setShowEditConfirm] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
-  const [iconType, setIconType] = useState('food');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -78,10 +71,18 @@ const AddonsManagement = () => {
     fetchAddons();
   }, []);
 
+  const totalPages = Math.ceil(addons.length / itemsPerPage) || 1;
+  const paginatedAddons = addons.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [addons.length, totalPages, currentPage]);
+
   const resetForm = () => {
     setName('');
     setPrice('');
-    setIconType('food');
     setImageFile(null);
     setImagePreview('');
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -97,7 +98,6 @@ const AddonsManagement = () => {
     setEditingAddon(addon);
     setName(addon.name);
     setPrice(addon.price);
-    setIconType(addon.iconType);
     setImageFile(null);
     setImagePreview(resolveImage(addon.image));
     setShowModal(true);
@@ -106,6 +106,13 @@ const AddonsManagement = () => {
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
   };
@@ -134,7 +141,6 @@ const AddonsManagement = () => {
       const formData = new FormData();
       formData.append('name', name);
       formData.append('price', Number(price));
-      formData.append('iconType', iconType);
       if (imageFile) formData.append('image', imageFile);
 
       if (editingAddon) {
@@ -171,95 +177,131 @@ const AddonsManagement = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl p-4 sm:p-6">
-      <Card>
-        <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6">
+    <div className="space-y-4 sm:space-y-6 max-w-6xl p-3 sm:p-6 mx-auto">
+      <Card className="border-gray-200/80 shadow-sm">
+        <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6">
           <div>
-            <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <Layers className="w-6 h-6 text-primary-500" />
+            <h1 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
+              <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-primary-500 flex-shrink-0" />
               Add-on Services Management
             </h1>
-            <p className="text-sm text-gray-500 mt-1">Create and manage premium services available during checkout</p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">Create and manage premium services available during checkout</p>
           </div>
-          <Button onClick={openAddModal} className="gap-2">
+          <Button onClick={openAddModal} className="w-full sm:w-auto gap-2 shadow-sm">
             <Plus className="w-4 h-4" />
             Add Service
           </Button>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-gray-200/80 shadow-sm overflow-hidden">
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
             </div>
           ) : addons.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-16 px-4">
               <Layers className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 font-medium">No add-on services found.</p>
-              <p className="text-sm text-gray-400 mt-1">Click "Add Service" to create your first add-on.</p>
+              <p className="text-gray-500 font-medium text-sm sm:text-base">No add-on services found.</p>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">Click "Add Service" to create your first add-on.</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Image</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {addons.map((addon) => {
-                  const IconComponent = categoryIcons[addon.iconType] || Layers;
-                  return (
-                    <TableRow key={addon._id}>
-                      <TableCell>
-                        {addon.image ? (
-                          <img
-                            src={resolveImage(addon.image)}
-                            alt={addon.name}
-                            className="w-12 h-12 rounded-lg object-cover border border-gray-100"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600">
-                            <IconComponent className="w-5 h-5" />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-semibold text-gray-800">{addon.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="gap-1">
-                          <IconComponent className="w-3.5 h-3.5" />
-                          {addon.iconType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-bold text-gray-900">
-                        ₹{addon.price.toLocaleString('en-IN')}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button variant="outline" size="icon" onClick={() => openEditModal(addon)} title="Edit Service">
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setDeleteTarget(addon)}
-                            title="Delete Service"
-                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+            <>
+              <div className="overflow-x-auto w-full">
+                <Table className="min-w-[500px] w-full">
+                  <TableHeader>
+                    <TableRow className="bg-gray-50/50">
+                      <TableHead className="w-20 sm:w-28 md:w-32 py-3 px-3 sm:px-4">Image</TableHead>
+                      <TableHead className="py-3 px-3 sm:px-4">Name</TableHead>
+                      <TableHead className="py-3 px-3 sm:px-4">Price</TableHead>
+                      <TableHead className="text-right w-16 sm:w-24 py-3 px-3 sm:px-4">Actions</TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedAddons.map((addon) => (
+                      <TableRow key={addon._id} className="hover:bg-gray-50/60 transition-colors">
+                        <TableCell className="py-2.5 sm:py-3.5 px-3 sm:px-4">
+                          {addon.image ? (
+                            <img
+                              src={resolveImage(addon.image)}
+                              alt={addon.name}
+                              className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl object-cover border border-gray-200 shadow-sm"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl bg-primary-50 border border-primary-100 flex items-center justify-center text-primary-600 shadow-sm">
+                              <Layers className="w-6 h-6 sm:w-8 sm:h-8" />
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-2.5 sm:py-3.5 px-3 sm:px-4 font-semibold text-gray-800 text-xs sm:text-sm truncate max-w-[140px] sm:max-w-[240px] md:max-w-[320px] whitespace-nowrap" title={addon.name}>
+                          {addon.name}
+                        </TableCell>
+                        <TableCell className="py-2.5 sm:py-3.5 px-3 sm:px-4 font-bold text-gray-900 text-xs sm:text-sm whitespace-nowrap">
+                          ₹{addon.price.toLocaleString('en-IN')}
+                        </TableCell>
+                        <TableCell className="py-2.5 sm:py-3.5 px-3 sm:px-4 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-36">
+                              <DropdownMenuItem onClick={() => openEditModal(addon)} className="gap-2 font-medium cursor-pointer">
+                                <Edit2 className="w-4 h-4 text-gray-500" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => setDeleteTarget(addon)}
+                                className="gap-2 font-medium text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4 text-red-600" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Shadcn UI Styled Responsive Pagination Footer */}
+              {addons.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-4 border-t border-gray-100 bg-gray-50/50 rounded-b-xl">
+                  <p className="text-xs text-gray-500 font-medium text-center sm:text-left">
+                    Showing <span className="font-semibold text-gray-800">{((currentPage - 1) * itemsPerPage) + 1}</span> to <span className="font-semibold text-gray-800">{Math.min(currentPage * itemsPerPage, addons.length)}</span> of <span className="font-semibold text-gray-800">{addons.length}</span> entries
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 gap-1 text-xs font-semibold"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1 text-xs font-bold px-2 text-gray-600">
+                      {currentPage} / {totalPages}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="h-8 gap-1 text-xs font-semibold"
+                    >
+                      Next
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -328,22 +370,6 @@ const AddonsManagement = () => {
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="e.g., 500"
               />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Category & Icon</Label>
-              <Select value={iconType} onValueChange={setIconType}>
-                <SelectTrigger className="focus:ring-0 focus:ring-offset-0 focus:border-gray-200">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="food">Food & Dining (Utensils)</SelectItem>
-                  <SelectItem value="room services">Room Service (Bell)</SelectItem>
-                  <SelectItem value="transport">Transport / Travel (Car)</SelectItem>
-                  <SelectItem value="Special Arrangements">Special Arrangements (Sparkles)</SelectItem>
-                  <SelectItem value="Guest Services">Guest Services (Heart)</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <DialogFooter>

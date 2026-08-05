@@ -141,8 +141,7 @@ const AddonsPage = () => {
 
       const addonsPayload = isSkipping ? [] : selectedAddons.map(a => ({
         name: a.name,
-        price: a.price,
-        iconType: a.iconType
+        price: a.price
       }));
 
       const stayTax = getAppliedTax(staySubtotal);
@@ -328,7 +327,6 @@ const AddonsPage = () => {
                 <div className="space-y-4">
                   <div className="space-y-3">
                     {roomAddons.map((addon) => {
-                      const IconComponent = categoryIcons[addon.iconType] || Layers;
                       const isSelected = selectedAddons.some(a => a._id === addon._id);
                       return (
                         <div
@@ -355,14 +353,13 @@ const AddonsPage = () => {
                               {addon.image ? (
                                 <img src={resolveImage(addon.image)} alt={addon.name} className="w-full h-full object-cover" />
                               ) : (
-                                <IconComponent className="w-5 h-5" />
+                                <Layers className="w-5 h-5" />
                               )}
                             </div>
 
                             {/* Addon Details */}
                             <div>
                               <h3 className="font-bold text-gray-800 text-sm sm:text-base">{addon.name}</h3>
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{addon.iconType || 'Extra'}</span>
                             </div>
                           </div>
 

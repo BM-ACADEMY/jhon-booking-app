@@ -279,19 +279,6 @@ const Footer = () => {
                 </a>
               </li>
             </ul>
-
-            {/* Check in Check out glass box */}
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center gap-3.5">
-              <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-white">
-                <Clock className="w-4.5 h-4.5 text-slate-300" />
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Check-in / Check-out</p>
-                <p className="text-xs text-slate-300 font-medium mt-0.5">
-                  {formatTime(settings.checkInTime, '2:00 PM')} / {formatTime(settings.checkOutTime, '11:00 AM')}
-                </p>
-              </div>
-            </div>
           </div>
         </div>
 

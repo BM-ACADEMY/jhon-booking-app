@@ -102,6 +102,7 @@ const BookingManagement = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [sourceFilter, setSourceFilter] = useState('All');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [refundingBooking, setRefundingBooking] = useState(null);
@@ -139,6 +140,15 @@ const BookingManagement = () => {
   useEffect(() => {
     fetchBookings(true);
 
+    const markViewed = async () => {
+      try {
+        await api.patch('/bookings/mark-viewed');
+      } catch (err) {
+        console.error('Failed to mark bookings as viewed:', err);
+      }
+    };
+    markViewed();
+
     // Poll for new bookings in real-time every 8 seconds
     const interval = setInterval(() => {
       fetchBookings(false);
@@ -147,10 +157,10 @@ const BookingManagement = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Reset page to 1 when search, filter, date filter, or items per page change
+  // Reset page to 1 when search, filter, source filter, date filter, or items per page change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter, dateFilter, startDate, endDate, itemsPerPage]);
+  }, [search, statusFilter, sourceFilter, dateFilter, startDate, endDate, itemsPerPage]);
 
   // Update Booking Status Handler
   const handleUpdateStatus = async (id, status) => {
@@ -214,6 +224,12 @@ const BookingManagement = () => {
     const effectiveStatus = getEffectiveStatus(b);
     const matchStatus = statusFilter === 'All' || effectiveStatus === statusFilter;
 
+    // Source Filter Logic
+    const matchSource =
+      sourceFilter === 'All' ||
+      (sourceFilter === 'Admin' && b.createdByAdmin) ||
+      (sourceFilter === 'Online' && !b.createdByAdmin);
+
     // Date Filter Logic
     let matchDate = true;
     if (dateFilter !== 'All') {
@@ -251,7 +267,7 @@ const BookingManagement = () => {
       }
     }
 
-    return matchSearch && matchStatus && matchDate;
+    return matchSearch && matchStatus && matchSource && matchDate;
   });
 
   // Stats Calculations
@@ -323,23 +339,17 @@ const BookingManagement = () => {
     const paymentUrl = `${window.location.origin}/booking-details/${booking._id}`;
 
     const message = 
-`Hello *${customerName}*! 👋
+`Hello *${customerName}*,
 
-Your room booking at *The Balified Villa* details: 🏨✨
+Please complete your booking payment for *The Balified Villa*:
 
-📋 *Booking ID:* #${booking._id.slice(-6).toUpperCase()}
-• *Room:* ${roomName} (${booking.roomsCount || 1} Room${(booking.roomsCount || 1) > 1 ? 's' : ''})
-• *Check-In:* ${cIn}
-• *Check-Out:* ${cOut}
+• *Room:* ${roomName}
+• *Dates:* ${cIn} - ${cOut}
+• *Due Amount:* ₹${due.toLocaleString('en-IN')}
 
-💳 *Payment Breakdown:*
-• *Total Amount:* ₹${(booking.totalAmount || 0).toLocaleString('en-IN')}
-• *Paid Amount:* ₹${(booking.paidAmount || 0).toLocaleString('en-IN')}
-• *Due Balance:* ₹${due.toLocaleString('en-IN')}
+🔗 *Payment Link:* ${paymentUrl}
 
-${due > 0 ? `🔗 *Payment Link:* ${paymentUrl}\n\nPlease complete your balance payment using the link above.` : '✅ *Payment Status:* Full Paid'}
-
-Thank you for choosing The Balified Villa! 🌴`;
+Thank you!`;
 
     const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
     window.open(waUrl, '_blank');
@@ -473,6 +483,20 @@ Thank you for choosing The Balified Villa! 🌴`;
           </Select>
         </div>
 
+        {/* Source Filter (All / Online / Admin Created) */}
+        <div className="w-full sm:w-auto min-w-[140px]">
+          <Select value={sourceFilter} onValueChange={(val) => setSourceFilter(val)}>
+            <SelectTrigger className="h-10 bg-white text-slate-900 border border-gray-200">
+              <SelectValue placeholder="All Sources" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Sources</SelectItem>
+              <SelectItem value="Online">Online / Customer</SelectItem>
+              <SelectItem value="Admin">Admin Created</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Date Filter Dropdown */}
         <div className="w-full sm:w-auto min-w-[140px]">
           <Select value={dateFilter} onValueChange={(val) => setDateFilter(val)}>
@@ -558,7 +582,14 @@ Thank you for choosing The Balified Villa! 🌴`;
 
                     {/* Guest Details */}
                     <TableCell className="truncate max-w-[160px] whitespace-nowrap" title={`${guestName} | ${guestEmail} | ${guestPhone}`}>
-                      <span className="font-medium text-gray-900 truncate block">{guestName}</span>
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="font-semibold text-gray-900 truncate">{guestName}</span>
+                        {b.createdByAdmin && (
+                          <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-[9px] font-extrabold px-1.5 py-0 shrink-0">
+                            Admin
+                          </Badge>
+                        )}
+                      </div>
                       <span className="text-[11px] text-gray-400 truncate block">{guestEmail}</span>
                     </TableCell>
 

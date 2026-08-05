@@ -1,14 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Loader2, Save, ArrowLeft } from 'lucide-react';
+import { User, Mail, Phone, Lock, Save, Loader2, Edit2, X, Check, Key, Shield, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+
+// Shadcn UI Imports
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 const ProfilePage = () => {
   const { user, updateUserData } = useAuth();
   const navigate = useNavigate();
 
+  const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
@@ -16,8 +24,27 @@ const ProfilePage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setEmail(user.email || '');
+      setPhone(user.phone || '');
+    }
+  }, [user]);
+
+  const handleCancel = () => {
+    if (user) {
+      setName(user.name || '');
+      setEmail(user.email || '');
+      setPhone(user.phone || '');
+    }
+    setPassword('');
+    setConfirmPassword('');
+    setIsEditing(false);
+  };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
     if (!name || !email || !phone) {
       toast.error('Name, Email, and Phone Number are required');
@@ -43,6 +70,7 @@ const ProfilePage = () => {
         toast.success('Profile updated successfully!');
         setPassword('');
         setConfirmPassword('');
+        setIsEditing(false);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update profile');
@@ -53,143 +81,223 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#eaf0f5] pt-28 sm:pt-32 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-stone-50 pt-28 sm:pt-32 pb-16 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* Header Section */}
-        <div className="mb-8 relative">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">Profile Settings</h1>
-          <p className="text-gray-500 text-sm mt-3">Manage your account information and preferences</p>
-        </div>
-
-        {/* Main Content Card */}
-        <div className="bg-white rounded-[20px] shadow-sm border border-gray-100 p-6 sm:p-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">My Profile</h2>
-
-          <form onSubmit={handleSubmit}>
-
-            {/* Avatar & Summary Card */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border border-gray-200 rounded-xl p-5 mb-6 gap-4">
-              <div className="flex items-center gap-4 min-w-0 w-full">
-                <div className="w-16 h-16 rounded-full bg-[#E8E8FF] text-[#4F46E5] flex items-center justify-center text-2xl font-semibold flex-shrink-0">
-                  {name ? name.charAt(0).toUpperCase() : 'U'}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-lg font-semibold text-gray-900 truncate" title={name}>{name || 'Your Name'}</h3>
-                  <p className="text-sm text-gray-500 truncate" title={email}>{email || 'your.email@example.com'}</p>
-                </div>
-              </div>
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2 whitespace-nowrap truncate">
+                <User className="w-5 h-5 text-primary-600 shrink-0" />
+                <span className="truncate whitespace-nowrap">My Profile</span>
+              </h1>
+              <Badge variant="secondary" className={`whitespace-nowrap shrink-0 ${isEditing ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                {isEditing ? 'Editing Mode' : 'Read-Only Mode'}
+              </Badge>
             </div>
+            <p className="text-xs text-gray-500 mt-1 truncate">
+              Manage your personal information, contact email, and security settings.
+            </p>
+          </div>
 
-            {/* Personal Information Card */}
-            <div className="border border-gray-200 rounded-xl p-5 sm:p-6 mb-6">
-              <h3 className="text-md font-semibold text-gray-900 mb-5">Personal Information</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-
-                {/* Full Name */}
-                <div>
-                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-600 mb-1.5">Full Name</label>
-                  <input
-                    id="fullName"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="John Doe"
-                    disabled={saving}
-                    className="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all disabled:opacity-50"
-                    required
-                  />
-                </div>
-
-                {/* Blank space to match design grid if needed */}
-                <div className="hidden sm:block"></div>
-
-                {/* Email */}
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-1.5">Email Address</label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="john.doe@example.com"
-                    disabled={saving}
-                    className="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all disabled:opacity-50"
-                    required
-                  />
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-600 mb-1.5">Phone Number</label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+91 9934917445"
-                    disabled={saving}
-                    className="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all disabled:opacity-50"
-                    required
-                  />
-                </div>
-
-              </div>
-            </div>
-
-            {/* Security / Password Card */}
-            <div className="border border-gray-200 rounded-xl p-5 sm:p-6 mb-8">
-              <h3 className="text-md font-semibold text-gray-900 mb-5">Security</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-
-                {/* New Password */}
-                <div>
-                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-600 mb-1.5">New Password</label>
-                  <input
-                    id="newPassword"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter new password"
-                    disabled={saving}
-                    className="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all disabled:opacity-50 placeholder-gray-400"
-                    minLength={6}
-                  />
-                </div>
-
-                {/* Confirm Password */}
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-600 mb-1.5">Confirm Password</label>
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
-                    disabled={saving}
-                    className="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all disabled:opacity-50 placeholder-gray-400"
-                    minLength={6}
-                  />
-                </div>
-
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={saving}
-                className="bg-[#4F46E5] hover:bg-[#4338CA] text-white text-sm font-medium px-6 py-2.5 rounded-lg flex items-center gap-2 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+          {/* Action Controls */}
+          <div className="flex items-center gap-3 shrink-0">
+            {!isEditing ? (
+              <Button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="gap-2 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs shadow-sm"
               >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {saving ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
-
-          </form>
+                <Edit2 className="w-4 h-4" />
+                Edit Profile
+              </Button>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={saving}
+                  className="gap-1.5 text-xs font-semibold border-gray-300"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={saving}
+                  className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  Save Changes
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
+        <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* Avatar Identity Card */}
+          <Card className="border border-gray-200 shadow-sm rounded-2xl bg-white overflow-hidden">
+            <CardContent className="p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+              <div className="w-20 h-20 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-3xl shadow-inner shrink-0 uppercase border border-primary-200">
+                {name ? name.charAt(0) : 'U'}
+              </div>
+              <div className="text-center sm:text-left flex-1 min-w-0">
+                <h2 className="text-xl font-bold text-gray-900 truncate">{name || 'Guest User'}</h2>
+                <p className="text-xs sm:text-sm text-gray-500 mt-0.5 truncate">{email || 'guest@example.com'}</p>
+                <div className="flex items-center justify-center sm:justify-start gap-2 mt-3">
+                  <Badge variant="secondary" className="bg-primary-50 text-primary-700 border-primary-200 font-bold text-[11px]">
+                    Verified Guest Account
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Personal Information Card */}
+          <Card className="border border-gray-200 shadow-sm rounded-2xl bg-white overflow-hidden">
+            <CardHeader className="bg-gray-50/50 border-b border-gray-200 p-5">
+              <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <User className="w-5 h-5 text-primary-600" />
+                Personal Information
+              </CardTitle>
+              <CardDescription className="text-xs text-gray-500">
+                Your full name, contact email, and mobile phone number for room bookings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-5 sm:p-6 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                
+                {/* Full Name */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-gray-400" />
+                    Full Name
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="John Doe"
+                      className="border-gray-300 text-sm font-semibold"
+                      required
+                    />
+                  ) : (
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900">
+                      {name || 'Not specified'}
+                    </div>
+                  )}
+                </div>
+
+                {/* Email Address */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-gray-400" />
+                    Email Address
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="john.doe@example.com"
+                      className="border-gray-300 text-sm font-semibold"
+                      required
+                    />
+                  ) : (
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900">
+                      {email || 'Not specified'}
+                    </div>
+                  )}
+                </div>
+
+                {/* Phone Number */}
+                <div className="space-y-2 sm:col-span-2">
+                  <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-gray-400" />
+                    Phone Number
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+91 98765 43210"
+                      className="border-gray-300 text-sm font-semibold"
+                      required
+                    />
+                  ) : (
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900">
+                      {phone || 'Not specified'}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Security Credentials Card */}
+          <Card className="border border-gray-200 shadow-sm rounded-2xl bg-white overflow-hidden">
+            <CardHeader className="bg-gray-50/50 border-b border-gray-200 p-5">
+              <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <Key className="w-5 h-5 text-primary-600" />
+                Security & Password
+              </CardTitle>
+              <CardDescription className="text-xs text-gray-500">
+                Change your login password.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-5 sm:p-6 space-y-5">
+              {!isEditing ? (
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-500 flex items-center justify-between">
+                  <span>Password is protected. Click <strong>Edit Profile</strong> to update your password.</span>
+                  <Badge variant="outline" className="border-gray-300 text-gray-600 font-bold">Protected</Badge>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  
+                  {/* New Password */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-gray-400" />
+                      New Password
+                    </Label>
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Leave blank to keep current password"
+                      className="border-gray-300 text-sm font-semibold"
+                    />
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-gray-400" />
+                      Confirm Password
+                    </Label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      className="border-gray-300 text-sm font-semibold"
+                    />
+                  </div>
+
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+        </form>
       </div>
     </div>
   );

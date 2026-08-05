@@ -1188,8 +1188,7 @@ const RoomDetailPage = () => {
 
       const addonsPayload = selectedAddons.map(a => ({
         name: a.name,
-        price: a.price,
-        iconType: a.iconType
+        price: a.price
       }));
 
       const stayTax = getAppliedTax(total);
@@ -1832,7 +1831,6 @@ const RoomDetailPage = () => {
                                     </div>
                                     <div>
                                       <h4 className="text-xs font-bold text-gray-800">{addon.name}</h4>
-                                      <p className="text-[10px] text-gray-400 capitalize">{addon.iconType || 'Service'}</p>
                                     </div>
                                   </div>
                                   <div className="text-right">
