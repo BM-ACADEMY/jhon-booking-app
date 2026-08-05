@@ -1006,6 +1006,39 @@ export const getDashboardStats = async (req, res) => {
       });
     }
 
+    // Top performing rooms by revenue (non-cancelled bookings)
+    const topRoomsAgg = await Booking.aggregate([
+      { $match: { status: { $ne: 'cancelled' }, room: { $exists: true, $ne: null } } },
+      {
+        $group: {
+          _id: '$room',
+          revenue: { $sum: '$totalAmount' },
+          bookings: { $sum: 1 }
+        }
+      },
+      { $sort: { revenue: -1 } },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: 'rooms',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'room'
+        }
+      },
+      { $unwind: { path: '$room', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 0,
+          id: '$_id',
+          name: { $ifNull: ['$room.name', 'Deleted Room'] },
+          category: { $ifNull: ['$room.category', ''] },
+          revenue: 1,
+          bookings: 1
+        }
+      }
+    ]);
+
     res.json({
       totalBookings,
       totalRevenue,
@@ -1020,7 +1053,8 @@ export const getDashboardStats = async (req, res) => {
       todayCheckIns,
       todayCheckOuts,
       recentBookings: formattedRecent,
-      monthlyStats: last6Months
+      monthlyStats: last6Months,
+      topRooms: topRoomsAgg
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
