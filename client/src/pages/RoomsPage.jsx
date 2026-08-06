@@ -1278,34 +1278,14 @@ const RoomsPage = () => {
         {/* Results summary and toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200/60 pb-5 mb-8 gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight">
-              Found <span className="text-violet-600">{totalItems}</span> stay{totalItems !== 1 ? 's' : ''}
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0f172a] tracking-tight">
+              {totalItems} <span className="font-medium text-gray-500">Stays Available</span>
             </h1>
           </div>
 
 
         </div>
 
-        {/* Categories Scroller - styled as pills */}
-        <div className="flex gap-2.5 overflow-x-auto pb-4 mb-8 scrollbar-thin">
-          {categories.map(cat => {
-            const Icon = getCategoryIcon(cat);
-            return (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`cursor-pointer flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-black transition-all border shrink-0 ${
-                  activeCategory === cat
-                    ? 'bg-primary-500 border-primary-500 text-white shadow-md shadow-primary-500/20'
-                    : 'bg-white border-gray-200 text-gray-600 hover:border-primary-300 hover:text-primary-600'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{cat}</span>
-              </button>
-            );
-          })}
-        </div>
 
         {/* 2-Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -1412,15 +1392,7 @@ const RoomsPage = () => {
                           <div className="flex flex-wrap items-center gap-y-2 gap-x-4 border-t border-gray-100 pt-3.5 mt-auto text-xs text-gray-500 font-bold">
                             <div className="flex items-center gap-1.5">
                               <Users className="w-3.5 h-3.5 text-gray-400" />
-                              <span>
-                                Max Occupancy: {room.maxOccupancy !== undefined && room.maxOccupancy !== null
-                                  ? room.maxOccupancy
-                                  : (room.guests || 2)} Guests
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <BedDouble className="w-3.5 h-3.5 text-gray-400" />
-                              <span>{room.bedrooms || 1} Bedroom{room.bedrooms > 1 ? 's' : ''}</span>
+                              <span>{room.guests || 2} Guests</span>
                             </div>
                             {room.bathrooms > 0 && (
                               <div className="flex items-center gap-1.5">

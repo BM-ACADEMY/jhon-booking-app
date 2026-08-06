@@ -174,12 +174,12 @@ const Footer = () => {
       <div className="absolute -right-36 -bottom-36 w-72 h-72 rounded-full bg-slate-800/10 blur-3xl pointer-events-none"></div>
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 sm:pb-24 lg:pb-36 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-6 lg:pb-8 relative z-10">
 
         {/* Middle Section: Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 mb-12">
           {/* Brand Col */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-5">
             <Link to="/" className="bg-white rounded-xl inline-flex items-center mb-6 outline-none border-none">
               <img
                 src={logoImg}
@@ -212,7 +212,7 @@ const Footer = () => {
           </div>
 
           {/* Quick Links */}
-          <div className="lg:col-span-2 lg:pl-4">
+          <div className="lg:col-span-3 lg:pl-4">
             <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-6">Quick Links</h4>
             <ul className="space-y-4">
               {[
@@ -237,24 +237,6 @@ const Footer = () => {
                   Feedback
                 </button>
               </li>
-            </ul>
-          </div>
-
-          {/* Room Types */}
-          <div className="lg:col-span-2">
-            <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-6">Room Types</h4>
-            <ul className="space-y-4">
-              {categories.map((cat) => (
-                <li key={cat._id}>
-                  <Link to="/rooms" className="group text-sm hover:text-white transition-colors duration-300 flex items-center gap-1.5">
-                    <span className="w-1 h-1 rounded-full bg-slate-600 group-hover:bg-white transition-colors duration-300"></span>
-                    {cat.name}
-                  </Link>
-                </li>
-              ))}
-              {categories.length === 0 && (
-                <li className="text-slate-500 text-sm">No categories available</li>
-              )}
             </ul>
           </div>
 
@@ -283,7 +265,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom Section: Copyright & Legal & Payments */}
-        <div className="border-t border-white/15 pt-8 flex flex-col lg:flex-row justify-between items-center gap-4 lg:gap-6 text-xs text-slate-400 mb-4 lg:mb-6">
+        <div className="border-t border-white/15 pt-8 flex flex-col lg:flex-row justify-between items-center gap-4 lg:gap-6 text-xs text-slate-400">
           <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
             <p>© {new Date().getFullYear()} The Balified Villa. All rights reserved.</p>
             <span className="hidden sm:inline text-slate-800">|</span>
@@ -316,19 +298,6 @@ const Footer = () => {
 
       </div>
 
-      {/* Giant Background Outline Text */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full text-center pointer-events-none select-none z-0">
-        <span
-          className="text-[11vw] sm:text-[10vw] md:text-[9vw] lg:text-[6vw] font-black uppercase tracking-[0.06em] text-transparent leading-none whitespace-nowrap block"
-          style={{
-            WebkitTextStroke: '1.5px rgba(255, 255, 255, 0.15)',
-            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 100%)',
-            maskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 100%)'
-          }}
-        >
-          The Balified Villa
-        </span>
-      </div>
 
       <Modal isOpen={showForm} onClose={() => setShowForm(false)}>
         <div className="space-y-6">

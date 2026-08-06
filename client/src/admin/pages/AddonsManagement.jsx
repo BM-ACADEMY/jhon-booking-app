@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -49,6 +50,7 @@ const AddonsManagement = () => {
   const itemsPerPage = 5;
 
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
@@ -82,6 +84,7 @@ const AddonsManagement = () => {
 
   const resetForm = () => {
     setName('');
+    setDescription('');
     setPrice('');
     setImageFile(null);
     setImagePreview('');
@@ -97,6 +100,7 @@ const AddonsManagement = () => {
   const openEditModal = (addon) => {
     setEditingAddon(addon);
     setName(addon.name);
+    setDescription(addon.description || '');
     setPrice(addon.price);
     setImageFile(null);
     setImagePreview(resolveImage(addon.image));
@@ -140,6 +144,7 @@ const AddonsManagement = () => {
       setSubmitting(true);
       const formData = new FormData();
       formData.append('name', name);
+      formData.append('description', description);
       formData.append('price', Number(price));
       if (imageFile) formData.append('image', imageFile);
 
@@ -359,6 +364,16 @@ const AddonsManagement = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Breakfast Buffet, Airport Transfer"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Description</Label>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Briefly describe what this add-on includes..."
+                rows={3}
               />
             </div>
 

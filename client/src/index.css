@@ -68,6 +68,13 @@
     from { height: var(--radix-accordion-content-height); }
     to { height: 0; }
   }
+
+  --animate-marquee: marquee 35s linear infinite;
+  
+  @keyframes marquee {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-50%); }
+  }
 }
 
 :root {
@@ -99,5 +106,13 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: #374151;
     border-radius: 2px;
+  }
+  
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
   }
 }

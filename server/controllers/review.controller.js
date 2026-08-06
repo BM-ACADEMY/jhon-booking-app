@@ -23,6 +23,15 @@ const updateRoomRating = async (roomId) => {
 export const getReviewsByRoom = async (req, res) => {
   try {
     let { roomId } = req.params;
+    
+    if (roomId && roomId.includes('-')) {
+      const parts = roomId.split('-');
+      const lastPart = parts[parts.length - 1];
+      if (mongoose.Types.ObjectId.isValid(lastPart)) {
+        roomId = lastPart;
+      }
+    }
+
     if (!mongoose.Types.ObjectId.isValid(roomId)) {
       const roomObj = await Room.findOne({ slug: roomId });
       if (roomObj) {

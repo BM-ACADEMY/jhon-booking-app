@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Loader2, BedDouble, Star, Heart, Users, Bath, Maximize, ChevronLeft, ChevronRight, ShowerHead } from 'lucide-react';
+import { ArrowRight, Loader2, BedDouble, Star, Heart, Users, Bath, Maximize, ChevronLeft, ChevronRight, ShowerHead, Eye } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api, { getRoomSlug } from '../api';
 import RoomCardSkeleton from '../components/RoomCardSkeleton';
@@ -176,9 +176,9 @@ const RoomsSection = () => {
   const RoomCard = ({ room }) => {
     const isWishlisted = wishlist.includes(room._id);
     return (
-      <Link
-        to={`/rooms/${getRoomSlug(room.name)}-${room._id}`}
-        className="group bg-white rounded-[32px] border border-gray-100 p-3 flex flex-col shadow-xl hover:border-gray-200/80 transition-all duration-350"
+      <div
+        onClick={() => navigate(`/rooms/${getRoomSlug(room.name)}-${room._id}`)}
+        className="group cursor-pointer bg-white rounded-[32px] border border-gray-100 p-3 flex flex-col shadow-xl hover:border-gray-200/80 transition-all duration-350"
       >
         {/* Image Container */}
         <div className="relative aspect-[4/3] rounded-[24px] overflow-hidden bg-gray-150 shadow-sm">
@@ -218,18 +218,15 @@ const RoomsSection = () => {
             {room.address || `${room.city || 'Serenity Beach'}, India`}
           </p>
 
-          <div className="flex items-center gap-1.5 mb-3">
-            <div className="flex gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className={`w-3.5 h-3.5 ${star <= Math.round(room.rating || 5) ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`}
-                />
-              ))}
+          <div className="flex items-center gap-4 mb-3">
+            <div className="flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span className="text-xs text-gray-700 font-bold">{room.rating || 5}</span>
             </div>
-            <span className="text-xs text-gray-500 font-bold">
-              ({room.monthVisitorsCount || 0} Month Visitors)
-            </span>
+            <div className="flex items-center gap-1.5 text-gray-500">
+              <Eye className="w-3.5 h-3.5" />
+              <span className="text-xs font-bold">{room.monthVisitorsCount || 0}</span>
+            </div>
           </div>
 
           {/* Specs Row */}
@@ -237,10 +234,6 @@ const RoomsSection = () => {
             <div className="flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5 text-gray-400" />
               <span>{room.guests || 2} Guests</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <BedDouble className="w-3.5 h-3.5 text-gray-400" />
-              <span>{room.bedrooms || 1} Bedroom{room.bedrooms > 1 ? 's' : ''}</span>
             </div>
             {room.bathrooms > 0 && (
               <div className="flex items-center gap-1.5">
@@ -262,7 +255,7 @@ const RoomsSection = () => {
             )}
           </div>
         </div>
-      </Link>
+      </div>
     );
   };
 
@@ -273,13 +266,13 @@ const RoomsSection = () => {
         {/* Top Header */}
         <div className="mb-12">
           <h2 className="text-2xl sm:text-3xl font-medium text-gray-900 tracking-tight">
-            Our Hotel Rooms
+            Our Rooms
           </h2>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 3 }).map((_, i) => (
               <RoomCardSkeleton key={i} />
             ))}
           </div>
@@ -293,18 +286,12 @@ const RoomsSection = () => {
             {grouped.map(({ name, rooms: catRooms }) => (
               <div key={name}>
                 {/* Category heading */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="mb-6">
                   <h3 className="text-xl font-semibold text-gray-800 capitalize">{name}</h3>
-                  <Link
-                    to={`/rooms?category=${encodeURIComponent(name)}`}
-                    className="text-sm text-primary-600 hover:text-primary-700 font-semibold flex items-center gap-1 transition-colors"
-                  >
-                    See all <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
                 </div>
 
                 {/* Room cards grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                   {catRooms.slice(0, 3).map(room => (
                     <RoomCard key={room._id} room={room} />
                   ))}

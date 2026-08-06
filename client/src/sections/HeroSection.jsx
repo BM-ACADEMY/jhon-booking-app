@@ -297,7 +297,7 @@ const HeroSection = () => {
 
   return (
     <>
-      <section className="relative min-h-[520px] sm:min-h-[580px] lg:min-h-0 lg:h-[520px] rounded-b-[2.5rem] lg:rounded-b-none font-sans flex flex-col overflow-hidden lg:overflow-visible bg-gray-100 shadow-xl z-20">
+      <section className="relative min-h-[520px] sm:min-h-[580px] lg:min-h-0 lg:h-[520px] font-sans flex flex-col overflow-hidden lg:overflow-visible bg-gray-100 shadow-xl z-20">
         <style>{`
           @keyframes reveal {
             from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
@@ -361,7 +361,7 @@ const HeroSection = () => {
 
 
         {/* Dynamic Background Slideshow */}
-        <div className="absolute inset-0 z-0 overflow-hidden rounded-b-[2.5rem] lg:rounded-b-none">
+        <div className="absolute inset-0 z-0 overflow-hidden">
           {hero?.slides && hero.slides.length > 0 ? (
             hero.slides.map((slide, index) => {
               const isCurrent = index === currentSlideIndex;
