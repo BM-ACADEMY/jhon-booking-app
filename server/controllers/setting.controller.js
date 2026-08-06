@@ -22,7 +22,9 @@ export const getSettings = async (req, res) => {
         advancePercent4Day: 30,
         advancePercent5To7Days: 25,
         advancePercentAbove7Days: 20,
-        taxRules: []
+        taxRules: [],
+        termsAndConditions: '',
+        privacyPolicy: ''
       });
     }
     res.json(setting);
@@ -50,7 +52,9 @@ export const updateSettings = async (req, res) => {
       advancePercent4Day,
       advancePercent5To7Days,
       advancePercentAbove7Days,
-      taxRules
+      taxRules,
+      termsAndConditions,
+      privacyPolicy
     } = req.body;
 
     let setting = await Setting.findOne();
@@ -73,6 +77,8 @@ export const updateSettings = async (req, res) => {
       setting.advancePercent5To7Days = advancePercent5To7Days !== undefined ? Number(advancePercent5To7Days) : setting.advancePercent5To7Days;
       setting.advancePercentAbove7Days = advancePercentAbove7Days !== undefined ? Number(advancePercentAbove7Days) : setting.advancePercentAbove7Days;
       setting.taxRules = taxRules !== undefined ? taxRules : setting.taxRules;
+      setting.termsAndConditions = termsAndConditions !== undefined ? termsAndConditions : setting.termsAndConditions;
+      setting.privacyPolicy = privacyPolicy !== undefined ? privacyPolicy : setting.privacyPolicy;
       await setting.save();
     } else {
       setting = await Setting.create({
@@ -92,7 +98,9 @@ export const updateSettings = async (req, res) => {
         advancePercent4Day,
         advancePercent5To7Days,
         advancePercentAbove7Days,
-        taxRules
+        taxRules,
+        termsAndConditions,
+        privacyPolicy
       });
     }
 

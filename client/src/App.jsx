@@ -16,6 +16,8 @@ import ProfilePage from './pages/ProfilePage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import PublicBookingDetails from './pages/PublicBookingDetails';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 
 // Admin
 import AdminLayout from './admin/layout/AdminLayout';
@@ -37,6 +39,7 @@ import AddonsManagement from './admin/pages/AddonsManagement';
 import RoomVisitors from './admin/pages/RoomVisitors';
 import AdminCreateBooking from './admin/pages/AdminCreateBooking';
 import AddonsPage from './pages/AddonsPage';
+import LegalManagement from './admin/pages/LegalManagement';
 
 const ProtectedRoute = ({ children }) => {
   const { user, isAdmin } = useAuth();
@@ -66,6 +69,8 @@ const AppRoutes = () => (
       <Route path="/wishlist" element={<WishlistPage />} />
       <Route path="/booking-details/:id" element={<PublicBookingDetails />} />
       <Route path="/payment-success" element={<PaymentSuccessPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
     </Route>
 
     {/* Admin */}
@@ -95,6 +100,7 @@ const AppRoutes = () => (
       <Route path="settings" element={<Settings />} />
       <Route path="profile" element={<AdminProfile />} />
       <Route path="visitors" element={<RoomVisitors />} />
+      <Route path="legal/:type" element={<LegalManagement />} />
     </Route>
 
     <Route path="*" element={<Navigate to="/" replace />} />

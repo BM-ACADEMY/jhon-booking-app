@@ -38,7 +38,8 @@ import {
   FileText,
   Info,
   PhoneCall,
-  Inbox
+  Inbox,
+  ShieldCheck
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -95,6 +96,11 @@ const pagesEditItems = [
   { label: 'Contact Page', icon: PhoneCall, path: '/admin/contact-page' },
 ];
 
+const legalItems = [
+  { label: 'Terms & Conditions', icon: FileText, path: '/admin/legal/terms' },
+  { label: 'Privacy Policy', icon: ShieldCheck, path: '/admin/legal/privacy' },
+];
+
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -102,6 +108,7 @@ const Sidebar = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [newBookingsCount, setNewBookingsCount] = useState(0);
   const [pagesEditOpen, setPagesEditOpen] = useState(true);
+  const [legalOpen, setLegalOpen] = useState(true);
 
   const handleLinkClick = () => {
     if (isMobile) {
@@ -263,6 +270,55 @@ const Sidebar = () => {
               {(pagesEditOpen || state === 'collapsed') && (
                 <div className={`space-y-1 mt-1 ${state !== 'collapsed' ? 'pl-4 border-l border-white/10 ml-4' : ''}`}>
                   {pagesEditItems.map(({ label, icon: Icon, path }) => {
+                    const isActive = location.pathname.startsWith(path);
+                    return (
+                      <SidebarMenuButton
+                        key={path}
+                        asChild
+                        isActive={isActive}
+                        tooltip={label}
+                        className={state === 'collapsed' ? 'justify-center p-2' : ''}
+                      >
+                        <NavLink to={path} onClick={handleLinkClick} className={`flex items-center gap-3 w-full ${state === 'collapsed' ? 'justify-center' : ''}`}>
+                          <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-primary-400' : 'text-gray-400'}`} />
+                          {state !== 'collapsed' && <span className="flex-1 font-medium text-xs truncate">{label}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    );
+                  })}
+                </div>
+              )}
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+
+        {/* LEGAL & POLICIES COLLAPSIBLE SECTION */}
+        <SidebarGroup className="p-0">
+          {state !== 'collapsed' && (
+            <SidebarGroupLabel className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-2 mb-1">
+              LEGAL MANAGEMENT
+            </SidebarGroupLabel>
+          )}
+          <SidebarMenu>
+            <SidebarMenuItem className="flex flex-col justify-center">
+              <SidebarMenuButton
+                onClick={() => setLegalOpen(!legalOpen)}
+                tooltip="Legal & Policies"
+                className={`flex items-center justify-between w-full text-white/90 hover:bg-white/10 ${state === 'collapsed' ? 'justify-center p-2' : ''}`}
+              >
+                <div className={`flex items-center gap-3 ${state === 'collapsed' ? 'justify-center' : ''}`}>
+                  <ShieldCheck className="w-4 h-4 shrink-0 text-primary-400" />
+                  {state !== 'collapsed' && <span className="font-medium text-xs sm:text-sm">Legal & Policies</span>}
+                </div>
+                {state !== 'collapsed' && (
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${legalOpen ? 'rotate-180' : ''}`} />
+                )}
+              </SidebarMenuButton>
+
+              {/* Dropdown Sub-Items */}
+              {(legalOpen || state === 'collapsed') && (
+                <div className={`space-y-1 mt-1 ${state !== 'collapsed' ? 'pl-4 border-l border-white/10 ml-4' : ''}`}>
+                  {legalItems.map(({ label, icon: Icon, path }) => {
                     const isActive = location.pathname.startsWith(path);
                     return (
                       <SidebarMenuButton

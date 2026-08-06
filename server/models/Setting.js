@@ -24,7 +24,9 @@ const settingSchema = new mongoose.Schema({
       taxPercent: { type: Number, required: true }
     }],
     default: []
-  }
+  },
+  termsAndConditions: { type: String, default: '' },
+  privacyPolicy: { type: String, default: '' }
 }, { timestamps: true });
 
 export default mongoose.model('Setting', settingSchema);
