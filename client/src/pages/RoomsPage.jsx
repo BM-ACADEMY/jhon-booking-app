@@ -1037,9 +1037,9 @@ const RoomsPage = () => {
                   <Users className="w-5 h-5 text-gray-500" />
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guests & Rooms</p>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guests</p>
                   <div className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent flex items-center justify-between">
-                     <span>{adultsInput} Adult{adultsInput > 1 ? 's' : ''}{childrenInput > 0 ? `, ${childrenInput} Child${childrenInput > 1 ? 'ren' : ''}` : ''}{infantsInput > 0 ? `, ${infantsInput} Infant${infantsInput > 1 ? 's' : ''}` : ''}, {roomsCountInput} Room{roomsCountInput > 1 ? 's' : ''}</span>
+                     <span>{adultsInput} Adult{adultsInput > 1 ? 's' : ''}{childrenInput > 0 ? `, ${childrenInput} Child${childrenInput > 1 ? 'ren' : ''}` : ''}{infantsInput > 0 ? `, ${infantsInput} Infant${infantsInput > 1 ? 's' : ''}` : ''}</span>
                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isGuestDropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
@@ -1110,25 +1110,7 @@ const RoomsPage = () => {
                         </div>
                       </div>
 
-                      {/* Rooms */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Rooms</span>
-                        <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
-                          <button
-                            onClick={() => setRoomsCountInput(Math.max(1, roomsCountInput - 1))}
-                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-gray-400 hover:text-blue-500 transition-colors"
-                          >
-                            <span className="text-xl font-light leading-none">−</span>
-                          </button>
-                          <span className="w-4 text-center text-sm font-semibold text-gray-900">{roomsCountInput}</span>
-                          <button
-                            onClick={() => setRoomsCountInput(Math.min(10, roomsCountInput + 1))}
-                            className="w-7 h-7 flex items-center justify-center rounded bg-transparent hover:bg-gray-50 text-blue-500 transition-colors"
-                          >
-                            <span className="text-xl font-light leading-none">+</span>
-                          </button>
-                        </div>
-                      </div>
+
                     </div>
                   </div>
                 )}
@@ -1244,21 +1226,7 @@ const RoomsPage = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
-                  <Home className="w-6 h-6 text-gray-400" />
-                  <div className="flex-1 flex items-center justify-between">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Rooms</p>
-                    <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
-                      <button onClick={() => setRoomsCountInput(Math.max(1, roomsCountInput - 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
-                        <span className="text-2xl font-light leading-none">−</span>
-                      </button>
-                      <span className="w-4 text-center text-[15px] font-bold text-gray-900">{roomsCountInput}</span>
-                      <button onClick={() => setRoomsCountInput(Math.min(10, roomsCountInput + 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
-                        <span className="text-2xl font-light leading-none">+</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+
                 <button
                   onClick={() => { handleUpdateSearch(); setIsMobileSearchOpen(false); }}
                   className="w-full bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-sm rounded-2xl px-8 py-4 mt-2 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"

@@ -62,7 +62,7 @@ const FeaturesSection = () => {
   }, []);
 
   return (
-    <section className="py-14 bg-[#ffffff]">
+    <section className="py-14 bg-blue-50/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* --- Left-Aligned Header --- */}
         <div className="max-w-3xl mb-8 text-center sm:text-left mx-auto sm:mx-0">
