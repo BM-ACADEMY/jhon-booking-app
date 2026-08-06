@@ -623,6 +623,11 @@ Thank you!`;
                     {/* Guests */}
                     <TableCell className="truncate max-w-[90px] whitespace-nowrap text-xs text-gray-600" title={`${b.adults || 1} adults, ${b.children || 0} children`}>
                       {b.adults || 1}A, {b.children || 0}C
+                      {Number(b.extraBedCount) > 0 && (
+                        <span className="ml-1 inline-block text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded" title={`${b.extraBedCount} Extra Bed(s)`}>
+                          +{b.extraBedCount} Bed
+                        </span>
+                      )}
                     </TableCell>
 
                     {/* Amount */}
@@ -874,6 +879,14 @@ Thank you!`;
                       {selectedBooking.adults || 1}A, {selectedBooking.children || 0}C
                     </span>
                   </div>
+                  {Number(selectedBooking.extraBedCount) > 0 && (
+                    <div className="truncate">
+                      <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">Extra Bed</span>
+                      <span className="font-semibold text-amber-700 truncate block">
+                        {selectedBooking.extraBedCount} Bed(s) — ₹{Number(selectedBooking.extraBedPrice || 0).toLocaleString('en-IN')}/night
+                      </span>
+                    </div>
+                  )}
                   {selectedBooking.specialRequests && (
                     <div className="col-span-2 md:col-span-4 border-t border-gray-200/50 pt-2.5 mt-1 truncate">
                       <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">Special Requests</span>

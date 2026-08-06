@@ -30,13 +30,6 @@ const roomSchema = new mongoose.Schema({
 
   size: { type: String }, 
 
-  // Highlights
-  highlights: [{
-    icon: { type: String, default: 'Star' },
-    text: { type: String },
-    subtext: { type: String }
-  }],
-
   // Amenities
   amenities: [{
     name: { type: String },

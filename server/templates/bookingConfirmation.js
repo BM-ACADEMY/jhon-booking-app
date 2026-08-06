@@ -11,7 +11,8 @@ export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails, 
   });
   const invoiceNo = booking._id ? booking._id.toString().toUpperCase().slice(-8) : 'TEMP';
 
-  const roomBaseTotal = booking.totalAmount - (booking.addons ? booking.addons.reduce((sum, addon) => sum + addon.price, 0) : 0);
+  const extraBedTotal = Number(booking.extraBedCount || 0) * Number(booking.extraBedPrice || 0) * nights;
+  const roomBaseTotal = booking.totalAmount - (booking.addons ? booking.addons.reduce((sum, addon) => sum + addon.price, 0) : 0) - extraBedTotal;
   const roomPricePerNight = Math.round(roomBaseTotal / ((booking.roomsCount || 1) * nights));
 
   // Build addons HTML if any
@@ -27,6 +28,22 @@ export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails, 
         <td align="right" style="padding: 12px 0; font-size: 14px; font-weight: 600; color: #1a1d20;">₹${addon.price.toLocaleString('en-IN')}</td>
       </tr>
     `).join('');
+  }
+
+  // Build extra bed HTML row if any
+  let extraBedRow = '';
+  if (Number(booking.extraBedCount) > 0) {
+    extraBedRow = `
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 12px 0; font-size: 14px; color: #1a1d20;">
+          <span style="font-weight: 500;">Extra Bed</span><br/>
+          <span style="font-size: 12px; color: #64748b;">${nights} Night(s)</span>
+        </td>
+        <td align="center" style="padding: 12px 0; font-size: 14px; color: #1a1d20;">${booking.extraBedCount}</td>
+        <td align="right" style="padding: 12px 0; font-size: 14px; color: #1a1d20;">₹${Number(booking.extraBedPrice).toLocaleString('en-IN')}</td>
+        <td align="right" style="padding: 12px 0; font-size: 14px; font-weight: 600; color: #1a1d20;">₹${extraBedTotal.toLocaleString('en-IN')}</td>
+      </tr>
+    `;
   }
 
   // Build Special Requests HTML if any
@@ -229,6 +246,7 @@ export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails, 
                       
                       <!-- Addons Rows -->
                       ${addonsRows}
+                      ${extraBedRow}
 
                       <!-- Summary Calculations -->
                       <tr>
@@ -297,7 +315,8 @@ export const getAdminBookingEmailTemplate = (user, booking, primaryRoomDetails) 
   });
   const bookingRef = booking._id ? booking._id.toString().toUpperCase().slice(-8) : 'TEMP';
 
-  const roomBaseTotal = booking.totalAmount - (booking.addons ? booking.addons.reduce((sum, addon) => sum + addon.price, 0) : 0);
+  const extraBedTotal = Number(booking.extraBedCount || 0) * Number(booking.extraBedPrice || 0) * nights;
+  const roomBaseTotal = booking.totalAmount - (booking.addons ? booking.addons.reduce((sum, addon) => sum + addon.price, 0) : 0) - extraBedTotal;
   const roomPricePerNight = Math.round(roomBaseTotal / ((booking.roomsCount || 1) * nights));
 
   // Build addons HTML if any
@@ -313,6 +332,22 @@ export const getAdminBookingEmailTemplate = (user, booking, primaryRoomDetails) 
         <td align="right" style="padding: 12px 0; font-size: 14px; font-weight: 600; color: #1a1d20;">₹${addon.price.toLocaleString('en-IN')}</td>
       </tr>
     `).join('');
+  }
+
+  // Build extra bed HTML row if any
+  let extraBedRow = '';
+  if (Number(booking.extraBedCount) > 0) {
+    extraBedRow = `
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 12px 0; font-size: 14px; color: #1a1d20;">
+          <span style="font-weight: 500;">Extra Bed</span><br/>
+          <span style="font-size: 12px; color: #64748b;">${nights} Night(s)</span>
+        </td>
+        <td align="center" style="padding: 12px 0; font-size: 14px; color: #1a1d20;">${booking.extraBedCount}</td>
+        <td align="right" style="padding: 12px 0; font-size: 14px; color: #1a1d20;">₹${Number(booking.extraBedPrice).toLocaleString('en-IN')}</td>
+        <td align="right" style="padding: 12px 0; font-size: 14px; font-weight: 600; color: #1a1d20;">₹${extraBedTotal.toLocaleString('en-IN')}</td>
+      </tr>
+    `;
   }
 
   // Build Special Requests HTML if any
@@ -465,6 +500,7 @@ export const getAdminBookingEmailTemplate = (user, booking, primaryRoomDetails) 
                       
                       <!-- Addons Rows -->
                       ${addonsRows}
+                      ${extraBedRow}
 
                       <!-- Summary Calculations -->
                       <tr>

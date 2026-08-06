@@ -61,7 +61,6 @@ export const DEFAULT_ROOM_FORM = {
   country: 'India',
   mapLink: '',
   amenities: [], // [{ name, icon }]
-  highlights: [], // [{ icon, text, subtext }]
   images: [], // [{ url, label }]
   isAvailable: true,
   maxInventory: 1,
@@ -109,7 +108,7 @@ export const CATEGORY_COLORS = [
 export const buildFormData = (roomForm, roomImages, status) => {
   const formData = new FormData();
   Object.keys(roomForm).forEach((key) => {
-    if (['amenities', 'highlights', 'datePrices', 'blockedDates'].includes(key)) {
+    if (['amenities', 'datePrices', 'blockedDates'].includes(key)) {
       formData.append(key, JSON.stringify(roomForm[key] || []));
     } else if (key === 'images') {
       formData.append('existingImages', JSON.stringify(roomForm[key] || []));
@@ -222,7 +221,6 @@ export const roomToForm = (r, fallbackCategory = '') => ({
   country: r?.country || 'India',
   mapLink: r?.mapLink || '',
   amenities: r?.amenities || [],
-  highlights: r?.highlights || [],
   images: r?.images || [],
   isAvailable: r?.isAvailable ?? true,
   maxInventory: r?.maxInventory ?? 1,

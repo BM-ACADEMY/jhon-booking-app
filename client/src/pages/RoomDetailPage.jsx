@@ -251,6 +251,7 @@ const RoomDetailPage = () => {
   const [showBookingDrawer, setShowBookingDrawer] = useState(true);
   const [addons, setAddons] = useState([]);
   const [selectedAddons, setSelectedAddons] = useState([]);
+  const [extraBedQty, setExtraBedQty] = useState(0);
   const [activeAccordion, setActiveAccordion] = useState(1);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [settings, setSettings] = useState(null);
@@ -1109,7 +1110,8 @@ const RoomDetailPage = () => {
   };
 
   const stayTax = getAppliedTax(total);
-  const finalTotal = total + stayTax + selectedAddons.reduce((sum, a) => sum + a.price, 0);
+  const extraBedTotal = room?.allowExtraBed ? extraBedQty * (Number(room.extraBedPrice) || 0) * nights : 0;
+  const finalTotal = total + stayTax + selectedAddons.reduce((sum, a) => sum + a.price, 0) + extraBedTotal;
 
   const getAppliedTaxPercent = (amount) => {
     if (!taxRules || taxRules.length === 0) return 0;
@@ -1204,7 +1206,7 @@ const RoomDetailPage = () => {
       }));
 
       const stayTax = getAppliedTax(total);
-      const finalTotal = total + stayTax + selectedAddons.reduce((sum, a) => sum + a.price, 0);
+      const finalTotal = total + stayTax + selectedAddons.reduce((sum, a) => sum + a.price, 0) + extraBedTotal;
       const actualAmount = paymentType === 'advance' ? Math.round(finalTotal * (advancePercent / 100)) : finalTotal;
 
       const orderRes = await api.post('/bookings/razorpay-order', {
@@ -1253,6 +1255,8 @@ const RoomDetailPage = () => {
                 paidAmount: actualAmount,
                 paymentType: paymentType,
                 addons: addonsPayload,
+                extraBedCount: extraBedQty,
+                extraBedPrice: extraBedQty > 0 ? (Number(room.extraBedPrice) || 0) : 0,
                 gstNumber: guestInfo.gstNumber,
                 specialRequests: guestInfo.specialRequests,
                 guestDetails: {
@@ -1963,7 +1967,7 @@ const RoomDetailPage = () => {
                               
                               <div className="flex justify-between items-start gap-2">
                                 <span className="font-bold text-gray-900 text-[14px]">The Balified Villa</span>
-                                <span className="font-bold text-gray-900 text-[14px]">₹{(total + getAppliedTax(total) + selectedAddons.reduce((sum, a) => sum + a.price, 0)).toLocaleString('en-IN')}</span>
+                                <span className="font-bold text-gray-900 text-[14px]">₹{(total + getAppliedTax(total) + selectedAddons.reduce((sum, a) => sum + a.price, 0) + extraBedTotal).toLocaleString('en-IN')}</span>
                               </div>
 
                               <div className="bg-gray-50/80 rounded-2xl p-4 text-[12px] text-gray-500 font-medium space-y-1.5">
@@ -1989,9 +1993,16 @@ const RoomDetailPage = () => {
                                   </div>
                                 )}
 
+                                {extraBedQty > 0 && (
+                                  <div className="flex justify-between text-gray-500 text-[12px] pt-2 border-t border-gray-50">
+                                    <span>• Extra Bed ({extraBedQty} × {nights} night{nights > 1 ? 's' : ''})</span>
+                                    <span>₹{extraBedTotal.toLocaleString('en-IN')}</span>
+                                  </div>
+                                )}
+
                                 <div className="flex justify-between text-gray-600 border-t border-gray-100 pt-3">
                                   <span>Sub Total</span>
-                                  <span className="font-semibold text-gray-900">₹{(total + selectedAddons.reduce((sum, a) => sum + a.price, 0)).toLocaleString('en-IN')}</span>
+                                  <span className="font-semibold text-gray-900">₹{(total + selectedAddons.reduce((sum, a) => sum + a.price, 0) + extraBedTotal).toLocaleString('en-IN')}</span>
                                 </div>
 
                                 {getAppliedTaxPercent(total) > 0 && (
@@ -2003,7 +2014,7 @@ const RoomDetailPage = () => {
 
                                 <div className="flex justify-between text-gray-900 font-extrabold text-[15px] border-t border-gray-200 pt-4">
                                   <span>Grand Total</span>
-                                  <span className="text-[#c5a880] text-[17px]">₹{(total + getAppliedTax(total) + selectedAddons.reduce((sum, a) => sum + a.price, 0)).toLocaleString('en-IN')}</span>
+                                  <span className="text-[#c5a880] text-[17px]">₹{(total + getAppliedTax(total) + selectedAddons.reduce((sum, a) => sum + a.price, 0) + extraBedTotal).toLocaleString('en-IN')}</span>
                                 </div>
                               </div>
                             </div>
@@ -2021,7 +2032,7 @@ const RoomDetailPage = () => {
 
             {/* Right Column: Premium Sticky Booking Card (Desktop Only) */}
             <div className="hidden lg:block lg:col-span-1">
-              <div className="sticky top-[160px] bg-white rounded-3xl border border-gray-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-8">
+              <div className="sticky top-[90px] bg-white rounded-3xl border border-gray-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-8">
                 <div className="flex items-end gap-2 mb-6">
                   {nights > 0 ? (
                     <div className="flex items-baseline gap-2">
@@ -2117,6 +2128,21 @@ const RoomDetailPage = () => {
                           <button onClick={(e) => { e.stopPropagation(); setInfants(g => Math.min(2, g + 1)); }} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors text-gray-500 hover:text-gray-900">+</button>
                         </div>
                       </div>
+
+                      {/* Extra Bed */}
+                      {room?.allowExtraBed && Number(room.extraBedCount) > 0 && (
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                          <div>
+                            <div className="text-[15px] font-bold text-gray-900">Extra Bed</div>
+                            <div className="text-[13px] text-gray-500">₹{Number(room.extraBedPrice || 0).toLocaleString('en-IN')} / bed / night</div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button onClick={(e) => { e.stopPropagation(); setExtraBedQty(q => Math.max(0, q - 1)); }} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:hover:border-gray-300 disabled:hover:text-gray-500 disabled:cursor-not-allowed" disabled={extraBedQty <= 0}>−</button>
+                            <span className="w-4 text-center text-[15px] font-medium text-gray-800">{extraBedQty}</span>
+                            <button onClick={(e) => { e.stopPropagation(); setExtraBedQty(q => Math.min(Number(room.extraBedCount), q + 1)); }} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:hover:border-gray-300 disabled:hover:text-gray-500 disabled:cursor-not-allowed" disabled={extraBedQty >= Number(room.extraBedCount)}>+</button>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="text-[11px] text-gray-500 pt-2 leading-relaxed">
                         This place has a maximum of {(room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)) * roomsCount} guests, not including infants.

@@ -619,6 +619,8 @@ export const createAdminBooking = async (req, res) => {
       paymentStatus = 'unpaid',
       paymentNotes = '',
       addons = [],
+      extraBedCount = 0,
+      extraBedPrice = 0,
       specialRequests = '',
       gstNumber = ''
     } = req.body;
@@ -685,6 +687,8 @@ export const createAdminBooking = async (req, res) => {
               // Bundled to stay within Razorpay's notes key limit
               extra: JSON.stringify({
                 addons: (addons || []).map(a => ({ name: a.name, price: a.price })),
+                extraBedCount: Number(extraBedCount) || 0,
+                extraBedPrice: Number(extraBedPrice) || 0,
                 specialRequests: (specialRequests || '').slice(0, 150),
                 gstNumber: gstNumber || ''
               })
@@ -744,6 +748,8 @@ export const createAdminBooking = async (req, res) => {
       paymentStatus: 'paid',
       paymentNotes,
       addons,
+      extraBedCount: Number(extraBedCount) || 0,
+      extraBedPrice: Number(extraBedPrice) || 0,
       specialRequests,
       gstNumber,
       status: 'confirmed'
@@ -1529,6 +1535,8 @@ const createBookingFromNotes = async (notes, paymentId, loggedInUser = null) => 
     try { extraNotes = JSON.parse(notes.extra); } catch (e) { extraNotes = {}; }
   }
   const addons = notes.addons ? JSON.parse(notes.addons) : (extraNotes.addons || []);
+  const extraBedCount = Number(notes.extraBedCount ?? extraNotes.extraBedCount) || 0;
+  const extraBedPrice = Number(notes.extraBedPrice ?? extraNotes.extraBedPrice) || 0;
 
   let customerUser = loggedInUser || null;
   const guestEmail = (notes.guestEmail || '').toLowerCase().trim();
@@ -1586,6 +1594,8 @@ const createBookingFromNotes = async (notes, paymentId, loggedInUser = null) => 
     specialRequests: notes.specialRequests || extraNotes.specialRequests || '',
     gstNumber: notes.gstNumber || extraNotes.gstNumber || '',
     addons,
+    extraBedCount,
+    extraBedPrice,
     status: 'confirmed',
     razorpayPaymentId: paymentId || ''
   }]);

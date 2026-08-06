@@ -101,6 +101,7 @@ const AdminCreateBooking = () => {
   const [infants, setInfants] = useState(0);
   const [roomsCount, setRoomsCount] = useState(1);
   const [selectedAddonIds, setSelectedAddonIds] = useState([]);
+  const [extraBedQty, setExtraBedQty] = useState(0);
 
   const handleRoomsCountChange = (newCount) => {
     const validCount = Math.max(1, Math.min(10, newCount));
@@ -476,7 +477,14 @@ const AdminCreateBooking = () => {
   const roomSubtotal = totalPerNightForSelectedRooms * nightsCount;
   const stayTax = getAppliedTax(roomSubtotal, nightsCount, taxRules);
   const stayTaxPercent = getAppliedTaxPercent(roomSubtotal, nightsCount, taxRules);
-  const grandTotal = roomSubtotal + stayTax + addonsTotal;
+
+  // Extra Bed Total (clamped to room's allowed count)
+  const effectiveExtraBedQty = selectedRoom?.allowExtraBed
+    ? Math.min(Number(extraBedQty) || 0, Number(selectedRoom.extraBedCount) || 0)
+    : 0;
+  const extraBedTotal = effectiveExtraBedQty * (Number(selectedRoom?.extraBedPrice) || 0) * nightsCount;
+
+  const grandTotal = roomSubtotal + stayTax + addonsTotal + extraBedTotal;
 
   // Calculate Advance Amount
   const advanceAmount = useMemo(() => {
@@ -570,6 +578,8 @@ const AdminCreateBooking = () => {
         paymentStatus: 'unpaid',
         paymentNotes: '',
         addons: selectedAddonObjects,
+        extraBedCount: effectiveExtraBedQty,
+        extraBedPrice: effectiveExtraBedQty > 0 ? (Number(selectedRoom?.extraBedPrice) || 0) : 0,
         specialRequests: '',
         gstNumber: gstNumber.trim()
       };
@@ -1305,6 +1315,45 @@ Thank you!`;
               </Card>
             )}
 
+            {/* Section 4: Extra Bed Selection */}
+            {selectedRoom?.allowExtraBed && Number(selectedRoom.extraBedCount) > 0 && (
+              <Card className="p-6 bg-white border border-amber-200 rounded-2xl shadow-sm space-y-4">
+                <div className="flex items-center gap-2.5 border-b border-amber-100 pb-3">
+                  <BedDouble className="w-5 h-5 text-amber-600" />
+                  <h2 className="font-bold text-base text-gray-900">4. Extra Bed</h2>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-800">
+                      ₹{Number(selectedRoom.extraBedPrice || 0).toLocaleString('en-IN')} per bed / night
+                    </p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      Up to {selectedRoom.extraBedCount} extra bed(s) allowed for this room
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setExtraBedQty((q) => Math.max(0, q - 1))}
+                      disabled={effectiveExtraBedQty <= 0}
+                      className="w-7 h-7 rounded-full border border-amber-300 text-amber-800 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-amber-50 transition-colors"
+                    >
+                      −
+                    </button>
+                    <span className="w-4 text-center text-sm font-bold text-gray-900">{effectiveExtraBedQty}</span>
+                    <button
+                      type="button"
+                      onClick={() => setExtraBedQty((q) => Math.min(Number(selectedRoom.extraBedCount), q + 1))}
+                      disabled={effectiveExtraBedQty >= Number(selectedRoom.extraBedCount)}
+                      className="w-7 h-7 rounded-full border border-amber-300 text-amber-800 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-amber-50 transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
           </div>
 
           {/* Right Column: Pricing Breakdown & Payment Settings (1 col) */}
@@ -1366,6 +1415,14 @@ Thank you!`;
                   <div className="flex justify-between items-center text-primary-700 font-medium pt-0.5">
                     <span>Selected Add-ons ({selectedAddonIds.length})</span>
                     <span className="font-bold">+₹{addonsTotal.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+
+                {/* Extra Bed Breakdown */}
+                {extraBedTotal > 0 && (
+                  <div className="flex justify-between items-center text-amber-700 font-medium pt-0.5">
+                    <span>Extra Bed ({effectiveExtraBedQty} × {nightsCount} night{nightsCount !== 1 ? 's' : ''})</span>
+                    <span className="font-bold">+₹{extraBedTotal.toLocaleString('en-IN')}</span>
                   </div>
                 )}
 

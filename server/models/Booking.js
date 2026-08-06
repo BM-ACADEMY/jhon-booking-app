@@ -26,6 +26,8 @@ const bookingSchema = new mongoose.Schema({
     name: { type: String },
     price: { type: Number }
   }],
+  extraBedCount: { type: Number, default: 0 },
+  extraBedPrice: { type: Number, default: 0 },
   specialRequests: { type: String },
   gstNumber: { type: String, default: '' },
   guestName: { type: String },

@@ -203,7 +203,7 @@ const parseRoomData = (roomData, req) => {
   }
 
   // Parse JSON fields
-  ['amenities', 'highlights', 'datePrices', 'blockedDates'].forEach(field => {
+  ['amenities', 'datePrices', 'blockedDates'].forEach(field => {
     if (typeof roomData[field] === 'string') {
       try { roomData[field] = JSON.parse(roomData[field]); }
       catch (e) { console.error(`Error parsing ${field}`, e); }
