@@ -507,32 +507,7 @@ const RoomsReview = () => {
               </div>
             </div>
 
-            {/* Photo Uploads */}
-            <div className="space-y-1">
-              <Label className="text-xs uppercase tracking-wider text-slate-400">Upload Photos</Label>
-              <div className="border-2 border-dashed border-gray-200 hover:border-primary-500 bg-slate-50/50 rounded-xl p-6 transition-all flex flex-col items-center justify-center cursor-pointer relative group">
-                <Input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <UploadCloud className="w-7 h-7 text-gray-400 group-hover:text-primary-500 transition-colors mb-2" />
-                <p className="text-xs text-gray-600 font-bold text-center">Click or drag images to upload</p>
-                <p className="text-[10px] text-gray-400 mt-0.5 text-center">Supports PNG, JPG, JPEG, WEBP</p>
-              </div>
 
-              {previews.length > 0 && (
-                <div className="flex gap-2 overflow-x-auto mt-3 pb-1">
-                  {previews.map((src, i) => (
-                    <div key={i} className="w-12 h-12 rounded-lg overflow-hidden border border-gray-200 shadow-sm shrink-0">
-                      <img src={src} alt="Preview" className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
             <DialogFooter className="gap-2 sm:gap-0 pt-2">
               <Button
@@ -570,7 +545,7 @@ const RoomsReview = () => {
           </DialogHeader>
 
           <div className="space-y-3 pt-2 text-sm text-gray-600 text-left">
-            <p className="truncate">
+            <p>
               Are you sure you want to delete this review by <span className="font-bold text-gray-800">{deleteTarget?.userName}</span>?
             </p>
           </div>

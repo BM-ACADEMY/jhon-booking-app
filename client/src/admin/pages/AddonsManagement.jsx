@@ -219,6 +219,7 @@ const AddonsManagement = () => {
                     <TableRow className="bg-gray-50/50">
                       <TableHead className="w-20 sm:w-28 md:w-32 py-3 px-3 sm:px-4">Image</TableHead>
                       <TableHead className="py-3 px-3 sm:px-4">Name</TableHead>
+                      <TableHead className="py-3 px-3 sm:px-4 hidden md:table-cell">Description</TableHead>
                       <TableHead className="py-3 px-3 sm:px-4">Price</TableHead>
                       <TableHead className="text-right w-16 sm:w-24 py-3 px-3 sm:px-4">Actions</TableHead>
                     </TableRow>
@@ -239,8 +240,11 @@ const AddonsManagement = () => {
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="py-2.5 sm:py-3.5 px-3 sm:px-4 font-semibold text-gray-800 text-xs sm:text-sm truncate max-w-[140px] sm:max-w-[240px] md:max-w-[320px] whitespace-nowrap" title={addon.name}>
+                        <TableCell className="py-2.5 sm:py-3.5 px-3 sm:px-4 font-semibold text-gray-800 text-xs sm:text-sm truncate max-w-[140px] sm:max-w-[240px] whitespace-nowrap" title={addon.name}>
                           {addon.name}
+                        </TableCell>
+                        <TableCell className="py-2.5 sm:py-3.5 px-3 sm:px-4 text-gray-500 text-xs sm:text-sm hidden md:table-cell max-w-[200px] lg:max-w-[300px] truncate" title={addon.description}>
+                          {addon.description || <span className="italic text-gray-300">No description</span>}
                         </TableCell>
                         <TableCell className="py-2.5 sm:py-3.5 px-3 sm:px-4 font-bold text-gray-900 text-xs sm:text-sm whitespace-nowrap">
                           ₹{addon.price.toLocaleString('en-IN')}

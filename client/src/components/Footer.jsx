@@ -270,9 +270,9 @@ const Footer = () => {
             <p>© {new Date().getFullYear()} The Balified Villa. All rights reserved.</p>
             <span className="hidden sm:inline text-slate-800">|</span>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
-              <Link to="/privacy" className="hover:text-slate-300 transition-colors duration-300">Privacy Policy</Link>
+              <Link to="/privacy-policy" className="hover:text-slate-300 transition-colors duration-300">Privacy Policy</Link>
               <span className="text-slate-800">|</span>
-              <Link to="/terms" className="hover:text-slate-300 transition-colors duration-300">Terms of Service</Link>
+              <Link to="/terms-and-conditions" className="hover:text-slate-300 transition-colors duration-300">Terms of Service</Link>
               <span className="text-slate-800">|</span>
               <a
                 href="https://bmtechx.in"

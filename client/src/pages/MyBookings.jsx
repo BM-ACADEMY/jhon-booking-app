@@ -365,20 +365,26 @@ const MyBookings = () => {
                           </div>
                         )}
 
-                        {booking.addons && booking.addons.length > 0 ? (
-                          <div className="mt-2 h-[36px] overflow-hidden">
-                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Selected Add-ons</span>
+                        {((booking.addons && booking.addons.length > 0) || booking.extraBedCount > 0) ? (
+                          <div className="mt-3">
+                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Extras</span>
                             <div className="flex flex-wrap gap-1.5">
-                              {booking.addons.map((addon, aIdx) => (
-                                <span key={aIdx} className="inline-flex items-center gap-1 bg-primary-50 text-primary-700 px-2 py-0.5 rounded-md text-[10px] font-bold border border-primary-100">
+                              {booking.extraBedCount > 0 && (
+                                <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-[10px] font-bold border border-amber-100">
+                                  <Bath className="w-3 h-3" />
+                                  {booking.extraBedCount} Extra Bed{booking.extraBedCount > 1 ? 's' : ''}
+                                  {booking.extraBedPrice > 0 && ` (₹${booking.extraBedPrice.toLocaleString('en-IN')}/night)`}
+                                </span>
+                              )}
+                              {booking.addons?.map((addon, aIdx) => (
+                                <span key={aIdx} className="inline-flex items-center gap-1.5 bg-primary-50 text-primary-700 px-2.5 py-1 rounded-full text-[10px] font-bold border border-primary-100">
+                                  <Check className="w-3 h-3" />
                                   {addon.name} (₹{addon.price})
                                 </span>
                               ))}
                             </div>
                           </div>
-                        ) : (
-                          <div className="mt-2 h-[36px] invisible" aria-hidden="true" />
-                        )}
+                        ) : null}
                       </div>
 
                       <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between border-t border-gray-50 pt-3 gap-4">

@@ -69,8 +69,8 @@ const AppRoutes = () => (
       <Route path="/wishlist" element={<WishlistPage />} />
       <Route path="/booking-details/:id" element={<PublicBookingDetails />} />
       <Route path="/payment-success" element={<PaymentSuccessPage />} />
-      <Route path="/terms" element={<TermsPage />} />
-      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms-and-conditions" element={<TermsPage />} />
+      <Route path="/privacy-policy" element={<PrivacyPage />} />
     </Route>
 
     {/* Admin */}

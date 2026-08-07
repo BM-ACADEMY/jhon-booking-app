@@ -339,10 +339,16 @@ const RoomsPage = () => {
   // Sidebar Filters
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
-  const [filterBedrooms, setFilterBedrooms] = useState('Any');
-  const [filterBeds, setFilterBeds] = useState('Any');
-  const [filterBathrooms, setFilterBathrooms] = useState('Any');
+  const [guestFilter, setGuestFilter] = useState('All'); // All, 2, 3, 4-6
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  // Price bounds derived from actual room prices in the database
+  const priceBounds = rooms.length
+    ? {
+        min: Math.max(0, Math.floor(Math.min(...rooms.map(r => r.price || 0)) / 100) * 100),
+        max: Math.ceil(Math.max(...rooms.map(r => r.price || 0)) / 100) * 100 || 20000,
+      }
+    : { min: 500, max: 20000 };
 
   // Wishlist Heart toggles (from global Auth state)
   const { user, toggleUserWishlist, setAuthModal } = useAuth();
@@ -372,6 +378,15 @@ const RoomsPage = () => {
     load();
   }, []);
 
+  // Initialize the price slider to the actual min/max of room prices once loaded
+  useEffect(() => {
+    if (rooms.length && minPrice === '' && maxPrice === '') {
+      setMinPrice(priceBounds.min);
+      setMaxPrice(priceBounds.max);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rooms]);
+
   // Update URL Search Parameters on form submit
   const handleUpdateSearch = (e) => {
     if (e) e.preventDefault();
@@ -391,21 +406,17 @@ const RoomsPage = () => {
 
   // Helper: Clear all sidebar filters
   const handleClearFilters = () => {
-    setMinPrice('');
-    setMaxPrice('');
-    setFilterBedrooms('Any');
-    setFilterBeds('Any');
-    setFilterBathrooms('Any');
+    setMinPrice(priceBounds.min);
+    setMaxPrice(priceBounds.max);
+    setGuestFilter('All');
     setActiveCategory('All');
     setSortBy('latest');
   };
 
   const activeFilterCount =
-    (minPrice !== '' ? 1 : 0) +
-    (maxPrice !== '' ? 1 : 0) +
-    (filterBedrooms !== 'Any' ? 1 : 0) +
-    (filterBeds !== 'Any' ? 1 : 0) +
-    (filterBathrooms !== 'Any' ? 1 : 0) +
+    (minPrice !== '' && Number(minPrice) !== priceBounds.min ? 1 : 0) +
+    (maxPrice !== '' && Number(maxPrice) !== priceBounds.max ? 1 : 0) +
+    (guestFilter !== 'All' ? 1 : 0) +
     (activeCategory !== 'All' ? 1 : 0) +
     (sortBy !== 'latest' ? 1 : 0);
 
@@ -647,29 +658,13 @@ const RoomsPage = () => {
     if (minPrice !== '' && room.price < parseFloat(minPrice)) return false;
     if (maxPrice !== '' && room.price > parseFloat(maxPrice)) return false;
 
-    // 3. Rooms & Beds count
-    if (filterBedrooms !== 'Any') {
-      const count = parseInt(filterBedrooms.replace('+', ''), 10);
-      if (filterBedrooms.includes('+')) {
-        if (room.bedrooms < count) return false;
-      } else {
-        if (room.bedrooms !== count) return false;
-      }
-    }
-    if (filterBeds !== 'Any') {
-      const count = parseInt(filterBeds.replace('+', ''), 10);
-      if (filterBeds.includes('+')) {
-        if (room.beds < count) return false;
-      } else {
-        if (room.beds !== count) return false;
-      }
-    }
-    if (filterBathrooms !== 'Any') {
-      const count = parseInt(filterBathrooms.replace('+', ''), 10);
-      if (filterBathrooms.includes('+')) {
-        if (room.bathrooms < count) return false;
-      } else {
-        if (room.bathrooms !== count) return false;
+    // 3. Guests filter (based on room capacity)
+    if (guestFilter !== 'All') {
+      const occupancy = room.maxOccupancy ?? room.guests ?? 2;
+      if (guestFilter === '4-6') {
+        if (occupancy < 4 || occupancy > 6) return false;
+      } else if (occupancy !== parseInt(guestFilter, 10)) {
+        return false;
       }
     }
 
@@ -706,7 +701,7 @@ const RoomsPage = () => {
     setCurrentPage(1);
   }, [
     activeCategory, queryCheckIn, queryCheckOut, queryAdults, queryChildren, queryRoomsCount,
-    minPrice, maxPrice, filterBedrooms, filterBeds, filterBathrooms,
+    minPrice, maxPrice, guestFilter,
     sortBy, itemsPerPage
   ]);
 
@@ -740,22 +735,6 @@ const RoomsPage = () => {
     : 'Add your dates';
   const guestText = `${adultsInput} Adult${adultsInput > 1 ? 's' : ''}${childrenInput > 0 ? `, ${childrenInput} Child${childrenInput > 1 ? 'ren' : ''}` : ''}${infantsInput > 0 ? `, ${infantsInput} Infant${infantsInput > 1 ? 's' : ''}` : ''} · ${roomsCountInput} Room${roomsCountInput > 1 ? 's' : ''}`;  const renderFilterContent = () => (
     <>
-      {/* Sort By Dropdown */}
-      <div className="space-y-2 border-b border-gray-100 pb-5">
-        <p className="font-extrabold text-sm text-gray-850">Sort by</p>
-        <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 flex items-center shadow-sm">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="w-full text-xs font-bold text-gray-800 bg-transparent outline-none cursor-pointer"
-          >
-            <option value="latest">Latest</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="rating">Top Rated</option>
-          </select>
-        </div>
-      </div>
 
       {/* Price Range */}
       <div className="space-y-3.5 border-b border-gray-100 pb-5">
@@ -765,93 +744,73 @@ const RoomsPage = () => {
             <p className="text-[10px] text-gray-400 font-bold">The average total price for {totalNights} night{totalNights !== 1 ? 's' : ''}</p>
           )}
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2 shadow-sm">
-            <span className="text-gray-400 text-xs font-bold">₹</span>
+        <div className="pt-1">
+          <div className="flex items-center justify-between text-xs font-black text-gray-800 mb-3">
+            <span>₹{Number(minPrice === '' ? priceBounds.min : minPrice).toLocaleString('en-IN')}</span>
+            <span>₹{Number(maxPrice === '' ? priceBounds.max : maxPrice).toLocaleString('en-IN')}{Number(maxPrice === '' ? priceBounds.max : maxPrice) >= priceBounds.max ? '+' : ''}</span>
+          </div>
+          <div className="relative h-5 flex items-center">
+            <div className="absolute w-full h-1 bg-gray-200 rounded-full" />
+            <div
+              className="absolute h-1 bg-[#222222] rounded-full"
+              style={{
+                left: `${priceBounds.max > priceBounds.min ? ((Number(minPrice === '' ? priceBounds.min : minPrice) - priceBounds.min) / (priceBounds.max - priceBounds.min)) * 100 : 0}%`,
+                right: `${priceBounds.max > priceBounds.min ? 100 - ((Number(maxPrice === '' ? priceBounds.max : maxPrice) - priceBounds.min) / (priceBounds.max - priceBounds.min)) * 100 : 0}%`,
+              }}
+            />
             <input
-              type="number"
-              placeholder="Min"
-              value={minPrice}
-              onChange={(e) => setMinPrice(e.target.value)}
-              className="w-full text-xs font-bold text-gray-800 bg-transparent outline-none"
+              type="range"
+              min={priceBounds.min}
+              max={priceBounds.max}
+              value={Number(minPrice === '' ? priceBounds.min : minPrice)}
+              onChange={(e) => {
+                const val = Math.min(Number(e.target.value), Number(maxPrice === '' ? priceBounds.max : maxPrice) - 1);
+                setMinPrice(val);
+              }}
+              className="range-thumb-slider absolute w-full appearance-none bg-transparent pointer-events-none z-20"
+            />
+            <input
+              type="range"
+              min={priceBounds.min}
+              max={priceBounds.max}
+              value={Number(maxPrice === '' ? priceBounds.max : maxPrice)}
+              onChange={(e) => {
+                const val = Math.max(Number(e.target.value), Number(minPrice === '' ? priceBounds.min : minPrice) + 1);
+                setMaxPrice(val);
+              }}
+              className="range-thumb-slider absolute w-full appearance-none bg-transparent pointer-events-none z-30"
             />
           </div>
-          <div className="text-gray-400 text-xs">—</div>
-          <div className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2 shadow-sm">
-            <span className="text-gray-400 text-xs font-bold">₹</span>
-            <input
-              type="number"
-              placeholder="Max"
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(e.target.value)}
-              className="w-full text-xs font-bold text-gray-800 bg-transparent outline-none"
-            />
+          <div className="flex items-center justify-between text-[10px] text-gray-400 font-bold mt-2">
+            <span>₹{priceBounds.min.toLocaleString('en-IN')}</span>
+            <span>₹{priceBounds.max.toLocaleString('en-IN')}+</span>
           </div>
         </div>
       </div>
 
-      {/* Rooms and beds selectors */}
-      <div className="space-y-4 border-b border-gray-100 pb-5">
-        <p className="font-extrabold text-sm text-gray-850">Rooms and beds</p>
-
-        {/* Bedrooms */}
-        <div className="space-y-2">
-          <span className="block text-xs font-bold text-gray-500">Bedrooms</span>
-          <div className="flex flex-wrap gap-1.5">
-            {['Any', '1', '2', '3', '4', '5+'].map(val => (
-              <button
-                key={val}
-                onClick={() => setFilterBedrooms(val)}
-                className={`cursor-pointer w-9 h-9 rounded-lg font-bold text-[11px] transition-all border ${
-                  filterBedrooms === val
-                    ? 'bg-violet-600 border-violet-600 text-white shadow-sm'
-                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                }`}
-              >
-                {val}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Beds */}
-        <div className="space-y-2">
-          <span className="block text-xs font-bold text-gray-500">Beds</span>
-          <div className="flex flex-wrap gap-1.5">
-            {['Any', '1', '2', '3', '4', '5+'].map(val => (
-              <button
-                key={val}
-                onClick={() => setFilterBeds(val)}
-                className={`cursor-pointer w-9 h-9 rounded-lg font-bold text-[11px] transition-all border ${
-                  filterBeds === val
-                    ? 'bg-violet-600 border-violet-600 text-white shadow-sm'
-                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                }`}
-              >
-                {val}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Bathrooms */}
-        <div className="space-y-2">
-          <span className="block text-xs font-bold text-gray-500">Bathrooms</span>
-          <div className="flex flex-wrap gap-1.5">
-            {['Any', '1', '2', '3', '4', '5+'].map(val => (
-              <button
-                key={val}
-                onClick={() => setFilterBathrooms(val)}
-                className={`cursor-pointer w-9 h-9 rounded-lg font-bold text-[11px] transition-all border ${
-                  filterBathrooms === val
-                    ? 'bg-violet-600 border-violet-600 text-white shadow-sm'
-                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                }`}
-              >
-                {val}
-              </button>
-            ))}
-          </div>
+      {/* Guests filter */}
+      <div className="space-y-3 border-b border-gray-100 pb-5">
+        <p className="font-extrabold text-sm text-gray-850">Guests</p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: 'All', value: 'All' },
+            { label: '2 Guests', value: '2' },
+            { label: '3 Guests', value: '3' },
+            { label: '4-6 Guests', value: '4-6' },
+          ].map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setGuestFilter(opt.value)}
+              className={`cursor-pointer flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-all border ${
+                guestFilter === opt.value
+                  ? 'bg-gray-100 border-[#222222] text-[#222222]'
+                  : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+              }`}
+            >
+              {opt.value !== 'All' && <Users className="w-3.5 h-3.5" />}
+              <span>{opt.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -909,6 +868,7 @@ const RoomsPage = () => {
             /* Custom DatePicker Styling */
             .react-datepicker-wrapper { width: 100%; }
             .react-datepicker-popper { z-index: 9999 !important; }
+            #rooms-datepicker-portal { position: relative; z-index: 9999; }
             .react-datepicker {
               font-family: inherit;
               background-color: #ffffff !important;
@@ -957,6 +917,43 @@ const RoomsPage = () => {
             .react-datepicker__day--selecting-range-end {
               border-top-right-radius: 0.5rem !important;
               border-bottom-right-radius: 0.5rem !important;
+            }
+
+            /* Dual-thumb price range slider */
+            input[type='range'].range-thumb-slider {
+              height: 20px;
+            }
+            input[type='range'].range-thumb-slider::-webkit-slider-runnable-track {
+              -webkit-appearance: none;
+              background: transparent;
+              height: 4px;
+            }
+            input[type='range'].range-thumb-slider::-moz-range-track {
+              background: transparent;
+              height: 4px;
+            }
+            input[type='range'].range-thumb-slider::-webkit-slider-thumb {
+              -webkit-appearance: none;
+              appearance: none;
+              pointer-events: auto;
+              width: 18px;
+              height: 18px;
+              border-radius: 50%;
+              background: #ffffff;
+              border: 3px solid #d6e5d8;
+              box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+              cursor: pointer;
+              margin-top: -7px;
+            }
+            input[type='range'].range-thumb-slider::-moz-range-thumb {
+              pointer-events: auto;
+              width: 18px;
+              height: 18px;
+              border-radius: 50%;
+              background: #ffffff;
+              border: 3px solid #7c3aed;
+              box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+              cursor: pointer;
             }
           `}</style>
 
@@ -1022,7 +1019,8 @@ const RoomsPage = () => {
                   }
                   popperPlacement="bottom-start"
                   popperProps={{ strategy: 'fixed', modifiers: [{ name: 'flip', enabled: false }, { name: 'preventOverflow', options: { mainAxis: false } }] }}
-                  popperClassName="z-[200]"
+                  popperClassName="z-[9999]"
+                  portalId="rooms-datepicker-portal"
                 />
               </div>
 
@@ -1273,7 +1271,7 @@ const RoomsPage = () => {
                 <p className="text-sm text-gray-400 max-w-sm mx-auto mb-6">Try adjusting your filters, location search, or widening your dates.</p>
                 <button
                   onClick={handleClearFilters}
-                  className="bg-violet-50 text-violet-600 hover:bg-violet-100 font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all cursor-pointer"
+                  className="bg-gray-100 text-[#222222] hover:bg-gray-200 font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all cursor-pointer"
                 >
                   Clear Filters
                 </button>
@@ -1413,7 +1411,7 @@ const RoomsPage = () => {
                             onClick={() => setCurrentPage(page)}
                             className={`w-9 h-9 rounded-xl font-bold text-sm transition-all cursor-pointer ${
                               currentPage === page
-                                ? 'bg-violet-600 text-white shadow-md'
+                                ? 'bg-[#222222] text-white shadow-md'
                                 : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                             }`}
                           >
@@ -1453,14 +1451,14 @@ const RoomsPage = () => {
           {/* RIGHT side: Sidebar Filters */}
           <div className="hidden lg:block lg:col-span-4 bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-6 sticky top-34">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <h2 className="text-base font-black text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-violet-600" />
-                Filters
-              </h2>
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-[#222222]" />
+                <h2 className="text-sm font-extrabold tracking-wide text-gray-900">FILTERS</h2>
+              </div>
               {activeFilterCount > 0 && (
                 <button
                   onClick={handleClearFilters}
-                  className="text-violet-600 hover:text-violet-700 font-bold text-xs uppercase tracking-wider cursor-pointer"
+                  className="text-[#222222] hover:text-black font-bold text-xs uppercase tracking-wider cursor-pointer"
                 >
                   Clear all ({activeFilterCount})
                 </button>
@@ -1501,15 +1499,15 @@ const RoomsPage = () => {
           <div className="relative w-[85%] max-w-sm h-full bg-white flex flex-col shadow-2xl animate-slide-in-right z-10">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
-              <h2 className="text-base font-black text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-violet-600" />
-                Filters
-              </h2>
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-[#222222]" />
+                <h2 className="text-sm font-extrabold tracking-wide text-gray-900">FILTERS</h2>
+              </div>
               <div className="flex items-center gap-3">
                 {activeFilterCount > 0 && (
                   <button
                     onClick={handleClearFilters}
-                    className="text-violet-600 hover:text-violet-700 font-bold text-xs uppercase tracking-wider cursor-pointer"
+                    className="text-[#222222] hover:text-black font-bold text-xs uppercase tracking-wider cursor-pointer"
                   >
                     Clear all
                   </button>

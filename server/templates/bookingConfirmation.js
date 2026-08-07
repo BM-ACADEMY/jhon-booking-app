@@ -88,6 +88,39 @@ export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails, 
     `;
   }
 
+  let paymentSummaryHtml = '';
+  const isAdvancePayment = booking.paymentType === 'advance' && Number(booking.advanceAmount) > 0;
+  
+  if (isAdvancePayment) {
+    const advancePaid = Number(booking.advanceAmount);
+    const balanceDue = booking.totalAmount - advancePaid;
+    paymentSummaryHtml = `
+      <tr>
+        <td colspan="2"></td>
+        <td align="right" style="padding: 12px 0 8px 0; border-top: 2px double #e2e8f0; font-size: 14px; color: #64748b;">Total Amount:</td>
+        <td align="right" style="padding: 12px 0 8px 0; border-top: 2px double #e2e8f0; font-size: 14px; font-weight: 600; color: #1a1d20;">₹${booking.totalAmount.toLocaleString('en-IN')}</td>
+      </tr>
+      <tr>
+        <td colspan="2"></td>
+        <td align="right" style="padding: 0 0 8px 0; font-size: 14px; font-weight: 700; color: #1a1d20;">Advance Paid:</td>
+        <td align="right" style="padding: 0 0 8px 0; font-size: 16px; font-weight: 700; color: #16a34a;">₹${advancePaid.toLocaleString('en-IN')}</td>
+      </tr>
+      <tr>
+        <td colspan="2"></td>
+        <td align="right" style="padding: 8px 0 0 0; border-top: 1px solid #e2e8f0; font-size: 14px; font-weight: 700; color: #ef4444;">Balance Due:</td>
+        <td align="right" style="padding: 8px 0 0 0; border-top: 1px solid #e2e8f0; font-size: 16px; font-weight: 700; color: #ef4444;">₹${balanceDue.toLocaleString('en-IN')}</td>
+      </tr>
+    `;
+  } else {
+    paymentSummaryHtml = `
+      <tr>
+        <td colspan="2"></td>
+        <td align="right" style="padding: 12px 0 0 0; border-top: 2px double #e2e8f0; font-size: 15px; font-weight: 700; color: #1a1d20;">Total Paid:</td>
+        <td align="right" style="padding: 12px 0 0 0; border-top: 2px double #e2e8f0; font-size: 18px; font-weight: 700; color: #16a34a;">₹${booking.totalAmount.toLocaleString('en-IN')}</td>
+      </tr>
+    `;
+  }
+
   return `
     <!DOCTYPE html>
     <html>
@@ -107,14 +140,14 @@ export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails, 
               
               <!-- Header Band -->
               <tr>
-                <td style="background-color: #1a1d20; padding: 30px 40px;">
+                <td style="background-color: #ffffff; padding: 30px 40px; border-bottom: 1px solid #e2e8f0;">
                   <table width="100%" border="0" cellspacing="0" cellpadding="0">
                     <tr>
                       <td>
-                        <span style="font-size: 20px; font-weight: 700; color: #ffffff; letter-spacing: 2px; text-transform: uppercase;">THE BALIFIED VILLA</span>
+                        <span style="font-size: 20px; font-weight: 700; color: #0f172a; letter-spacing: 2px; text-transform: uppercase;">THE BALIFIED VILLA</span>
                       </td>
                       <td align="right">
-                        <span style="font-size: 12px; font-weight: 600; color: #c5a880; letter-spacing: 1.5px; text-transform: uppercase;">BOOKING INVOICE</span>
+                        <span style="font-size: 12px; font-weight: 600; color: #d97706; letter-spacing: 1.5px; text-transform: uppercase;">BOOKING INVOICE</span>
                       </td>
                     </tr>
                   </table>
@@ -147,10 +180,7 @@ export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails, 
                         <table border="0" cellspacing="0" cellpadding="0">
                           <tr>
                             <td>
-                              <a href="${bookingDetailsUrl}" style="display: inline-block; background-color: #1a1d20; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 600; padding: 8px 16px; border-radius: 4px; margin-right: 10px;">Booking Details URL</a>
-                            </td>
-                            <td>
-                              <a href="${loginUrl}" style="display: inline-block; border: 1px solid #cbd5e1; color: #1a1d20; text-decoration: none; font-size: 12px; font-weight: 600; padding: 8px 16px; border-radius: 4px;">Login Page</a>
+                              <a href="${bookingDetailsUrl}" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 600; padding: 8px 16px; border-radius: 4px; margin-right: 10px;">Booking Details URL</a>
                             </td>
                           </tr>
                         </table>
@@ -259,11 +289,7 @@ export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails, 
                         <td align="right" style="padding: 0 0 8px 0; font-size: 14px; color: #64748b;">Tax & Service Fee:</td>
                         <td align="right" style="padding: 0 0 8px 0; font-size: 13px; color: #64748b; font-style: italic;">Included</td>
                       </tr>
-                      <tr>
-                        <td colspan="2"></td>
-                        <td align="right" style="padding: 12px 0 0 0; border-top: 2px double #e2e8f0; font-size: 15px; font-weight: 700; color: #1a1d20;">Total Paid:</td>
-                        <td align="right" style="padding: 12px 0 0 0; border-top: 2px double #e2e8f0; font-size: 18px; font-weight: 700; color: #c5a880;">₹${booking.totalAmount.toLocaleString('en-IN')}</td>
-                      </tr>
+                      ${paymentSummaryHtml}
                     </tbody>
                   </table>
 
@@ -276,20 +302,20 @@ export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails, 
 
               <!-- Footer Band -->
               <tr>
-                <td style="background-color: #1a1d20; padding: 40px 40px 30px 40px; text-align: center; border-top: 1px solid #2e343b;">
-                  <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: #ffffff; letter-spacing: 2px;">THE BALIFIED VILLA</p>
-                  <p style="margin: 0 0 25px 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                <td style="background-color: #f8fafc; padding: 40px 40px 30px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
+                  <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: #0f172a; letter-spacing: 2px;">THE BALIFIED VILLA</p>
+                  <p style="margin: 0 0 25px 0; font-size: 12px; color: #64748b; line-height: 1.5;">
                     Jalan Luxury Villa No. 8, Seminyak, Bali, Indonesia<br/>
                     Tel: +62 361 123456 | Email: info@jhonhotel.com
                   </p>
                   <table align="center" border="0" cellspacing="0" cellpadding="0">
                     <tr>
                       <td>
-                        <a href="https://thebalifiedvilla.com" style="display: inline-block; font-size: 11px; color: #c5a880; text-decoration: none; font-weight: 600; border: 1px solid #c5a880; padding: 8px 24px; border-radius: 4px; letter-spacing: 0.5px; text-transform: uppercase;">Visit Website</a>
+                        <a href="https://thebalifiedvilla.com" style="display: inline-block; font-size: 11px; color: #ffffff; background-color: #c5a880; text-decoration: none; font-weight: 600; padding: 8px 24px; border-radius: 4px; letter-spacing: 0.5px; text-transform: uppercase;">Visit Website</a>
                       </td>
                     </tr>
                   </table>
-                  <p style="margin: 30px 0 0 0; font-size: 10px; color: #475569;">&copy; 2026 The Balified Villa. All rights reserved.</p>
+                  <p style="margin: 30px 0 0 0; font-size: 10px; color: #94a3b8;">&copy; 2026 The Balified Villa. All rights reserved.</p>
                 </td>
               </tr>
 
@@ -365,6 +391,39 @@ export const getAdminBookingEmailTemplate = (user, booking, primaryRoomDetails) 
     `;
   }
 
+  let paymentSummaryHtml = '';
+  const isAdvancePayment = booking.paymentType === 'advance' && Number(booking.advanceAmount) > 0;
+  
+  if (isAdvancePayment) {
+    const advancePaid = Number(booking.advanceAmount);
+    const balanceDue = booking.totalAmount - advancePaid;
+    paymentSummaryHtml = `
+      <tr>
+        <td colspan="2"></td>
+        <td align="right" style="padding: 12px 0 8px 0; border-top: 2px double #e2e8f0; font-size: 14px; color: #64748b;">Total Amount:</td>
+        <td align="right" style="padding: 12px 0 8px 0; border-top: 2px double #e2e8f0; font-size: 14px; font-weight: 600; color: #1a1d20;">₹${booking.totalAmount.toLocaleString('en-IN')}</td>
+      </tr>
+      <tr>
+        <td colspan="2"></td>
+        <td align="right" style="padding: 0 0 8px 0; font-size: 14px; font-weight: 700; color: #1a1d20;">Advance Paid:</td>
+        <td align="right" style="padding: 0 0 8px 0; font-size: 16px; font-weight: 700; color: #16a34a;">₹${advancePaid.toLocaleString('en-IN')}</td>
+      </tr>
+      <tr>
+        <td colspan="2"></td>
+        <td align="right" style="padding: 8px 0 0 0; border-top: 1px solid #e2e8f0; font-size: 14px; font-weight: 700; color: #ef4444;">Balance Due:</td>
+        <td align="right" style="padding: 8px 0 0 0; border-top: 1px solid #e2e8f0; font-size: 16px; font-weight: 700; color: #ef4444;">₹${balanceDue.toLocaleString('en-IN')}</td>
+      </tr>
+    `;
+  } else {
+    paymentSummaryHtml = `
+      <tr>
+        <td colspan="2"></td>
+        <td align="right" style="padding: 12px 0 0 0; border-top: 2px double #e2e8f0; font-size: 15px; font-weight: 700; color: #1a1d20;">Total Paid:</td>
+        <td align="right" style="padding: 12px 0 0 0; border-top: 2px double #e2e8f0; font-size: 18px; font-weight: 700; color: #16a34a;">₹${booking.totalAmount.toLocaleString('en-IN')}</td>
+      </tr>
+    `;
+  }
+
   return `
     <!DOCTYPE html>
     <html>
@@ -384,11 +443,11 @@ export const getAdminBookingEmailTemplate = (user, booking, primaryRoomDetails) 
               
               <!-- Header Band -->
               <tr>
-                <td style="background-color: #1a1d20; padding: 30px 40px; border-bottom: 3px solid #c5a880;">
+                <td style="background-color: #ffffff; padding: 30px 40px; border-bottom: 3px solid #e2e8f0;">
                   <table width="100%" border="0" cellspacing="0" cellpadding="0">
                     <tr>
                       <td>
-                        <span style="font-size: 20px; font-weight: 700; color: #ffffff; letter-spacing: 2px; text-transform: uppercase;">THE BALIFIED VILLA</span>
+                        <span style="font-size: 20px; font-weight: 700; color: #0f172a; letter-spacing: 2px; text-transform: uppercase;">THE BALIFIED VILLA</span>
                       </td>
                       <td align="right">
                         <span style="font-size: 12px; font-weight: 600; color: #e11d48; letter-spacing: 1.5px; text-transform: uppercase;">NEW BOOKING ALERT</span>
@@ -510,14 +569,10 @@ export const getAdminBookingEmailTemplate = (user, booking, primaryRoomDetails) 
                       </tr>
                       <tr>
                         <td colspan="2"></td>
-                        <td align="right" style="padding: 0 0 8px 0; font-size: 14px; color: #64748b;">Gateway:</td>
-                        <td align="right" style="padding: 0 0 8px 0; font-size: 13px; color: #64748b;">Razorpay (Paid)</td>
+                        <td align="right" style="padding: 16px 0 8px 0; font-size: 14px; color: #64748b;">Gateway:</td>
+                        <td align="right" style="padding: 16px 0 8px 0; font-size: 13px; color: #64748b;">Razorpay (Paid)</td>
                       </tr>
-                      <tr>
-                        <td colspan="2"></td>
-                        <td align="right" style="padding: 12px 0 0 0; border-top: 2px double #e2e8f0; font-size: 15px; font-weight: 700; color: #1a1d20;">Grand Total:</td>
-                        <td align="right" style="padding: 12px 0 0 0; border-top: 2px double #e2e8f0; font-size: 18px; font-weight: 700; color: #1a1d20;">₹${booking.totalAmount.toLocaleString('en-IN')}</td>
-                      </tr>
+                      ${paymentSummaryHtml}
                     </tbody>
                   </table>
 
