@@ -462,8 +462,8 @@ export const verifyRazorpayPayment = async (req, res) => {
 
     let session = null;
     try {
-      session = await mongoose.startSession();
-      session.startTransaction();
+      // session = await mongoose.startSession();
+      // session.startTransaction();
     } catch (e) {
       session = null;
     }
@@ -549,8 +549,8 @@ export const createBooking = async (req, res) => {
     const { room, checkIn, checkOut, adults, children, roomsCount, infants, selectedRoomIds } = req.body;
 
     try {
-      session = await mongoose.startSession();
-      session.startTransaction();
+      // session = await mongoose.startSession();
+      // session.startTransaction();
     } catch (e) {
       session = null;
     }
@@ -720,8 +720,8 @@ export const createAdminBooking = async (req, res) => {
 
     // DIRECT CASH / FULL PAID IMMEDIATELY: Create Confirmed Booking in DB
     try {
-      session = await mongoose.startSession();
-      session.startTransaction();
+      // session = await mongoose.startSession();
+      // session.startTransaction();
     } catch (e) {
       session = null;
     }
