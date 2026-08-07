@@ -211,7 +211,7 @@ const Navbar = () => {
     navigate("/");
   };
   return (
-    <header className="fixed top-0 left-0 right-0 w-full z-50 pointer-events-none outline-none border-none">
+    <header className={`fixed top-0 left-0 right-0 w-full z-50 pointer-events-none outline-none border-none ${(location.pathname.startsWith("/rooms/") && location.pathname !== "/rooms") ? "hidden lg:block" : ""}`}>
       <div className="pointer-events-auto w-full bg-white/70 backdrop-blur-md border-b border-gray-200/50 shadow-sm py-2 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between h-14 lg:h-16">
           {/* Logo */}
