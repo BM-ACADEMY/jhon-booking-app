@@ -18,6 +18,7 @@ import reviewRoutes from './routes/review.routes.js';
 import messageRoutes from './routes/message.routes.js';
 import addonRoutes from './routes/addon.routes.js';
 import pageContentRoutes from './routes/pageContent.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 
 
 const app = express();
@@ -67,6 +68,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/addons', addonRoutes);
 app.use('/api/page-content', pageContentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health Check API
 app.get('/api/health', (req, res) => {

@@ -200,7 +200,7 @@ const WishlistPage = () => {
                             <Star 
                               key={star} 
                               className={`w-3.5 h-3.5 ${
-                                star <= Math.round(room.rating || 5) 
+                                star <= Math.round(room.rating || 0)
                                   ? 'fill-amber-400 text-amber-400' 
                                   : 'text-gray-200'
                               }`} 

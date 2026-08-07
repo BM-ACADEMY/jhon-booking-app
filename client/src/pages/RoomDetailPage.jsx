@@ -1607,6 +1607,7 @@ const RoomDetailPage = () => {
                   <div className="flex items-center gap-1 text-[#222222] font-semibold text-[15px] sm:text-base mt-1">
                     <span>★ {reviews.length > 0 ? (dynamicStats.reduce((acc, curr) => acc + curr.score, 0) / dynamicStats.length).toFixed(2) : (room.rating || 'New')}</span>
                     <span>&middot;</span>
+                    <span className="underline">{reviews.length} review{reviews.length !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
 
@@ -2036,7 +2037,16 @@ const RoomDetailPage = () => {
                                   className="mt-0.5 w-4 h-4 rounded border-gray-300 text-black focus:ring-black accent-black cursor-pointer"
                                 />
                                 <label htmlFor="termsCheck" className="text-[12px] text-gray-500 leading-snug cursor-pointer select-none">
-                                  By completing this reservation you are accepting our <span className="underline font-bold text-gray-800 hover:text-black">Terms & Conditions</span>
+                                  By completing this reservation you are accepting our{' '}
+                                  <Link
+                                    to="/terms-and-conditions"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="underline font-bold text-gray-800 hover:text-black"
+                                  >
+                                    Terms & Conditions
+                                  </Link>
                                 </label>
                               </div>
 
@@ -2885,7 +2895,17 @@ const RoomDetailPage = () => {
                       className="mt-0.5 w-4 h-4 rounded text-yellow-500 focus:ring-yellow-400"
                     />
                     <span className="text-xs text-gray-600 leading-snug">
-                      I agree to the <span className="font-bold text-gray-900 underline">Terms & Conditions</span> and cancellation policy.
+                      I agree to the{' '}
+                      <Link
+                        to="/terms-and-conditions"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-bold text-gray-900 underline"
+                      >
+                        Terms & Conditions
+                      </Link>{' '}
+                      and cancellation policy.
                     </span>
                   </label>
                 </div>

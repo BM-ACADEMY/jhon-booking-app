@@ -8,11 +8,52 @@ import { toast } from 'react-hot-toast';
 import api from '../../api';
 import notificationSound from '../../assets/notificaition.mp3';
 
+const urlBase64ToUint8Array = (base64String) => {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+};
+
 const AdminLayout = () => {
   const navigate = useNavigate();
   const [activeBooking, setActiveBooking] = useState(null);
   const audioIntervalRef = useRef(null);
   const audioRef = useRef(null);
+
+  // Register service worker + subscribe to Web Push so admins get OS-level
+  // desktop/mobile notifications for new bookings, even outside the browser tab.
+  useEffect(() => {
+    const setupPush = async () => {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+      try {
+        const registration = await navigator.serviceWorker.register('/sw.js');
+
+        let permission = Notification.permission;
+        if (permission === 'default') {
+          permission = await Notification.requestPermission();
+        }
+        if (permission !== 'granted') return;
+
+        let subscription = await registration.pushManager.getSubscription();
+        if (!subscription) {
+          const { data } = await api.get('/notifications/vapid-public-key');
+          if (!data.publicKey) return;
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(data.publicKey),
+          });
+        }
+
+        await api.post('/notifications/subscribe', subscription.toJSON());
+      } catch (err) {
+        console.error('Push notification setup failed:', err);
+      }
+    };
+
+    setupPush();
+  }, []);
 
   // Poll for unnotified bookings every 10 seconds
   useEffect(() => {

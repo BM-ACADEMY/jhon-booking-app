@@ -8,12 +8,13 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import sendEmail from '../utils/email.js';
 import Setting from '../models/Setting.js';
-import { 
-  getGuestBookingEmailTemplate, 
+import {
+  getGuestBookingEmailTemplate,
   getAdminBookingEmailTemplate,
   getCancelBookingEmailTemplate,
   getRefundEmailTemplate
 } from '../templates/bookingConfirmation.js';
+import { createBookingNotification } from './notification.controller.js';
 
 let razorpayInstance = null;
 
@@ -497,6 +498,7 @@ export const verifyRazorpayPayment = async (req, res) => {
     Room.findById(bookingData.room)
       .then(primaryRoomDetails => {
         if (!primaryRoomDetails) return;
+        createBookingNotification(booking, primaryRoomDetails);
         const emailHtmlUser = getGuestBookingEmailTemplate(bookingUser, booking, primaryRoomDetails, createdCredentials);
 
         // Send to User
@@ -589,6 +591,7 @@ export const createBooking = async (req, res) => {
     }
 
     await syncRoomUnavailableDates();
+    createBookingNotification(booking);
 
     res.status(201).json(booking);
   } catch (err) {
@@ -765,6 +768,7 @@ export const createAdminBooking = async (req, res) => {
     // Send confirmation emails in background
     Room.findById(room).then(primaryRoomDetails => {
       if (!primaryRoomDetails) return;
+      createBookingNotification(booking, primaryRoomDetails);
       const guestObj = {
         name: name.trim(),
         email: cleanEmail,
@@ -1601,6 +1605,7 @@ const createBookingFromNotes = async (notes, paymentId, loggedInUser = null) => 
   }]);
 
   await syncRoomUnavailableDates();
+  createBookingNotification(newBooking, room);
 
   // Send confirmation emails in background
   try {
