@@ -889,7 +889,7 @@ const RoomsPage = () => {
            HERO SECTION  (mirrors HomePage HeroSection)
          ══════════════════════════════════════════ */}
       <>
-        <section className="relative h-[220px] md:h-[260px] lg:h-[300px] font-sans flex flex-col bg-gray-900 lg:overflow-visible shadow-xl">
+        <section className="relative h-[220px] md:h-[260px] lg:h-[300px] font-sans flex flex-col bg-gray-900 lg:overflow-visible shadow-xl z-[60]">
           <style>{`
             @keyframes rooms-reveal {
               from { opacity: 0; transform: translateY(22px); filter: blur(8px); }
