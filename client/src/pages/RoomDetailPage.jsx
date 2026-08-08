@@ -344,13 +344,18 @@ const RoomDetailPage = () => {
     const total = room?.images?.length || 0;
     if (total <= 1) return;
 
-    // Swiped left at last image -> wrap to 1st image
-    if (diff > 40 && activeMobileImageIndex === total - 1) {
-      scrollToMobileImage(0);
-    }
-    // Swiped right at 1st image -> wrap to last image
-    else if (diff < -40 && activeMobileImageIndex === 0) {
-      scrollToMobileImage(total - 1);
+    if (diff > 40) {
+      if (activeMobileImageIndex === total - 1) {
+        scrollToMobileImage(0);
+      } else {
+        scrollToMobileImage(activeMobileImageIndex + 1);
+      }
+    } else if (diff < -40) {
+      if (activeMobileImageIndex === 0) {
+        scrollToMobileImage(total - 1);
+      } else {
+        scrollToMobileImage(activeMobileImageIndex - 1);
+      }
     }
   };
 
@@ -1480,12 +1485,11 @@ const RoomDetailPage = () => {
           <>
             <div
               ref={mobileSliderRef}
-              onScroll={handleMobileImageScroll}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
               onMouseDown={handleTouchStart}
               onMouseUp={handleTouchEnd}
-              className="flex w-full h-full overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth"
+              className="flex w-full h-full overflow-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] select-none"
             >
               {images.map((img, index) => (
                 <div
