@@ -1014,7 +1014,7 @@ const RoomsPage = () => {
             {/* ── Mobile search pill ── */}
             <div
               onClick={() => setIsMobileSearchOpen(true)}
-              className="lg:hidden w-full max-w-xs bg-black/40 backdrop-blur-xl border border-white/10 rounded-full px-4 py-3 flex items-center gap-3 cursor-pointer shadow-xl rooms-reveal-d3 transition-transform active:scale-95"
+              className="lg:hidden absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-40 w-[calc(100%-2rem)] max-w-sm bg-black/60 backdrop-blur-xl border border-white/10 rounded-full px-5 py-3.5 flex items-center gap-3 cursor-pointer shadow-xl transition-transform active:scale-95"
             >
               <Search className="w-4 h-4 text-white ml-1 opacity-80 shrink-0" />
               <div className="relative h-5 w-full flex items-center overflow-hidden text-left">
@@ -1359,22 +1359,11 @@ const RoomsPage = () => {
                             {room.address || `${[room.city, room.country].filter(Boolean).join(', ') || 'Serenity Beach, India'}`}
                           </p>
 
-                          <div className="flex items-center gap-1.5 mb-3">
-                            <div className="flex gap-0.5">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                  key={star}
-                                  className={`w-3.5 h-3.5 ${
-                                    star <= Math.round(room.rating || 0)
-                                      ? 'fill-amber-400 text-amber-400'
-                                      : 'text-gray-200'
-                                    }`}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-xs text-gray-500 font-bold">
-                              ({room.monthVisitorsCount || 0} Month Visitors)
-                            </span>
+                          <div className="flex items-center gap-1.5 mb-3 text-[13px] text-gray-900 font-semibold">
+                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                            <span>{room.rating > 0 ? room.rating.toFixed(2) : '0.00'}</span>
+                            <span className="mx-0.5">·</span>
+                            <span>{room.reviewCount || 0} {(room.reviewCount === 1) ? 'review' : 'reviews'}</span>
                           </div>
 
                           {roomTotal > 0 && (

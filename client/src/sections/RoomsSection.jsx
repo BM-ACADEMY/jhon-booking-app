@@ -247,15 +247,11 @@ const RoomsSection = () => {
             {room.address || `${room.city || 'Serenity Beach'}, India`}
           </p>
 
-          <div className="flex items-center gap-4 mb-3">
-            <div className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span className="text-xs text-gray-700 font-bold">{room.rating > 0 ? room.rating.toFixed(1) : '0'}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-gray-500">
-              <Eye className="w-3.5 h-3.5" />
-              <span className="text-xs font-bold">{room.monthVisitorsCount || 0}</span>
-            </div>
+          <div className="flex items-center gap-1.5 mb-3 text-[13px] text-gray-900 font-semibold">
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span>{room.rating > 0 ? room.rating.toFixed(2) : '0.00'}</span>
+            <span className="mx-0.5">·</span>
+            <span>{room.reviewCount || 0} {(room.reviewCount === 1) ? 'review' : 'reviews'}</span>
           </div>
 
           {/* Specs Row */}

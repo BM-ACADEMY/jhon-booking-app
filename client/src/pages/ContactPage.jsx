@@ -279,7 +279,7 @@ const ContactPage = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#ea7b00] hover:bg-[#cc6b00] text-white font-medium py-5 px-8 transition-colors duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group rounded-none mt-4 text-lg"
+                className="w-full bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold py-5 px-8 transition-colors duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group rounded-none mt-4 text-lg"
               >
                 {isSubmitting ? (
                   <span className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />

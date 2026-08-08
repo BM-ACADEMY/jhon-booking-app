@@ -2343,7 +2343,7 @@ const RoomDetailPage = () => {
                   <button 
                     onClick={handleBooking} 
                     disabled={bookingLoading || !room.isAvailable || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed} 
-                    className="w-full bg-[#FCE83A] hover:bg-[#FCE83A]/90 text-gray-900 font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm mt-4"
+                    className="w-full bg-[#d9f969] hover:bg-[#cbf046] text-gray-900 font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm mt-4"
                   >
                     {bookingLoading && <Loader2 className="w-5 h-5 animate-spin" />}
                     {remainingRooms === 0 ? 'Sold Out' : (!clientOccupancyValidation.isAllowed ? 'Invalid Guests' : (room.isAvailable ? 'Book Now' : 'Check Availability'))}
@@ -2397,7 +2397,7 @@ const RoomDetailPage = () => {
                   setShowMobileBooking(true);
                 }}
                 disabled={!room?.isAvailable || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed}
-                className={`bg-[#FCE83A] hover:bg-[#fbdc19] active:bg-[#f0d00d] text-gray-900 font-extrabold text-base py-3.5 rounded-full shadow-md flex items-center justify-center transition-all duration-350 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+                className={`bg-[#d9f969] hover:bg-[#cbf046] active:bg-[#bde830] text-gray-900 font-extrabold text-base py-3.5 rounded-full shadow-md flex items-center justify-center transition-all duration-350 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
                   isScrolledDown ? 'w-full px-4' : 'w-[140px] sm:w-[160px] px-4'
                 }`}
               >
@@ -3009,7 +3009,7 @@ const RoomDetailPage = () => {
                   setMobileBookingStep(2);
                 }}
                 disabled={!room?.isAvailable || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed}
-                className="w-full bg-[#FCE83A] active:bg-[#f3df2c] text-gray-900 font-extrabold text-[16px] py-4 rounded-full transition-all active:scale-[0.98] disabled:opacity-50 shadow-md flex justify-center items-center gap-2 cursor-pointer"
+                className="w-full bg-[#d9f969] active:bg-[#bde830] text-gray-900 font-extrabold text-[16px] py-4 rounded-full transition-all active:scale-[0.98] disabled:opacity-50 shadow-md flex justify-center items-center gap-2 cursor-pointer"
               >
                 <span>Continue to Add-ons</span>
                 <ChevronRight className="w-5 h-5" />
@@ -3031,7 +3031,7 @@ const RoomDetailPage = () => {
                 <button
                   type="button"
                   onClick={() => setMobileBookingStep(3)}
-                  className="flex-1 bg-linear-to-r from-[#FCE83A] to-[#f3d90c] active:scale-[0.98] text-gray-900 font-extrabold text-[13px] h-11 rounded-full transition-all shadow-lg shadow-yellow-400/30 flex justify-center items-center gap-1.5 cursor-pointer"
+                  className="flex-1 bg-linear-to-r from-[#d9f969] to-[#cbf046] active:scale-[0.98] text-gray-900 font-extrabold text-[13px] h-11 rounded-full transition-all shadow-lg shadow-[#d9f969]/30 flex justify-center items-center gap-1.5 cursor-pointer"
                 >
                   <span>Guest Details</span>
                   <ChevronRight className="w-4 h-4" />
@@ -3053,7 +3053,7 @@ const RoomDetailPage = () => {
                   type="button"
                   onClick={initiateGuestBookingPayment}
                   disabled={bookingLoading || paymentProcessing}
-                  className="flex-1 bg-[#FCE83A] active:bg-[#f3df2c] text-gray-900 font-extrabold text-[14px] h-11 rounded-full transition-all active:scale-[0.98] disabled:opacity-50 shadow-md flex justify-center items-center gap-2 cursor-pointer"
+                  className="flex-1 bg-[#d9f969] active:bg-[#bde830] text-gray-900 font-extrabold text-[14px] h-11 rounded-full transition-all active:scale-[0.98] disabled:opacity-50 shadow-md flex justify-center items-center gap-2 cursor-pointer"
                 >
                   {(bookingLoading || paymentProcessing) && <Loader2 className="w-5 h-5 animate-spin mr-1" />}
                   <span>Confirm & Pay ₹{finalTotal.toLocaleString('en-IN')}</span>
