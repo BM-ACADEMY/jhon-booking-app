@@ -179,6 +179,18 @@ const HeroSection = () => {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
 
+  // Prevent background scrolling when mobile search is open
+  useEffect(() => {
+    if (isMobileSearchOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileSearchOpen]);
+
   // Desktop Guest Popover State
   const [isGuestDropdownOpen, setIsGuestDropdownOpen] = useState(false);
   const checkinPickerRef = useRef(null);
