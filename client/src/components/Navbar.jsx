@@ -211,7 +211,7 @@ const Navbar = () => {
     navigate("/");
   };
   return (
-    <header className={`fixed top-0 left-0 right-0 w-full z-50 pointer-events-none outline-none border-none ${(location.pathname.startsWith("/rooms/") && location.pathname !== "/rooms") ? "hidden lg:block" : ""}`}>
+    <header className={`w-full z-50 pointer-events-none outline-none border-none ${(location.pathname.startsWith("/rooms/") && location.pathname !== "/rooms") ? "hidden lg:block" : ""}`}>
       <div className="pointer-events-auto w-full bg-white/70 backdrop-blur-md border-b border-gray-200/50 shadow-sm py-2 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between h-14 lg:h-16">
           {/* Logo */}
@@ -530,23 +530,21 @@ const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 w-[85vw] max-w-[340px] bg-[#0f172a]/80 backdrop-blur-xl z-[70] flex flex-col lg:hidden pointer-events-auto shadow-2xl border-r border-white/10"
+              className="fixed inset-y-0 left-0 w-[85vw] max-w-[340px] bg-white/80 backdrop-blur-2xl z-[70] flex flex-col lg:hidden pointer-events-auto shadow-[20px_0_40px_-10px_rgba(0,0,0,0.1)] border-r border-gray-200/50"
             >
               {/* Close Icon & Header */}
               <div className="flex justify-between items-center mb-6 pt-6 px-6">
-                <span className="text-sm font-black text-white uppercase tracking-widest">Menu</span>
+                <span className="text-sm font-black text-gray-900 uppercase tracking-widest">Menu</span>
                 <button
                   onClick={() => setMenuOpen(false)}
-                  className="p-2 bg-white/10 rounded-full text-gray-300 hover:text-white hover:bg-white/20 transition-all duration-300 hover:rotate-90 hover:scale-105 outline-none"
+                  className="p-2 bg-gray-100/80 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-200 transition-all duration-300 hover:rotate-90 hover:scale-105 outline-none"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="flex-1 overflow-y-auto hide-scrollbar px-6">
-                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-[0.15em] mb-4 px-2">
-                  Navigation
-                </p>
+
                 <nav className="space-y-1 mb-8">
                   {navLinks.map(({ label, to }) => {
                     const active = location.pathname === to;
@@ -556,15 +554,15 @@ const Navbar = () => {
                         to={to}
                         onClick={() => setMenuOpen(false)}
                         className={`flex items-center justify-between py-3.5 px-5 rounded-[18px] transition-all outline-none ${active
-                          ? "bg-blue-600/30 text-blue-400 font-medium"
-                          : "text-gray-300 font-medium hover:bg-white/10 hover:text-white"
+                          ? "bg-gray-900/5 text-gray-900 font-bold"
+                          : "text-gray-600 font-medium hover:bg-gray-50 hover:text-gray-900"
                           }`}
                       >
                         <span className="tracking-wide text-[15px]">
                           {label}
                         </span>
                         <ChevronRight
-                          className={`w-4 h-4 ${active ? "text-blue-400" : "text-gray-600"}`}
+                          className={`w-4 h-4 ${active ? "text-gray-900" : "text-gray-400"}`}
                         />
                       </Link>
                     );
@@ -574,44 +572,44 @@ const Navbar = () => {
                 {/* User Links inline with Navigation */}
                 {user && (
                   <>
-                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-[0.15em] mb-4 px-2 mt-8">
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-[0.15em] mb-4 px-2 mt-8">
                       My Account
                     </p>
                     <div className="space-y-1">
                       {user.role === 'admin' ? (
                         <Link
                           to="/admin"
-                          className="flex items-center gap-3 py-3.5 px-5 rounded-[18px] text-[15px] font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all outline-none"
+                          className="flex items-center gap-3 py-3.5 px-5 rounded-[18px] text-[15px] font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all outline-none"
                         >
-                          <User className="w-5 h-5 text-gray-500" /> Dashboard
+                          <User className="w-5 h-5 text-gray-400" /> Dashboard
                         </Link>
                       ) : (
                         <>
                           <Link
                             to="/profile"
-                            className="flex items-center gap-3 py-3.5 px-5 rounded-[18px] text-[15px] font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all outline-none"
+                            className="flex items-center gap-3 py-3.5 px-5 rounded-[18px] text-[15px] font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all outline-none"
                           >
-                            <User className="w-5 h-5 text-gray-500" /> Profile
+                            <User className="w-5 h-5 text-gray-400" /> Profile
                           </Link>
                           <Link
                             to="/mybookings"
-                            className="flex items-center gap-3 py-3.5 px-5 rounded-[18px] text-[15px] font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all outline-none"
+                            className="flex items-center gap-3 py-3.5 px-5 rounded-[18px] text-[15px] font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all outline-none"
                           >
-                            <CalendarCheck className="w-5 h-5 text-gray-500" /> My Bookings
+                            <CalendarCheck className="w-5 h-5 text-gray-400" /> My Bookings
                           </Link>
                           <Link
                             to="/wishlist"
-                            className="flex items-center gap-3 py-3.5 px-5 rounded-[18px] text-[15px] font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all outline-none"
+                            className="flex items-center gap-3 py-3.5 px-5 rounded-[18px] text-[15px] font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all outline-none"
                           >
-                            <Heart className="w-5 h-5 text-gray-500" /> Wishlist
+                            <Heart className="w-5 h-5 text-gray-400" /> Wishlist
                           </Link>
                         </>
                       )}
                       <button
                         onClick={handleLogout}
-                        className="flex items-center gap-3 w-full py-3.5 px-5 rounded-[18px] text-[15px] font-medium text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-all outline-none"
+                        className="flex items-center gap-3 w-full py-3.5 px-5 rounded-[18px] text-[15px] font-medium text-red-500 hover:text-red-700 hover:bg-red-50 transition-all outline-none"
                       >
-                        <LogOut className="w-5 h-5" /> Sign Out
+                        <LogOut className="w-5 h-5 text-red-400" /> Sign Out
                       </button>
                     </div>
                   </>
@@ -619,17 +617,17 @@ const Navbar = () => {
               </div>
 
               {/* USER PROFILE / AUTH AT VERY BOTTOM */}
-              <div className="mt-auto border-t border-white/10 bg-black/20">
+              <div className="mt-auto border-t border-gray-200/50 bg-gray-50/50">
                 {user ? (
                   <div className="flex items-center gap-4 px-6 py-5">
-                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+                    <div className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
                       {user.name?.[0]?.toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-bold text-white truncate">
+                      <p className="text-[14px] font-bold text-gray-900 truncate">
                         {user.name}
                       </p>
-                      <p className="text-[12px] text-gray-400 truncate mt-0.5">
+                      <p className="text-[12px] text-gray-500 truncate mt-0.5">
                         {user.email}
                       </p>
                     </div>
@@ -638,13 +636,13 @@ const Navbar = () => {
                   <div className="space-y-3 px-6 py-5">
                     <button
                       onClick={() => { setAuthModal('login'); setMenuOpen(false); }}
-                      className="flex items-center justify-center w-full py-3 rounded-xl text-[14px] text-gray-300 font-medium border border-gray-700 hover:bg-gray-800 transition-all outline-none bg-transparent"
+                      className="flex items-center justify-center w-full py-3 rounded-xl text-[14px] text-gray-700 font-bold border border-gray-300 hover:bg-gray-100 hover:text-gray-900 transition-all outline-none bg-white shadow-sm"
                     >
                       Sign In
                     </button>
                     <button
                       onClick={() => { setAuthModal('register'); setMenuOpen(false); }}
-                      className="flex items-center justify-center w-full py-3 rounded-xl bg-blue-600 text-white text-[14px] font-medium shadow-md hover:bg-blue-700 transition-all outline-none border-none"
+                      className="flex items-center justify-center w-full py-3 rounded-xl bg-gray-900 text-white text-[14px] font-bold shadow-md hover:bg-black transition-all outline-none border-none"
                     >
                       Book a Room
                     </button>

@@ -98,6 +98,27 @@ MainDateRangeInput.displayName = 'MainDateRangeInput';
 const ImageCarousel = ({ images, roomName }) => {
   const [current, setCurrent] = useState(0);
   const [hovered, setHovered] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > minSwipeDistance) {
+      setCurrent((c) => (c + 1) % images.length);
+    } else if (distance < -minSwipeDistance) {
+      setCurrent((c) => (c - 1 + images.length) % images.length);
+    }
+  };
 
   const prev = (e) => {
     e.preventDefault();
@@ -124,13 +145,16 @@ const ImageCarousel = ({ images, roomName }) => {
       className="relative w-full h-full group overflow-hidden"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
       {images.map((img, idx) => (
         <img
           key={idx}
           src={getImageUrl(img)}
           alt={`${roomName} - View ${idx + 1}`}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:scale-[1.03] ${
+          className={`absolute inset-0 w-full h-full object-cover lg:transition-opacity lg:duration-300 group-hover:scale-[1.03] ${
             idx === current ? 'opacity-100 z-0' : 'opacity-0 pointer-events-none'
           }`}
         />
@@ -139,13 +163,13 @@ const ImageCarousel = ({ images, roomName }) => {
         <>
           <button
             onClick={prev}
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 duration-200"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-md hidden lg:flex items-center justify-center transition-all z-10 cursor-pointer opacity-0 group-hover:opacity-100 duration-200"
           >
             <ChevronLeft className="w-4 h-4 text-gray-700" />
           </button>
           <button
             onClick={next}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 duration-200"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-md hidden lg:flex items-center justify-center transition-all z-10 cursor-pointer opacity-0 group-hover:opacity-100 duration-200"
           >
             <ChevronRight className="w-4 h-4 text-gray-700" />
           </button>
@@ -848,7 +872,7 @@ const RoomsPage = () => {
            HERO SECTION  (mirrors HomePage HeroSection)
          ══════════════════════════════════════════ */}
       <>
-        <section className="relative h-[220px] md:h-[260px] lg:h-[300px] font-sans flex flex-col bg-gray-900 rounded-b-[2.5rem] lg:rounded-b-none lg:overflow-visible shadow-xl">
+        <section className="relative h-[220px] md:h-[260px] lg:h-[300px] font-sans flex flex-col bg-gray-900 lg:overflow-visible shadow-xl">
           <style>{`
             @keyframes rooms-reveal {
               from { opacity: 0; transform: translateY(22px); filter: blur(8px); }
@@ -959,7 +983,7 @@ const RoomsPage = () => {
 
 
           {/* Background — overflow-hidden + matching radius so image clips to curved bottom */}
-          <div className="absolute inset-0 z-0 overflow-hidden rounded-b-[2.5rem] lg:rounded-b-none">
+          <div className="absolute inset-0 z-0 overflow-hidden">
             {heroVideoSrc ? (
               <video key={heroVideoSrc} autoPlay muted loop playsInline className="w-full h-full object-cover opacity-90">
                 <source src={heroVideoSrc} />

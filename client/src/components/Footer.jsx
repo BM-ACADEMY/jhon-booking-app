@@ -179,7 +179,7 @@ const Footer = () => {
         {/* Middle Section: Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 mb-12">
           {/* Brand Col */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-6">
             <Link to="/" className="bg-white rounded-xl inline-flex items-center mb-6 outline-none border-none">
               <img
                 src={logoImg}
@@ -211,37 +211,8 @@ const Footer = () => {
             )}
           </div>
 
-          {/* Quick Links */}
-          <div className="lg:col-span-3 lg:pl-4">
-            <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-6">Quick Links</h4>
-            <ul className="space-y-4">
-              {[
-                { label: 'Home', to: '/' },
-                { label: 'Our Rooms', to: '/rooms' },
-                { label: 'About Us', to: '/about' },
-                { label: 'Contact', to: '/contact' }
-              ].map(({ label, to }) => (
-                <li key={label}>
-                  <Link to={to} className="group text-sm hover:text-white transition-colors duration-300 flex items-center gap-1.5">
-                    <span className="w-1 h-1 rounded-full bg-slate-600 group-hover:bg-white transition-colors duration-300"></span>
-                    {label}
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <button
-                  onClick={() => setShowForm(true)}
-                  className="group text-sm hover:text-white text-slate-400 transition-colors duration-300 flex items-center gap-1.5 bg-transparent border-none p-0 cursor-pointer text-left outline-none font-normal"
-                >
-                  <span className="w-1 h-1 rounded-full bg-slate-600 group-hover:bg-white transition-colors duration-300"></span>
-                  Feedback
-                </button>
-              </li>
-            </ul>
-          </div>
-
           {/* Contact Col */}
-          <div className="lg:col-span-4">
+          <div className="hidden lg:block lg:col-span-6">
             <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-6">Contact Us</h4>
             <ul className="space-y-4 mb-6">
               <li className="flex items-start gap-3.5 text-sm text-slate-400">

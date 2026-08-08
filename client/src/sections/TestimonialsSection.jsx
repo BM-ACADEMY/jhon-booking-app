@@ -51,13 +51,13 @@ const TestimonialsSection = () => {
     fetchTestimonials();
   }, []);
 
-  // 2.5 second interval slide change
+  // 3 second interval slide change
   useEffect(() => {
     if (testimonials.length <= 1) return;
-    
+
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-    }, 2500);
+    }, 3500);
 
     return () => clearInterval(interval);
   }, [testimonials.length]);

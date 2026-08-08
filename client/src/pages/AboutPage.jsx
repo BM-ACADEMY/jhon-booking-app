@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Hotel, Award, ShieldCheck, Coffee, MapPin, ArrowRight } from 'lucide-react';
+import { Hotel, Trees, Bath, Sparkles, MapPin, ArrowRight } from 'lucide-react';
 import api from '../api';
 
 const AboutPage = () => {
@@ -21,32 +21,32 @@ const AboutPage = () => {
   }, []);
 
   const stats = [
-    { label: 'Years of Excellence', value: '15+' },
-    { label: 'Luxury Rooms', value: '120+' },
-    { label: 'Happy Guests', value: '50k+' },
-    { label: 'Awards Won', value: '25' },
+    { label: 'Years Creating Memorable Stays', value: '4+' },
+    { label: 'Rooms', value: '10+' },
+    { label: 'Happy Guests', value: '20K+' },
+    { label: 'Reviews (4.8★ Avg)', value: '1000+' },
   ];
 
   const features = [
     {
-      icon: <Award className="w-6 h-6" />,
-      title: 'World Class Service',
-      description: 'Our dedicated staff is committed to providing an unparalleled level of hospitality and attention to detail.',
+      icon: <Trees className="w-6 h-6" />,
+      title: 'Unique Themed Stays',
+      description: 'Beautifully designed Bali and Greece-inspired rooms that make every stay feel truly different.',
     },
     {
-      icon: <ShieldCheck className="w-6 h-6" />,
-      title: 'Safety & Security',
-      description: 'Your safety is our priority. We maintain the highest standards of security and hygiene across all our properties.',
+      icon: <Bath className="w-6 h-6" />,
+      title: 'Romantic Experiences',
+      description: 'Private bathtub suites and thoughtfully curated spaces for couples, anniversaries and special celebrations.',
     },
     {
-      icon: <Coffee className="w-6 h-6" />,
-      title: 'Premium Amenities',
-      description: 'From gourmet dining to state-of-the-art spa facilities, enjoy the finest amenities designed for your comfort.',
+      icon: <Sparkles className="w-6 h-6" />,
+      title: 'Spotlessly Clean',
+      description: 'Meticulously maintained rooms that ensure every stay is fresh, comfortable and welcoming.',
     },
     {
       icon: <MapPin className="w-6 h-6" />,
-      title: 'Prime Locations',
-      description: 'Our hotels are situated in the most iconic and accessible locations, perfect for business or leisure.',
+      title: 'Prime Location',
+      description: 'Perfectly located between White Town and Auroville, with Serenity Beach just minutes away.',
     },
   ];
 
@@ -188,8 +188,8 @@ const AboutPage = () => {
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
           <Hotel className="w-12 h-12 text-amber-700 mx-auto mb-8" />
           <h2 className="text-3xl md:text-4xl font-serif mb-8">Our Mission</h2>
-          <p className="text-xl md:text-3xl font-serif italic leading-relaxed text-stone-700">
-            "To define the future of luxury hospitality by creating personalized experiences that inspire and delight every guest, every time."
+          <p className="text-lg md:text-2xl font-serif italic leading-relaxed text-stone-700">
+            "To create private, memorable stays where every guest feels genuinely welcomed and every visit becomes a story worth remembering. We also believe great hospitality begins with a great team, which is why we're committed to creating a workplace where our people can grow, take pride in what they do, and continue delivering the warmth and care that define The Balified Villa."
           </p>
           <div className="mt-12 h-px w-24 bg-amber-600 mx-auto" />
         </div>

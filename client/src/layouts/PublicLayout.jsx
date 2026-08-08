@@ -6,6 +6,7 @@ const PublicLayout = () => {
   const location = useLocation();
   const hideNavFooter = location.pathname === '/checkout/addons';
   const hideFooter = location.pathname.startsWith('/rooms/') || hideNavFooter;
+  const isRoomsPage = location.pathname === '/rooms';
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -21,7 +22,7 @@ const PublicLayout = () => {
           href="https://wa.me/918946022554"
           target="_blank"
           rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-[9999] bg-[#25D366] text-white p-3.5 rounded-full shadow-xl hover:scale-110 hover:shadow-2xl transition-all duration-300 flex items-center justify-center group"
+          className={`fixed right-6 z-[9999] bg-[#25D366] text-white p-3.5 rounded-full shadow-xl hover:scale-110 hover:shadow-2xl transition-all duration-300 flex items-center justify-center group ${isRoomsPage ? 'bottom-24 lg:bottom-6' : 'bottom-6'}`}
           aria-label="Chat on WhatsApp"
         >
           <svg

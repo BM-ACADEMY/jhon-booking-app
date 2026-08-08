@@ -297,7 +297,7 @@ const HeroSection = () => {
 
   return (
     <>
-      <section className="relative min-h-[520px] sm:min-h-[580px] lg:min-h-0 lg:h-[520px] font-sans flex flex-col overflow-hidden lg:overflow-visible bg-blue-50/30 shadow-xl z-20">
+      <section className="relative min-h-[520px] sm:min-h-[580px] lg:min-h-0 lg:h-[520px] font-sans flex flex-col overflow-visible bg-blue-50/30 shadow-xl z-20">
         <style>{`
           @keyframes reveal {
             from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
@@ -479,7 +479,7 @@ const HeroSection = () => {
           {/* ========================================= */}
           <div 
             onClick={() => setIsMobileSearchOpen(true)}
-            className="lg:hidden w-full max-w-md bg-black/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-5 flex items-center gap-4 cursor-pointer shadow-2xl animate-reveal [animation-delay:600ms] opacity-0 transition-transform active:scale-95"
+            className="lg:hidden absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-40 w-[calc(100%-2rem)] max-w-md bg-black/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-5 flex items-center gap-4 cursor-pointer shadow-2xl animate-reveal [animation-delay:600ms] opacity-0 transition-transform active:scale-95"
           >
             <Search className="w-6 h-6 text-white ml-2 opacity-80 shrink-0" />
             
