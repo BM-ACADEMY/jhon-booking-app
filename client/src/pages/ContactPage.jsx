@@ -91,6 +91,13 @@ const ContactPage = () => {
       value: settings.phone,
     },
     {
+      icon: <MessageSquare className="w-5 h-5" />,
+      label: 'WhatsApp',
+      value: '+91 8946022554',
+      description: 'Chat with us on WhatsApp.',
+      link: 'https://wa.me/918946022554'
+    },
+    {
       icon: <Mail className="w-5 h-5" />,
       label: 'Email Us',
       value: settings.email,
@@ -161,18 +168,22 @@ const ContactPage = () => {
             </div>
 
             <div className="space-y-4">
-              {contactInfo.map((item, index) => (
-                <div key={index} className="flex gap-5 p-6 bg-white border border-stone-200 hover:border-amber-300 hover:shadow-lg hover:shadow-stone-200 transition-all duration-300 group rounded-sm">
-                  <div className="w-12 h-12 bg-stone-50 flex items-center justify-center text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition-colors duration-300 rounded-sm shrink-0">
-                    {item.icon}
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">{item.label}</p>
-                    <p className="text-base font-serif text-stone-900">{item.value}</p>
-                    <p className="text-sm text-stone-500 mt-1 font-light">{item.description}</p>
-                  </div>
-                </div>
-              ))}
+              {contactInfo.map((item, index) => {
+                const CardWrapper = item.link ? 'a' : 'div';
+                const wrapperProps = item.link ? { href: item.link, target: '_blank', rel: 'noopener noreferrer' } : {};
+                return (
+                  <CardWrapper key={index} {...wrapperProps} className={`flex gap-5 p-6 bg-white border border-stone-200 hover:border-amber-300 hover:shadow-lg hover:shadow-stone-200 transition-all duration-300 group rounded-sm ${item.link ? 'cursor-pointer block' : ''}`}>
+                    <div className="w-12 h-12 bg-stone-50 flex items-center justify-center text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition-colors duration-300 rounded-sm shrink-0">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">{item.label}</p>
+                      <p className="text-base font-serif text-stone-900 group-hover:text-amber-700 transition-colors duration-300">{item.value}</p>
+                      <p className="text-sm text-stone-500 mt-1 font-light">{item.description}</p>
+                    </div>
+                  </CardWrapper>
+                );
+              })}
             </div>
 
             {/* Social Media Links */}
