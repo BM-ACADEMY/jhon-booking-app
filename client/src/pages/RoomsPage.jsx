@@ -323,8 +323,9 @@ const RoomsPage = () => {
     return () => window.removeEventListener('booking-search-sync', handleSync);
   }, [checkInInput, checkOutInput, adultsInput, childrenInput, infantsInput, roomsCountInput]);
 
-  // Hero section data
-  const [hero, setHero] = useState(null);
+  // Page Content for Hero Banner
+  const [pageContent, setPageContent] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
 
@@ -365,7 +366,9 @@ const RoomsPage = () => {
   }, []);
 
   useEffect(() => {
-    api.get('/hero').then(res => setHero(res.data)).catch(() => {});
+    api.get('/page-content/rooms').then(res => {
+      setPageContent(res.data);
+    }).catch(() => {});
   }, []);
 
   // General Page Data States
@@ -753,23 +756,25 @@ const RoomsPage = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const paginatedRooms = sortedRooms.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Hero derived values
-  const firstSlide = hero?.slides?.[0];
-  const heroVideoSrc = firstSlide?.videoUrl
-    ? (firstSlide.videoUrl.startsWith('http') ? firstSlide.videoUrl : `${SERVER_URL}${firstSlide.videoUrl}`)
-    : (hero?.videoUrl
-        ? (hero.videoUrl.startsWith('http') ? hero.videoUrl : `${SERVER_URL}${hero.videoUrl}`)
-        : null);
+  // Banner Image handling
+  const getFullUrl = (src) => {
+    if (!src) return '';
+    if (src.startsWith('http') || src.startsWith('data:')) return src;
+    return `${SERVER_URL}${src}`;
+  };
 
-  const heroImageSrc = firstSlide?.backgroundImage
-    ? (firstSlide.backgroundImage.startsWith('http') ? firstSlide.backgroundImage : `${SERVER_URL}${firstSlide.backgroundImage}`)
-    : (hero?.backgroundImage
-        ? (hero.backgroundImage.startsWith('http') ? hero.backgroundImage : `${SERVER_URL}${hero.backgroundImage}`)
-        : '');
+  const bannerImg = pageContent?.bannerImage ? getFullUrl(pageContent.bannerImage) : "";
+  const bannerImages = pageContent?.bannerImages && pageContent.bannerImages.length > 0
+    ? pageContent.bannerImages.map(img => getFullUrl(img))
+    : (bannerImg ? [bannerImg] : ["https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1920&q=80"]);
 
-  const heroMobileImageSrc = firstSlide?.mobileImage
-    ? (firstSlide.mobileImage.startsWith('http') ? firstSlide.mobileImage : `${SERVER_URL}${firstSlide.mobileImage}`)
-    : null;
+  useEffect(() => {
+    if (bannerImages.length === 0) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % bannerImages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [bannerImages.length]);
 
   const dateText = checkInInput && checkOutInput
     ? `${checkInInput.getDate()} ${checkInInput.toLocaleString('default', { month: 'short' })} – ${checkOutInput.getDate()} ${checkOutInput.toLocaleString('default', { month: 'short' })}`
@@ -889,7 +894,7 @@ const RoomsPage = () => {
            HERO SECTION  (mirrors HomePage HeroSection)
          ══════════════════════════════════════════ */}
       <>
-        <section className="relative h-[220px] md:h-[260px] lg:h-[300px] font-sans flex flex-col bg-gray-900 lg:overflow-visible shadow-xl z-[60]">
+        <section className="relative min-h-[420px] sm:min-h-[450px] lg:min-h-0 lg:h-[520px] font-sans flex flex-col bg-gray-900 lg:overflow-visible shadow-xl z-[60]">
           <style>{`
             @keyframes rooms-reveal {
               from { opacity: 0; transform: translateY(22px); filter: blur(8px); }
@@ -999,29 +1004,43 @@ const RoomsPage = () => {
           `}</style>
 
 
-          {/* Background — overflow-hidden + matching radius so image clips to curved bottom */}
+          {/* Background Carousel */}
           <div className="absolute inset-0 z-0 overflow-hidden">
-            {heroVideoSrc ? (
-              <video key={heroVideoSrc} autoPlay muted loop playsInline className="w-full h-full object-cover opacity-90">
-                <source src={heroVideoSrc} />
-              </video>
-            ) : (
-              <>
-                {heroMobileImageSrc ? (
-                  <>
-                    <img src={heroImageSrc} alt="Rooms hero desktop" className="hidden md:block w-full h-full object-cover" />
-                    <img src={heroMobileImageSrc} alt="Rooms hero mobile" className="block md:hidden w-full h-full object-cover" />
-                  </>
-                ) : (
-                  <img src={heroImageSrc} alt="Rooms hero" className="w-full h-full object-cover" />
-                )}
-              </>
-            )}
-            <div className="absolute inset-0 bg-black/45" />
+            <div 
+              className="flex w-full h-full transition-transform duration-1000 ease-in-out" 
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {bannerImages.map((img, index) => (
+                <div key={index} className="w-full h-full flex-shrink-0 relative">
+                  <img
+                    src={img}
+                    alt={`Banner Slide ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    style={{ imageOrientation: 'from-image' }}
+                  />
+                  <div className="absolute inset-0 bg-black/45" />
+                </div>
+              ))}
+            </div>
+
+
           </div>
 
-          {/* Content — search bar only, no title/subtitle */}
+          {/* Content — search bar and optional title/subtitle */}
           <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center h-full pt-24 pb-4">
+            
+            {pageContent?.bannerTitle && (
+              <div className="mb-8 text-center px-4 w-full" style={{ zIndex: 10 }}>
+                <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white font-serif mb-4 drop-shadow-lg">
+                  {pageContent.bannerTitle}
+                </h1>
+                {pageContent?.bannerSubtitle && (
+                  <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto drop-shadow-md">
+                    {pageContent.bannerSubtitle}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* ── Mobile search pill ── */}
             <div

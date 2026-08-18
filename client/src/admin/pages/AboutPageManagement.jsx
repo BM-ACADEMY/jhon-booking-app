@@ -21,8 +21,9 @@ const AboutPageManagement = () => {
   });
 
   // Local file refs & previews
-  const [bannerFile, setBannerFile] = useState(null);
-  const [bannerPreview, setBannerPreview] = useState('');
+  const [existingBannerImages, setExistingBannerImages] = useState([]);
+  const [newBannerFiles, setNewBannerFiles] = useState([]);
+  const [newBannerPreviews, setNewBannerPreviews] = useState([]);
   
   const [storyFiles, setStoryFiles] = useState([null, null, null, null]);
   const [storyPreviews, setStoryPreviews] = useState(['', '', '', '']);
@@ -53,8 +54,13 @@ const AboutPageManagement = () => {
           storyImages: data.storyImages && data.storyImages.length === 4 ? data.storyImages : ['', '', '', ''],
         });
         
-        if (data.bannerImage) {
-          setBannerPreview(getFullUrl(data.bannerImage));
+        
+        if (data.bannerImages && data.bannerImages.length > 0) {
+          setExistingBannerImages(data.bannerImages.map(img => getFullUrl(img)));
+        } else if (data.bannerImage) {
+          setExistingBannerImages([getFullUrl(data.bannerImage)]);
+        } else {
+          setExistingBannerImages([]);
         }
         if (data.storyImages) {
           setStoryPreviews(data.storyImages.map(img => getFullUrl(img)));
@@ -73,16 +79,44 @@ const AboutPageManagement = () => {
   }, []);
 
   const handleBannerChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Upload 5MB only');
-        e.target.value = '';
-        return;
-      }
-      setBannerFile(file);
-      setBannerPreview(URL.createObjectURL(file));
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    
+    const currentTotal = existingBannerImages.length + newBannerFiles.length;
+    if (currentTotal + files.length > 3) {
+      toast.error('You can only upload a maximum of 3 banner images.');
+      e.target.value = '';
+      return;
     }
+
+    const validFiles = files.filter(f => {
+      if (f.size > 5 * 1024 * 1024) {
+        toast.error(`${f.name} exceeds 5MB limit`);
+        return false;
+      }
+      return true;
+    });
+
+    setNewBannerFiles(prev => [...prev, ...validFiles]);
+    const previews = validFiles.map(f => URL.createObjectURL(f));
+    setNewBannerPreviews(prev => [...prev, ...previews]);
+    e.target.value = '';
+  };
+
+  const removeExistingBannerImage = (index) => {
+    const updated = [...existingBannerImages];
+    updated.splice(index, 1);
+    setExistingBannerImages(updated);
+  };
+
+  const removeNewBannerImage = (index) => {
+    const updatedFiles = [...newBannerFiles];
+    updatedFiles.splice(index, 1);
+    setNewBannerFiles(updatedFiles);
+
+    const updatedPreviews = [...newBannerPreviews];
+    updatedPreviews.splice(index, 1);
+    setNewBannerPreviews(updatedPreviews);
   };
 
   const handleStoryImageChange = (index, e) => {
@@ -113,9 +147,12 @@ const AboutPageManagement = () => {
       formData.append('storyTitle', content.storyTitle);
       formData.append('storyContent', JSON.stringify(content.storyContent));
 
-      if (bannerFile) {
-        formData.append('bannerImage', bannerFile);
-      }
+      const relativeExisting = existingBannerImages.map(url => url.replace(baseUrl, ''));
+      formData.append('existingBannerImages', JSON.stringify(relativeExisting));
+
+      newBannerFiles.forEach((file) => {
+        formData.append('bannerImages', file);
+      });
 
       storyFiles.forEach((file, index) => {
         if (file) {
@@ -128,7 +165,8 @@ const AboutPageManagement = () => {
       });
 
       toast.success('About Page updated successfully!');
-      setBannerFile(null);
+      setNewBannerFiles([]);
+      setNewBannerPreviews([]);
       setStoryFiles([null, null, null, null]);
       fetchContent();
     } catch (err) {
@@ -155,6 +193,19 @@ const AboutPageManagement = () => {
             <Layout className="w-6 h-6 text-primary-600" /> About Page Content
           </h1>
           <p className="text-xs sm:text-sm text-gray-500">Configure and customize your website's About Us page elements.</p>
+        </div>
+        <div className="flex shrink-0">
+          <Button onClick={handleSave} disabled={saving} className="min-w-[150px] font-bold gap-2 text-xs sm:text-sm">
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" /> Save Content
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
@@ -194,38 +245,65 @@ const AboutPageManagement = () => {
                 />
               </div>
 
-              {/* Compact Banner Image Upload Dropzone */}
-              <div className="space-y-1.5">
+              {/* Dynamic Banner Images Gallery */}
+              <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <Label className="text-xs font-bold text-gray-700">Hero Banner Image</Label>
-                  <span className="text-[10px] text-gray-400">Max 5MB (16:9 recommended)</span>
+                  <Label className="text-xs font-bold text-gray-700">Hero Banner Slides</Label>
+                  <span className="text-[10px] text-gray-400">Max 5MB per image (16:9 recommended)</span>
                 </div>
-                <input
-                  type="file"
-                  ref={bannerInputRef}
-                  onChange={handleBannerChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <div 
-                  onClick={() => bannerInputRef.current?.click()}
-                  className="border border-dashed border-gray-300 rounded-xl p-2 text-center cursor-pointer hover:border-primary-500 transition-all bg-white overflow-hidden relative group h-24 flex flex-col items-center justify-center"
-                >
-                  {bannerPreview ? (
-                    <div className="w-full h-full relative">
-                      <img src={bannerPreview} alt="Banner Preview" className="w-full h-full object-cover rounded-lg" />
-                      <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
-                        <Upload className="w-4 h-4 text-white mb-0.5" />
-                        <span className="text-[10px] text-white font-bold uppercase tracking-wider">Change Banner Image</span>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {/* Existing Images */}
+                  {existingBannerImages.map((src, idx) => (
+                    <div key={`existing-${idx}`} className="relative group rounded-lg overflow-hidden border border-gray-200 aspect-video">
+                      <img src={src} alt="Slide" className="w-full h-full object-cover" style={{ imageOrientation: 'from-image' }} />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          size="icon" 
+                          className="w-8 h-8 rounded-full"
+                          onClick={() => removeExistingBannerImage(idx)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
-                  ) : (
-                    <>
-                      <Upload className="w-5 h-5 mx-auto mb-1 text-gray-400" />
-                      <p className="text-xs font-semibold text-gray-700">Click to upload Banner Image</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">PNG, JPG, WEBP up to 5MB</p>
-                    </>
-                  )}
+                  ))}
+
+                  {/* New Previews */}
+                  {newBannerPreviews.map((src, idx) => (
+                    <div key={`new-${idx}`} className="relative group rounded-lg overflow-hidden border border-green-500 aspect-video">
+                      <img src={src} alt="New Slide" className="w-full h-full object-cover" style={{ imageOrientation: 'from-image' }} />
+                      <div className="absolute top-2 right-2 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">New</div>
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          size="icon" 
+                          className="w-8 h-8 rounded-full"
+                          onClick={() => removeNewBannerImage(idx)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <input
+                    type="file"
+                    ref={bannerInputRef}
+                    onChange={handleBannerChange}
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                  />
+                </div>
+                <div className="flex justify-start mt-4">
+                  <Button type="button" variant="outline" className="border-primary-200 text-primary-700 hover:bg-primary-50" onClick={() => bannerInputRef.current?.click()}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Add Slide
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -310,20 +388,6 @@ const AboutPageManagement = () => {
               </div>
             </CardContent>
           </Card>
-
-          <div className="flex justify-end">
-            <Button type="submit" disabled={saving} className="min-w-[150px] font-bold gap-2 text-xs sm:text-sm">
-              {saving ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" /> Save Content
-                </>
-              )}
-            </Button>
-          </div>
         </div>
 
         {/* Live Preview Sidebar */}
@@ -337,8 +401,8 @@ const AboutPageManagement = () => {
             <CardContent className="p-4 space-y-5">
               {/* Preview Hero Banner */}
               <div className="w-full aspect-video rounded-xl bg-slate-950 overflow-hidden relative flex flex-col justify-center items-center p-4 border border-slate-800 shadow-sm">
-                {bannerPreview ? (
-                  <img src={bannerPreview} alt="Banner Preview" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                {existingBannerImages.length > 0 || newBannerPreviews.length > 0 ? (
+                  <img src={existingBannerImages[0] || newBannerPreviews[0]} alt="Banner Preview" className="absolute inset-0 w-full h-full object-cover opacity-60" />
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-800" />
                 )}

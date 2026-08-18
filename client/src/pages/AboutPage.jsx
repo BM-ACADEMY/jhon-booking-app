@@ -4,6 +4,7 @@ import api from '../api';
 
 const AboutPage = () => {
   const [content, setContent] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const baseUrl = import.meta.env.VITE_BASE_URL && import.meta.env.VITE_BASE_URL !== 'undefined' ? import.meta.env.VITE_BASE_URL : '';
 
   useEffect(() => {
@@ -56,37 +57,51 @@ const AboutPage = () => {
     return `${baseUrl}${src}`;
   };
 
-  const bannerImg = content?.bannerImage || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1920&q=80";
-  const bannerTitle = content?.bannerTitle || "About Us";
-  const bannerSubtitle = content?.bannerSubtitle || "Learn more about our heritage and values";
+  const bannerImg = content?.bannerImage ? getFullUrl(content.bannerImage) : "";
+  
+  const bannerImages = content?.bannerImages && content.bannerImages.length > 0 
+    ? content.bannerImages.map(img => getFullUrl(img))
+    : (bannerImg ? [bannerImg] : []);
 
-  const storyTitle = content?.storyTitle || "A New Standard of Hospitality";
-  const storyParas = content?.storyContent && content.storyContent.length > 0 ? content.storyContent : [
-    "Founded on the principles of elegance and exceptional service, The Balified Villa has grown from a single boutique hotel to a world-renowned destination for luxury travelers.",
-    "We believe that every stay should be more than just a room—it should be an experience. Our philosophy blends traditional hospitality with modern innovation, ensuring that every guest feels truly at home while enjoying the finest luxuries.",
-    "Our commitment to excellence has earned us numerous accolades, but our greatest reward remains the smile on our guests' faces and the memories they take home."
-  ];
+  useEffect(() => {
+    if (bannerImages.length === 0) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % bannerImages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [bannerImages.length]);
 
-  const storyImgs = content?.storyImages || [
-    "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=800",
-    "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800",
-    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800",
-    "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800"
-  ];
+  const bannerTitle = content?.bannerTitle || "";
+  const bannerSubtitle = content?.bannerSubtitle || "";
+
+  const storyTitle = content?.storyTitle || "";
+  const storyParas = content?.storyContent && content.storyContent.length > 0 ? content.storyContent : [];
+
+  const storyImgs = content?.storyImages || [];
 
   return (
     <div className="bg-stone-50 font-sans text-stone-800 animate-in fade-in duration-500">
       {/* Hero Section */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-        {/* Background Image & Overlay */}
-        <div className="absolute inset-0">
-          <img
-            src={getFullUrl(bannerImg)}
-            alt="The Balified Villa Exterior"
-            className="w-full h-full object-cover"
-          />
-          {/* Dark overlay to ensure text readability */}
-          <div className="absolute inset-0 bg-black/55" />
+        {/* Background Slides */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <div 
+            className="flex w-full h-full transition-transform duration-1000 ease-in-out" 
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          >
+            {bannerImages.map((img, index) => (
+              <div key={index} className="w-full h-full flex-shrink-0 relative">
+                <img
+                  src={img}
+                  alt={`Banner Slide ${index + 1}`}
+                  className="w-full h-full object-cover"
+                  style={{ imageOrientation: 'from-image' }}
+                />
+                {/* Dark overlay to ensure text readability */}
+                <div className="absolute inset-0 bg-black/55" />
+              </div>
+            ))}
+          </div>
         </div>
         
         {/* Content Container */}
@@ -101,6 +116,24 @@ const AboutPage = () => {
             </p>
           )}
         </div>
+
+        {/* Dot Navigation */}
+        {bannerImages.length > 1 && (
+          <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
+            {bannerImages.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                  currentSlide === idx 
+                    ? 'bg-white w-8' 
+                    : 'bg-white/50 hover:bg-white/80'
+                }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Story Section */}

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-const ContactPageManagement = () => {
+const RoomPageManagement = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [content, setContent] = useState({
@@ -33,7 +33,7 @@ const ContactPageManagement = () => {
   const fetchContent = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/page-content/contact');
+      const res = await api.get('/page-content/rooms');
       if (res.data) {
         const data = res.data;
         setContent({
@@ -51,7 +51,7 @@ const ContactPageManagement = () => {
       }
     } catch (err) {
       console.error(err);
-      toast.error('Failed to load Contact Page settings');
+      toast.error('Failed to load Room Page settings');
     } finally {
       setLoading(false);
     }
@@ -117,11 +117,11 @@ const ContactPageManagement = () => {
         formData.append('bannerImages', file);
       });
 
-      await api.put('/page-content/contact', formData, {
+      await api.put('/page-content/rooms', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      toast.success('Contact Page updated successfully!');
+      toast.success('Room Page updated successfully!');
       setNewBannerFiles([]);
       setNewBannerPreviews([]);
       fetchContent();
@@ -146,9 +146,9 @@ const ContactPageManagement = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-            <Layout className="w-6 h-6 text-primary-600" /> Contact Page Content
+            <Layout className="w-6 h-6 text-primary-600" /> Room Page Content
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500">Configure and customize your website's Contact Us page banner elements.</p>
+          <p className="text-xs sm:text-sm text-gray-500">Configure and customize your website's Room page banner elements.</p>
         </div>
         <div className="flex shrink-0">
           <Button onClick={handleSave} disabled={saving} className="min-w-[150px] font-bold gap-2 text-xs sm:text-sm">
@@ -182,8 +182,7 @@ const ContactPageManagement = () => {
                   id="bannerTitle"
                   value={content.bannerTitle}
                   onChange={(e) => setContent({ ...content, bannerTitle: e.target.value })}
-                  placeholder="e.g. Contact Us"
-                  required
+                  placeholder="e.g. Our Rooms"
                   className="bg-white font-medium text-gray-900"
                 />
               </div>
@@ -194,7 +193,7 @@ const ContactPageManagement = () => {
                   id="bannerSubtitle"
                   value={content.bannerSubtitle}
                   onChange={(e) => setContent({ ...content, bannerSubtitle: e.target.value })}
-                  placeholder="e.g. Have questions? We're here to help you plan your perfect stay."
+                  placeholder="e.g. Find the perfect room for your stay."
                   rows={2}
                   className="bg-white font-medium text-gray-900"
                 />
@@ -282,7 +281,7 @@ const ContactPageManagement = () => {
                 )}
                 <div className="absolute inset-0 bg-black/35" />
                 <div className="relative z-10 text-center">
-                  <span className="text-[#d9f969] font-bold tracking-widest uppercase text-[8px] block mb-1">Get in Touch</span>
+                  <span className="text-[#d9f969] font-bold tracking-widest uppercase text-[8px] block mb-1">Our Accommodations</span>
                   <h2 className="text-white text-base sm:text-lg font-bold font-serif leading-tight">{content.bannerTitle || 'Banner Title'}</h2>
                   <p className="text-gray-200 text-[10px] font-light mt-1.5 max-w-[200px] mx-auto line-clamp-2">{content.bannerSubtitle}</p>
                 </div>
@@ -295,4 +294,4 @@ const ContactPageManagement = () => {
   );
 };
 
-export default ContactPageManagement;
+export default RoomPageManagement;

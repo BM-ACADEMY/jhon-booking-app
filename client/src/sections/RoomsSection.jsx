@@ -263,13 +263,13 @@ const RoomsSection = () => {
             {room.bathrooms > 0 && (
               <div className="flex items-center gap-1.5">
                 <Bath className="w-3.5 h-3.5 text-gray-400" />
-                <span>{room.bathrooms} Bath{room.bathrooms > 1 ? 's' : ''}</span>
+                <span>{room.bathrooms === 1 ? 'Bath Tub' : `${room.bathrooms} Bath Tubs`}</span>
               </div>
             )}
             {room.showers > 0 && (
               <div className="flex items-center gap-1.5">
                 <ShowerHead className="w-3.5 h-3.5 text-gray-400" />
-                <span>{room.showers} Shower{room.showers > 1 ? 's' : ''}</span>
+                <span>{room.showers === 1 ? 'Bathroom' : `${room.showers} Bathrooms`}</span>
               </div>
             )}
             {room.size && (

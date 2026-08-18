@@ -18,6 +18,7 @@ import "yet-another-react-lightbox/styles.css";
 const SERVER_URL = import.meta.env.VITE_BASE_URL;
 
 // Import SVG Assets for Room Details
+import tagIcon from '../assets/icons/tag.svg';
 import airIcon from '@/assets/svg/air.svg';
 import razorpayLogo from '../assets/razorpay.png';
 import bedLinenIcon from '@/assets/svg/bed linen.svg';
@@ -265,12 +266,12 @@ const RoomDetailPage = () => {
     return (val === 'null' || val === 'undefined') ? '' : (val || '');
   };
 
-  const checkInQuery = getQueryParam('checkIn');
-  const checkOutQuery = getQueryParam('checkOut');
-  const adultsQuery = parseInt(getQueryParam('adults') || getQueryParam('guests') || '2', 10);
-  const childrenQuery = parseInt(getQueryParam('children') || '0', 10);
-  const infantsQuery = parseInt(getQueryParam('infants') || '0', 10);
-  const roomsCountQuery = parseInt(getQueryParam('roomsCount') || getQueryParam('rooms') || '1', 10);
+  const checkInQuery = getQueryParam('checkIn') || localStorage.getItem('booking_checkIn') || '';
+  const checkOutQuery = getQueryParam('checkOut') || localStorage.getItem('booking_checkOut') || '';
+  const adultsQuery = parseInt(getQueryParam('adults') || getQueryParam('guests') || localStorage.getItem('booking_adults') || '2', 10);
+  const childrenQuery = parseInt(getQueryParam('children') || localStorage.getItem('booking_children') || '0', 10);
+  const infantsQuery = parseInt(getQueryParam('infants') || localStorage.getItem('booking_infants') || '0', 10);
+  const roomsCountQuery = parseInt(getQueryParam('roomsCount') || getQueryParam('rooms') || localStorage.getItem('booking_roomsCount') || '1', 10);
 
   const [checkIn, setCheckIn] = useState(checkInQuery);
   const [checkOut, setCheckOut] = useState(checkOutQuery);
@@ -280,6 +281,29 @@ const RoomDetailPage = () => {
   const [pets, setPets] = useState(0);
   const [roomsCount, setRoomsCount] = useState(roomsCountQuery);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
+  const [showAddonsDropdown, setShowAddonsDropdown] = useState(true);
+  const guestDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (guestDropdownRef.current && !guestDropdownRef.current.contains(e.target)) {
+        setShowGuestDropdown(false);
+      }
+    };
+    if (showGuestDropdown) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showGuestDropdown]);
+
+  useEffect(() => {
+    localStorage.setItem('booking_checkIn', checkIn || '');
+    localStorage.setItem('booking_checkOut', checkOut || '');
+    localStorage.setItem('booking_adults', adults);
+    localStorage.setItem('booking_children', children);
+    localStorage.setItem('booking_infants', infants);
+    localStorage.setItem('booking_roomsCount', roomsCount);
+  }, [checkIn, checkOut, adults, children, infants, roomsCount]);
 
   const [remainingRooms, setRemainingRooms] = useState(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
@@ -1239,7 +1263,10 @@ const RoomDetailPage = () => {
 
   const initiateGuestBookingPayment = async () => {
     if (!validateGuestInfo()) {
-      setActiveAccordion(2);
+      const el = document.getElementById('guest-info-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
 
@@ -1592,13 +1619,13 @@ const RoomDetailPage = () => {
                     {room.bathrooms > 0 && (
                       <div className="flex items-center gap-1.5">
                         <Bath className="w-4 h-4 text-gray-500" />
-                        <span>{room.bathrooms} Bath{room.bathrooms > 1 ? 's' : ''}</span>
+                        <span>{room.bathrooms === 1 ? 'Bath Tub' : `${room.bathrooms} Bath Tubs`}</span>
                       </div>
                     )}
                     {room.showers > 0 && (
                       <div className="flex items-center gap-1.5">
                         <ShowerHead className="w-4 h-4 text-gray-500" />
-                        <span>{room.showers} Shower{room.showers > 1 ? 's' : ''}</span>
+                        <span>{room.showers === 1 ? 'Bathroom' : `${room.showers} Bathrooms`}</span>
                       </div>
                     )}
                     {room.size && (
@@ -1755,22 +1782,29 @@ const RoomDetailPage = () => {
                 <h2 className="text-[22px] font-semibold text-[#222222] mb-8">Things to know</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 lg:gap-x-32 gap-y-10">
                   {/* Cancellation Policy */}
-                  <div>
-                    <Icons.CalendarX className="w-7 h-7 text-[#222222] mb-5" strokeWidth={1.5} />
-                    <h3 className="font-semibold text-[#222222] text-[16px] mb-3">Cancellation policy</h3>
-                    <p className="text-[#222222] text-[16px] font-normal leading-relaxed mb-4">
-                      Free cancellation for 48 hours. After that, the reservation is non-refundable.
-                    </p>
+                  <div className="flex gap-3">
+                    <Icons.CalendarX className="w-6 h-6 text-[#222222] shrink-0" strokeWidth={1.5} />
+                    <div>
+                      <h3 className="font-semibold text-[#222222] text-[16px] mb-2">Cancellation policy</h3>
+                      <p className="text-[#222222] text-[16px] font-normal leading-relaxed mb-2">
+                        Free cancellation for 48 hours. After that, the reservation is non-refundable.
+                      </p>
+                      <Link to="/terms-and-conditions" target='_blank' className="text-[#222222] text-[15px] font-semibold underline hover:text-gray-600 transition-colors">
+                        Terms and Conditions
+                      </Link>
+                    </div>
                   </div>
 
                   {/* House Rules */}
-                  <div>
-                    <Icons.Key className="w-7 h-7 text-[#222222] mb-5" strokeWidth={1.5} />
-                    <h3 className="font-semibold text-[#222222] text-[16px] mb-3">House rules</h3>
-                    <div className="space-y-3 text-[#222222] text-[16px] font-normal">
-                      <p>Check-in: {resolvedTimings.checkIn} – 11:00 pm</p>
-                      <p>Checkout before {resolvedTimings.checkOut}</p>
-                      <p>{room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)} guests maximum</p>
+                  <div className="flex gap-3">
+                    <Icons.Key className="w-6 h-6 text-[#222222] shrink-0" strokeWidth={1.5} />
+                    <div>
+                      <h3 className="font-semibold text-[#222222] text-[16px] mb-2">House rules</h3>
+                      <div className="space-y-3 text-[#222222] text-[16px] font-normal">
+                        <p>Check-in: {resolvedTimings.checkIn} – 11:00 pm</p>
+                        <p>Checkout before {resolvedTimings.checkOut}</p>
+                        <p>{room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)} guests maximum</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1784,31 +1818,20 @@ const RoomDetailPage = () => {
                   
 
                   {/* Step 2 Header: Enhance Your Stay */}
-                  <div className="border-b border-gray-200">
-                    <div className={`px-6 py-4 flex items-center justify-between ${activeAccordion === 1 ? 'bg-[#1f2937] text-white' : 'bg-[#f3f4f6] text-gray-800'}`}>
-                      <h3 className="font-bold text-sm">Enhance Your Stay</h3>
-                      {activeAccordion !== 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setActiveAccordion(1)}
-                          className="flex items-center gap-1 text-xs font-bold text-gray-750 hover:text-black transition-colors cursor-pointer border-none bg-transparent"
-                        >
-                          <Icons.Edit className="w-3.5 h-3.5" /> Change
-                        </button>
-                      )}
+                  <div className="border-b border-gray-100">
+                    <div className="px-6 py-4 flex items-center justify-between bg-[#374151] text-white">
                     </div>
 
-                    {activeAccordion === 1 && (
-                      <div className="p-6 bg-white space-y-4">
-                        <p className="text-xs text-gray-500">Select premium add-on services to customize your experience, or skip to continue.</p>
+                    <div className="p-6 bg-white space-y-4">
+                      <p className="text-xs text-gray-500">Select premium add-on services to customize your experience (optional).</p>
 
-                        {addons.length === 0 ? (
-                          <p className="text-xs text-gray-400 italic">No add-ons available for selection.</p>
-                        ) : (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[400px] overflow-y-auto p-1 pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
-                            {addons.map((addon) => {
-                              const isSelected = selectedAddons.some(a => a._id === addon._id);
-                              return (
+                      {addons.length === 0 ? (
+                        <p className="text-xs text-gray-400 italic">No add-ons available for selection.</p>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[400px] overflow-y-auto p-1 pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+                          {addons.map((addon) => {
+                            const isSelected = selectedAddons.some(a => a._id === addon._id);
+                            return (
                                 <div
                                   key={addon._id}
                                   className="border border-gray-200 rounded-sm overflow-hidden bg-white flex flex-col transition-all hover:shadow-md"
@@ -1871,46 +1894,23 @@ const RoomDetailPage = () => {
                           </div>
                         )}
 
-                        <div className="pt-2 flex items-center justify-between gap-4">
-                          <div>
-                            {selectedAddons.length > 0 && (
-                              <span className="text-xs font-semibold text-gray-600">
-                                {selectedAddons.length} service(s) selected (₹{selectedAddons.reduce((sum, a) => sum + a.price, 0).toLocaleString('en-IN')})
-                              </span>
-                            )}
+                        {selectedAddons.length > 0 && (
+                          <div className="pt-2">
+                            <span className="text-xs font-semibold text-gray-600">
+                              {selectedAddons.length} service(s) selected (₹{selectedAddons.reduce((sum, a) => sum + a.price, 0).toLocaleString('en-IN')})
+                            </span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedAddons([]);
-                                setActiveAccordion(2);
-                              }}
-                              className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs px-4 py-2.5 rounded-lg border-none transition-colors cursor-pointer"
-                            >
-                              Skip
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setActiveAccordion(2)}
-                              className="bg-black hover:bg-black/90 text-white font-bold text-xs px-4 py-2.5 rounded-lg border-none transition-colors cursor-pointer"
-                            >
-                              Continue
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                        )}
+                    </div>
                   </div>
 
                   {/* Step 3 Header & Body: Guest Information */}
-                  <div>
-                    <div className={`px-6 py-4 ${activeAccordion === 2 ? 'bg-[#374151] text-white' : 'bg-[#f3f4f6] text-gray-800'}`}>
+                  <div id="guest-info-section">
+                    <div className="px-6 py-4 bg-[#374151] text-white">
                       <h3 className="font-bold text-sm">Guest Information</h3>
                     </div>
 
-                    {activeAccordion === 2 && (
-                      <div className="p-6 bg-white">
+                    <div className="p-6 bg-white">
                         {user?.role === 'admin' ? (
                           <div className="max-w-xl mx-auto bg-purple-50 border border-purple-100 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-4 text-left">
@@ -1930,8 +1930,8 @@ const RoomDetailPage = () => {
                         ) : (
                           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                             
-                            {/* FORM FIELDS (LEFT SIDE) */}
-                            <div className="lg:col-span-7 space-y-5">
+                            {/* FORM FIELDS */}
+                            <div className="lg:col-span-12 max-w-2xl mx-auto w-full space-y-5">
                               
                               <div>
                                 <input
@@ -2054,82 +2054,12 @@ const RoomDetailPage = () => {
                                 </label>
                               </div>
 
-                              {/* Submit Button */}
-                              <div>
-                                <button
-                                  type="button"
-                                  onClick={initiateGuestBookingPayment}
-                                  className="w-full bg-[#2B84EA] hover:bg-[#1C6DD0] text-white font-bold text-[15px] py-4 rounded-xl transition-all border-none cursor-pointer tracking-wide flex items-center justify-center gap-3 shadow-md hover:shadow-lg active:scale-[0.99]"
-                                >
-                                  <img src={razorpayLogo} alt="Razorpay" className="h-5 object-contain rounded-sm px-1.5" />
-                                  <span>Pay & Confirm Booking</span>
-                                </button>
-                              </div>
+                              {/* Submit Button moved to Sticky Card */}
 
                             </div>
-
-                            {/* sticky SUMMARY CARD (RIGHT SIDE) */}
-                            <div className="lg:col-span-5 bg-white border border-gray-200/80 rounded-3xl p-7 space-y-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                              <h3 className="font-extrabold text-[15px] text-gray-900 border-b border-gray-100 pb-3">Your Booking Details</h3>
-                              
-                              <div className="flex justify-between items-start gap-2">
-                                <span className="font-bold text-gray-900 text-[14px]">The Balified Villa</span>
-                                <span className="font-bold text-gray-900 text-[14px]">₹{(total + getAppliedTax(total) + selectedAddons.reduce((sum, a) => sum + a.price, 0) + extraBedTotal).toLocaleString('en-IN')}</span>
-                              </div>
-
-                              <div className="bg-gray-50/80 rounded-2xl p-4 text-[12px] text-gray-500 font-medium space-y-1.5">
-                                <div className="text-gray-700">{formatDisplayDate(checkIn, 'en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })} - {formatDisplayDate(checkOut, 'en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                                <div>{nights} Night{nights > 1 ? 's' : ''} — {roomsCount} Room{roomsCount > 1 ? 's' : ''}, {adults} Adult{adults > 1 ? 's' : ''}</div>
-                              </div>
-
-                              <div className="space-y-3 border-t border-gray-100 pt-4 text-[13px]">
-                                <div className="flex justify-between items-center text-gray-600 gap-2">
-                                  <span className="truncate" title={room.name}>Room - {room.name}</span>
-                                  <span className="font-semibold text-gray-900 shrink-0">₹{total.toLocaleString('en-IN')}</span>
-                                </div>
-                                
-                                {selectedAddons.length > 0 && (
-                                  <div className="space-y-2 pt-2 border-t border-gray-50">
-                                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Add-on Services</span>
-                                    {selectedAddons.map(a => (
-                                      <div key={a._id} className="flex justify-between text-gray-500 text-[12px]">
-                                        <span>• {a.name}</span>
-                                        <span>₹{a.price.toLocaleString('en-IN')}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {extraBedQty > 0 && (
-                                  <div className="flex justify-between text-gray-500 text-[12px] pt-2 border-t border-gray-50">
-                                    <span>• Extra Bed ({extraBedQty} × {nights} night{nights > 1 ? 's' : ''})</span>
-                                    <span>₹{extraBedTotal.toLocaleString('en-IN')}</span>
-                                  </div>
-                                )}
-
-                                <div className="flex justify-between text-gray-600 border-t border-gray-100 pt-3">
-                                  <span>Sub Total</span>
-                                  <span className="font-semibold text-gray-900">₹{(total + selectedAddons.reduce((sum, a) => sum + a.price, 0) + extraBedTotal).toLocaleString('en-IN')}</span>
-                                </div>
-
-                                {getAppliedTaxPercent(total) > 0 && (
-                                  <div className="flex justify-between text-gray-600">
-                                    <span>Taxes and Fees ({getAppliedTaxPercent(total)}%)</span>
-                                    <span className="font-semibold text-gray-900">₹{getAppliedTax(total).toLocaleString('en-IN')}</span>
-                                  </div>
-                                )}
-
-                                <div className="flex justify-between text-gray-900 font-extrabold text-[15px] border-t border-gray-200 pt-4">
-                                  <span>Grand Total</span>
-                                  <span className="text-[#c5a880] text-[17px]">₹{(total + getAppliedTax(total) + selectedAddons.reduce((sum, a) => sum + a.price, 0) + extraBedTotal).toLocaleString('en-IN')}</span>
-                                </div>
-                              </div>
-                            </div>
-
                           </div>
                         )}
                       </div>
-                    )}
                   </div>
 
                 </div>
@@ -2140,11 +2070,11 @@ const RoomDetailPage = () => {
             {/* Right Column: Premium Sticky Booking Card (Desktop Only) */}
             <div className="hidden lg:block lg:col-span-1">
               <div className="sticky top-[90px] bg-white rounded-3xl border border-gray-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-8">
-                <div className="flex items-end gap-2 mb-6">
+                <div className={`flex items-end gap-2 mb-6 ${nights > 0 ? 'justify-center w-full' : ''}`}>
                   {nights > 0 ? (
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-gray-900">₹{average.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
-                      <span className="text-gray-500 font-medium ml-1">for {nights} night{nights !== 1 ? 's' : ''}</span>
+                    <div className="flex items-center justify-center gap-2 pb-1 pt-1 w-full">
+                      <img src={tagIcon} alt="tag" className="w-8 h-8 drop-shadow-sm" />
+                      <span className="text-[15px] font-semibold text-gray-800">Prices include all fees</span>
                     </div>
                   ) : (
                     <div className="flex items-baseline gap-2">
@@ -2154,7 +2084,7 @@ const RoomDetailPage = () => {
                   )}
                 </div>
 
-                <div className="bg-white border border-gray-300 rounded-2xl mb-6 relative z-30">
+                <div ref={guestDropdownRef} className="bg-white border border-gray-300 rounded-2xl mb-6 relative z-30">
                   <div className="flex border-b border-gray-300">
                     <div
                       onClick={() => {
@@ -2250,14 +2180,6 @@ const RoomDetailPage = () => {
                           </div>
                         </div>
                       )}
-
-                      <div className="text-[11px] text-gray-500 pt-2 leading-relaxed">
-                        This place has a maximum of {(room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)) * roomsCount} guests, not including infants.
-                      </div>
-
-                      <div className="flex justify-end pt-2">
-                        <button onClick={(e) => { e.stopPropagation(); setShowGuestDropdown(false); }} className="text-[15px] font-bold text-gray-900 underline cursor-pointer hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors">Close</button>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -2310,8 +2232,40 @@ const RoomDetailPage = () => {
                       ))}
                     </div>
 
+                    {selectedAddons.length > 0 && (
+                      <div className="pt-2">
+                        <div 
+                          className="flex items-center justify-between text-sm text-gray-600 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 -ml-1 rounded transition-colors"
+                          onClick={() => setShowAddonsDropdown(!showAddonsDropdown)}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium">Add-ons</span>
+                            <Icons.ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAddonsDropdown ? 'rotate-180' : ''}`} />
+                          </div>
+                          <span>₹{selectedAddons.reduce((sum, a) => sum + a.price, 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        {showAddonsDropdown && (
+                          <div className="pl-2.5 ml-1 border-l-2 border-gray-200 space-y-1.5">
+                            {selectedAddons.map(a => (
+                              <div key={a._id} className="flex justify-between text-[11px] text-gray-500">
+                                <span>{a.name}</span>
+                                <span>₹{a.price.toLocaleString('en-IN')}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {extraBedQty > 0 && (
+                      <div className="flex justify-between text-sm text-gray-600 pt-1">
+                        <span>Extra Bed ({extraBedQty})</span>
+                        <span>₹{extraBedTotal.toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+
                      {getAppliedTaxPercent(total) > 0 && (
-                      <div className="flex justify-between text-sm text-gray-550 font-semibold">
+                      <div className="flex justify-between text-sm text-gray-550 font-semibold pt-1">
                         <span>Tax ({getAppliedTaxPercent(total)}%)</span>
                         <span>₹{getAppliedTax(total).toLocaleString('en-IN')}</span>
                       </div>
@@ -2320,7 +2274,7 @@ const RoomDetailPage = () => {
                     <hr className="border-gray-200 my-4" />
                     <div className="flex justify-between font-bold text-gray-900 text-lg">
                       <span>Total</span>
-                      <span>₹{(total + getAppliedTax(total)).toLocaleString('en-IN')}</span>
+                      <span>₹{(total + getAppliedTax(total) + selectedAddons.reduce((sum, a) => sum + a.price, 0) + extraBedTotal).toLocaleString('en-IN')}</span>
                     </div>
                   </div>
                 )}
@@ -2339,17 +2293,26 @@ const RoomDetailPage = () => {
                   >
                     Go to Admin Bookings
                   </Link>
-                ) : (
+                ) : !(checkIn && checkOut) ? (
                   <button 
-                    onClick={handleBooking} 
-                    disabled={bookingLoading || !room.isAvailable || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed} 
-                    className="w-full bg-[#d9f969] hover:bg-[#cbf046] text-gray-900 font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm mt-4"
+                    onClick={() => toast.error('Please select check-in and check-out dates')} 
+                    className="w-full bg-[#d9f969] hover:bg-[#cbf046] text-gray-900 font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm mt-4 cursor-pointer"
                   >
-                    {bookingLoading && <Loader2 className="w-5 h-5 animate-spin" />}
                     {remainingRooms === 0 ? 'Sold Out' : (!clientOccupancyValidation.isAllowed ? 'Invalid Guests' : (room.isAvailable ? 'Book Now' : 'Check Availability'))}
                   </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={bookingLoading || paymentProcessing || !room.isAvailable || remainingRooms === 0 || !clientOccupancyValidation.isAllowed}
+                    onClick={initiateGuestBookingPayment}
+                    className="w-full bg-[#d9f969] hover:bg-[#cbf046] text-gray-900 font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm mt-4 cursor-pointer"
+                  >
+                    {(bookingLoading || paymentProcessing) && <Loader2 className="w-5 h-5 animate-spin mr-1" />}
+                    <img src={razorpayLogo} alt="Razorpay" className="h-7 object-contain rounded-sm px-1" />
+                    <span>Pay & Confirm Booking</span>
+                  </button>
                 )}
-                <p className="text-sm text-gray-500 text-center mt-4">You won't be charged yet</p>
+                {/* <p className="text-sm text-gray-500 text-center mt-4">You won't be charged yet</p> */}
               </div>
             </div>
 

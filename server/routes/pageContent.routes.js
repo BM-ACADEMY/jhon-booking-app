@@ -13,6 +13,7 @@ router.put(
   adminOnly,
   upload.fields([
     { name: 'bannerImage', maxCount: 1 },
+    { name: 'bannerImages', maxCount: 10 },
     { name: 'storyImage0', maxCount: 1 },
     { name: 'storyImage1', maxCount: 1 },
     { name: 'storyImage2', maxCount: 1 },

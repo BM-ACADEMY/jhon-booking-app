@@ -92,6 +92,7 @@ const navSections = [
 
 const pagesEditItems = [
   { label: 'Hero Section', icon: Film, path: '/admin/hero' },
+  { label: 'Rooms Page', icon: BedDouble, path: '/admin/rooms-page' },
   { label: 'About Page', icon: Info, path: '/admin/about-page' },
   { label: 'Contact Page', icon: PhoneCall, path: '/admin/contact-page' },
 ];

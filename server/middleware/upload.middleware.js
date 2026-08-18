@@ -88,6 +88,7 @@ const convertImagesToWebp = async (files) => {
 
       try {
         await sharp(originalPath)
+          .rotate() // Auto-rotate based on EXIF orientation tag before converting to WebP
           .webp({ quality: 80 })
           .toFile(webpPath);
 

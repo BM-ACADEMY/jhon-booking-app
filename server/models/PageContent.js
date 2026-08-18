@@ -2,7 +2,8 @@ import mongoose from 'mongoose';
 
 const pageContentSchema = new mongoose.Schema({
   page: { type: String, required: true, unique: true }, // 'about', 'contact'
-  bannerImage: { type: String, default: '' },
+  bannerImage: { type: String, default: '' }, // Legacy fallback
+  bannerImages: { type: [String], default: [] },
   bannerTitle: { type: String, default: '' },
   bannerSubtitle: { type: String, default: '' },
   // About Page specific fields:

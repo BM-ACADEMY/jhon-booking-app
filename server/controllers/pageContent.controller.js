@@ -66,7 +66,7 @@ export const updatePageContent = async (req, res) => {
     // Process files using multer
     const files = req.files || {};
 
-    // 1. Banner Image update
+    // 1. Banner Image update (Legacy single)
     if (files.bannerImage && files.bannerImage[0]) {
       // Delete old banner if it is a local upload
       if (content.bannerImage && content.bannerImage.startsWith('/uploads/')) {
@@ -74,6 +74,31 @@ export const updatePageContent = async (req, res) => {
       }
       content.bannerImage = `/uploads/${files.bannerImage[0].filename}`;
     }
+
+    // 1.5. Dynamic Banner Images Array update
+    let keptImages = [];
+    if (req.body.existingBannerImages) {
+      try {
+        keptImages = Array.isArray(req.body.existingBannerImages)
+          ? req.body.existingBannerImages
+          : JSON.parse(req.body.existingBannerImages);
+      } catch (e) {}
+    }
+
+    // Find and delete removed images
+    const oldImages = content.bannerImages || [];
+    oldImages.forEach((img) => {
+      if (!keptImages.includes(img) && img.startsWith('/uploads/')) {
+        deleteLocalFile(img);
+      }
+    });
+
+    let newBannerImages = [...keptImages];
+    if (files.bannerImages && files.bannerImages.length > 0) {
+      const uploadedImages = files.bannerImages.map((f) => `/uploads/${f.filename}`);
+      newBannerImages = [...newBannerImages, ...uploadedImages];
+    }
+    content.bannerImages = newBannerImages;
 
     // 2. Story Images update (4 possible files: storyImage0, storyImage1, storyImage2, storyImage3)
     if (page === 'about') {
