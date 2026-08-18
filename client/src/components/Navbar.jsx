@@ -492,7 +492,7 @@ const Navbar = () => {
                   Sign In
                 </button>
                 <button
-                  onClick={() => setAuthModal('register')}
+                  onClick={() => navigate('/rooms')}
                   className="text-sm font-bold px-6 py-2.5 rounded-full transition-all shadow-lg hover:shadow-xl outline-none cursor-pointer bg-[#d9f969] text-black hover:bg-[#cbf046]"
                 >
                   Book Now
@@ -641,7 +641,7 @@ const Navbar = () => {
                       Sign In
                     </button>
                     <button
-                      onClick={() => { setAuthModal('register'); setMenuOpen(false); }}
+                      onClick={() => { navigate('/rooms'); setMenuOpen(false); }}
                       className="flex items-center justify-center w-full py-3 rounded-xl bg-[#d9f969] hover:bg-[#cbf046] text-black text-[14px] font-bold shadow-md transition-all outline-none border-none"
                     >
                       Book a Room

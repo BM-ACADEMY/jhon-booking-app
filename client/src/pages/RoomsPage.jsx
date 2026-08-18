@@ -154,7 +154,7 @@ const ImageCarousel = ({ images, roomName }) => {
           key={idx}
           src={getImageUrl(img)}
           alt={`${roomName} - View ${idx + 1}`}
-          className={`absolute inset-0 w-full h-full object-cover transition-transform lg:transition-opacity duration-300 lg:group-hover:scale-[1.03] ${
+          className={`absolute inset-0 w-full h-full object-cover transition-transform lg:transition-opacity duration-300 ${
             idx === current 
               ? 'translate-x-0 lg:opacity-100 z-10' 
               : (idx < current 

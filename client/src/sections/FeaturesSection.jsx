@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import wifiIcon from "../assets/whychoose/wifi.png";
 import socialIcon from "../assets/whychoose/users.png";
 import kitchenIcon from "../assets/whychoose/kitchen.png";
@@ -43,6 +43,32 @@ const features = [
 
 const FeaturesSection = () => {
   const scrollRef = useRef(null);
+  const [isDown, setIsDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e) => {
+    setIsDown(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDown(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDown(false);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2;
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -62,7 +88,7 @@ const FeaturesSection = () => {
   }, []);
 
   return (
-    <section className="py-14 bg-blue-50/30">
+    <section className="py-8 bg-blue-50/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* --- Left-Aligned Header --- */}
         <div className="max-w-3xl mb-8 text-center sm:text-left mx-auto sm:mx-0">
@@ -77,19 +103,24 @@ const FeaturesSection = () => {
         {/* Carousel Layout (Center Mode) */}
         <div 
           ref={scrollRef}
-          className="flex overflow-x-auto gap-x-6 pb-8 pt-16 hide-scrollbar snap-x snap-mandatory scroll-smooth"
+          className={`flex overflow-x-auto gap-x-6 pb-8 pt-16 hide-scrollbar select-none ${isDown ? 'cursor-grabbing' : 'cursor-grab snap-x snap-mandatory scroll-smooth'}`}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
         >
           {features.map(({ image, title, desc }, index) => (
             <div
               key={index}
-              className="group relative flex-none w-[85vw] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] snap-center pt-16 pb-8 px-6 bg-white rounded-2xl border border-blue-100 text-center shadow-sm hover:shadow-md transition-all duration-300"
+              className="group relative flex-none w-[85vw] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] snap-center snap-always pt-16 pb-8 px-6 bg-white rounded-2xl border border-blue-100 text-center shadow-sm hover:shadow-md transition-all duration-300"
             >
               {/* Overlapping Icon Container */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[96px] h-[96px] bg-white rounded-full flex items-center justify-center border-8 border-white overflow-hidden transition-transform duration-300 shadow-md group-hover:scale-105">
                 <img
                   src={image}
                   alt={title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover select-none"
+                  draggable="false"
                 />
               </div>
 
