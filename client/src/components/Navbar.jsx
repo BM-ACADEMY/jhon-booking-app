@@ -29,40 +29,30 @@ const navLinks = [
 
 const HeaderDateRangeInput = forwardRef(({ value, onClick, startDate, endDate }, ref) => {
   const formatDateDisplay = (date) => {
-    if (!date) return 'Select date';
-    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    if (!date) return '';
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
   };
+
+  const displayStr = startDate && endDate 
+    ? `${formatDateDisplay(startDate)} - ${formatDateDisplay(endDate)}` 
+    : startDate 
+      ? formatDateDisplay(startDate) 
+      : "Select dates";
 
   return (
     <div 
       ref={ref} 
       onClick={onClick} 
-      className="flex items-center divide-x divide-gray-200/50 w-full cursor-pointer"
+      className="flex items-center gap-2 px-3 py-1 w-full cursor-pointer group"
     >
-      {/* Check-In */}
-      <div className="flex-[1.2] flex items-center gap-2 px-3 py-1.5 w-full group">
-        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-          <CalendarDays className="w-4 h-4 text-gray-500" />
-        </div>
-        <div className="flex-1 text-left">
-          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Check‑In</p>
-          <p className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400 leading-tight whitespace-nowrap">
-            {startDate ? formatDateDisplay(startDate) : "Select date"}
-          </p>
-        </div>
+      <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+        <CalendarDays className="w-3.5 h-3.5 text-gray-500" />
       </div>
-
-      {/* Check-Out */}
-      <div className="flex-[1.2] flex items-center gap-2 px-3 py-1.5 w-full group">
-        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-          <CalendarDays className="w-4 h-4 text-gray-500" />
-        </div>
-        <div className="flex-1 text-left">
-          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Check‑Out</p>
-          <p className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400 leading-tight whitespace-nowrap">
-            {endDate ? formatDateDisplay(endDate) : "Select date"}
-          </p>
-        </div>
+      <div className="flex-1 text-left">
+        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Date</p>
+        <p className="w-full text-xs font-semibold text-gray-900 outline-none bg-transparent cursor-pointer placeholder-gray-400 leading-tight whitespace-nowrap">
+          {displayStr}
+        </p>
       </div>
     </div>
   );
@@ -211,20 +201,22 @@ const Navbar = () => {
     navigate("/");
   };
   return (
-    <header className={`relative w-full z-[100] pointer-events-none outline-none border-none ${(location.pathname.startsWith("/rooms/") && location.pathname !== "/rooms") ? "hidden lg:block" : ""}`}>
-      <div className="pointer-events-auto w-full bg-white/70 backdrop-blur-md border-b border-gray-200/50 shadow-sm py-2 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between h-14 lg:h-16">
+    <header className={`sticky top-0 w-full z-[100] pointer-events-none outline-none border-none ${(location.pathname.startsWith("/rooms/") && location.pathname !== "/rooms") ? "hidden lg:block" : ""}`}>
+      <div className={`pointer-events-auto w-full transition-all duration-300 ${isHeaderScrolled ? "bg-white/95 shadow-md backdrop-blur-md border-b border-gray-200/50 py-2" : "bg-white/70 backdrop-blur-md border-b border-gray-200/50 py-2"} px-4 sm:px-6 lg:px-8`}>
+        <div className={`max-w-7xl mx-auto flex items-center h-14 lg:h-16 ${showSearchInHeader ? 'justify-center' : 'justify-between'}`}>
           {/* Logo */}
-          <Link
-            to="/"
-            className="flex items-center flex-shrink-0 z-50 outline-none border-none"
-          >
-            <img
-              src={logoImg}
-              alt="Logo"
-              className="h-12 lg:h-15 w-auto object-contain transition-all duration-300"
-            />
-          </Link>
+          {!showSearchInHeader && (
+            <Link
+              to="/"
+              className="flex items-center flex-shrink-0 z-50 outline-none border-none"
+            >
+              <img
+                src={logoImg}
+                alt="Logo"
+                className="h-12 lg:h-15 w-auto object-contain transition-all duration-300"
+              />
+            </Link>
+          )}
 
           {/* Desktop Nav Links / Compact Search Bar */}
           {showSearchInHeader ? (
@@ -232,10 +224,10 @@ const Navbar = () => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="hidden lg:flex bg-transparent max-w-3xl w-full items-center gap-1.5 divide-x divide-gray-200/50"
+              className="hidden lg:flex bg-white shadow-sm border border-gray-200/50 rounded-full max-w-[550px] w-full items-center divide-x divide-gray-200/50 py-1 mx-auto"
             >
-              {/* Date Range Picker containing both Check-In and Check-Out columns */}
-              <div className="flex-[2.4] flex items-center">
+              {/* Date Range Picker containing Date column */}
+              <div className="flex-[1.5] flex items-center">
                 <DatePicker
                   selectsRange={true}
                   startDate={startDate}
@@ -256,17 +248,17 @@ const Navbar = () => {
 
               {/* Guests & Rooms */}
               <div 
-                className="flex-[1.4] flex items-center gap-2 px-3 py-1.5 w-full group relative cursor-pointer" 
+                className="flex-[1.2] flex items-center gap-2 px-3 py-1 w-full group relative cursor-pointer" 
                 ref={navGuestDropdownRef}
                 onClick={() => setIsNavGuestDropdownOpen(!isNavGuestDropdownOpen)}
               >
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <Users className="w-4 h-4 text-gray-500" />
+                <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <Users className="w-3.5 h-3.5 text-gray-500" />
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Guests & Rooms</p>
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 leading-none">Guests</p>
                   <div className="w-full text-xs font-bold text-gray-900 outline-none bg-transparent flex items-center justify-between mt-0.5">
-                    <span>{adults} Adult{adults > 1 ? 's' : ''}{children > 0 ? `, ${children} Child${children > 1 ? 'ren' : ''}` : ''}{infants > 0 ? `, ${infants} Infant${infants > 1 ? 's' : ''}` : ''}, {roomsCount} Room{roomsCount > 1 ? 's' : ''}</span>
+                    <span>{adults} Adult{adults > 1 ? 's' : ''}</span>
                     <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isNavGuestDropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
@@ -362,10 +354,10 @@ const Navbar = () => {
               </div>
 
               {/* Search Button */}
-              <div className="px-2 w-full md:w-auto mt-0 flex self-stretch py-0.5">
+              <div className="px-2 w-full md:w-auto mt-0 flex self-stretch items-center">
                 <button
                   onClick={handleSearch}
-                  className="w-full md:w-auto bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-[10px] rounded-full px-5 py-2.5 flex items-center justify-center gap-1.5 transition-all hover:shadow active:scale-95 group"
+                  className="w-full md:w-auto bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-[10px] rounded-full px-4 py-2 flex items-center justify-center gap-1.5 transition-all hover:shadow active:scale-95 group"
                 >
                   <Search className="w-3.5 h-3.5 group-hover:scale-110 transition-transform duration-300" />
                   <span>SEARCH</span>
@@ -400,8 +392,9 @@ const Navbar = () => {
           )}
 
           {/* Desktop Right Section */}
-          <div className="hidden lg:flex items-center gap-5">
-            {user ? (
+          {!showSearchInHeader && (
+            <div className="hidden lg:flex items-center gap-5">
+              {user ? (
               <div
                 className="relative"
                 ref={dropdownRef}
@@ -500,6 +493,7 @@ const Navbar = () => {
               </div>
             )}
           </div>
+          )}
 
           {/* MAIN HEADER HAMBURGER */}
           <button
