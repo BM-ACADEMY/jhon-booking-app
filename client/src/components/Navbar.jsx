@@ -211,7 +211,7 @@ const Navbar = () => {
     navigate("/");
   };
   return (
-    <header className={`w-full z-50 pointer-events-none outline-none border-none ${(location.pathname.startsWith("/rooms/") && location.pathname !== "/rooms") ? "hidden lg:block" : ""}`}>
+    <header className={`relative w-full z-[100] pointer-events-none outline-none border-none ${(location.pathname.startsWith("/rooms/") && location.pathname !== "/rooms") ? "hidden lg:block" : ""}`}>
       <div className="pointer-events-auto w-full bg-white/70 backdrop-blur-md border-b border-gray-200/50 shadow-sm py-2 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between h-14 lg:h-16">
           {/* Logo */}
@@ -474,7 +474,7 @@ const Navbar = () => {
                       <div className="border-t border-gray-100/80 pt-2 px-2 pb-2">
                         <button
                            onClick={handleLogout}
-                          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm text-red-500 hover:text-red-700 hover:bg-red-50 transition-all outline-none"
+                           className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm text-red-500 hover:text-red-700 hover:bg-red-50 transition-all outline-none"
                         >
                           <LogOut className="w-4 h-4" /> Sign Out
                         </button>

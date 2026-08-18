@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { LogOut, User, Settings, ChevronDown, ChevronRight, Bell, CalendarCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -45,6 +45,20 @@ const Header = () => {
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuTimeoutRef = useRef(null);
+
+  const handleUserMenuEnter = () => {
+    if (userMenuTimeoutRef.current) clearTimeout(userMenuTimeoutRef.current);
+    setUserMenuOpen(true);
+  };
+
+  const handleUserMenuLeave = () => {
+    userMenuTimeoutRef.current = setTimeout(() => {
+      setUserMenuOpen(false);
+    }, 150);
+  };
 
   const pageTitle = pageTitles[location.pathname] || 'Admin Profile';
 
@@ -167,21 +181,28 @@ const Header = () => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2.5 p-1.5 pr-3 h-auto rounded-xl hover:bg-slate-100">
-              <Avatar className="w-8 h-8">
-                <AvatarFallback className="bg-primary-500/20 text-primary-600 font-bold text-sm">
-                  {(user?.name?.[0] || 'A').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="hidden sm:block text-sm font-semibold text-gray-700 truncate max-w-[120px]">
-                {user?.name || 'Admin'}
-              </span>
-              <ChevronDown className="hidden sm:block w-4 h-4 text-gray-400" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52 p-1.5">
+        <DropdownMenu open={userMenuOpen} onOpenChange={setUserMenuOpen}>
+          <div onMouseEnter={handleUserMenuEnter} onMouseLeave={handleUserMenuLeave}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2.5 p-1.5 pr-3 h-auto rounded-xl hover:bg-slate-100">
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback className="bg-primary-500/20 text-primary-600 font-bold text-sm">
+                    {(user?.name?.[0] || 'A').toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="hidden sm:block text-sm font-semibold text-gray-700 truncate max-w-[120px]">
+                  {user?.name || 'Admin'}
+                </span>
+                <ChevronDown className="hidden sm:block w-4 h-4 text-gray-400" />
+              </Button>
+            </DropdownMenuTrigger>
+          </div>
+          <DropdownMenuContent 
+            align="end" 
+            className="w-52 p-1.5"
+            onMouseEnter={handleUserMenuEnter}
+            onMouseLeave={handleUserMenuLeave}
+          >
             <DropdownMenuLabel className="normal-case">
               <p className="text-sm font-bold text-gray-800 truncate">{user?.name || 'Administrator'}</p>
               <p className="text-xs font-medium text-gray-400">{user?.email || 'admin@jhon.com'}</p>

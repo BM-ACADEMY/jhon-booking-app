@@ -266,8 +266,8 @@ const RoomDetailPage = () => {
     return (val === 'null' || val === 'undefined') ? '' : (val || '');
   };
 
-  const checkInQuery = getQueryParam('checkIn') || localStorage.getItem('booking_checkIn') || '';
-  const checkOutQuery = getQueryParam('checkOut') || localStorage.getItem('booking_checkOut') || '';
+  const checkInQuery = getQueryParam('checkIn') || '';
+  const checkOutQuery = getQueryParam('checkOut') || '';
   const adultsQuery = parseInt(getQueryParam('adults') || getQueryParam('guests') || localStorage.getItem('booking_adults') || '2', 10);
   const childrenQuery = parseInt(getQueryParam('children') || localStorage.getItem('booking_children') || '0', 10);
   const infantsQuery = parseInt(getQueryParam('infants') || localStorage.getItem('booking_infants') || '0', 10);
@@ -297,13 +297,13 @@ const RoomDetailPage = () => {
   }, [showGuestDropdown]);
 
   useEffect(() => {
-    localStorage.setItem('booking_checkIn', checkIn || '');
-    localStorage.setItem('booking_checkOut', checkOut || '');
+    localStorage.removeItem('booking_checkIn');
+    localStorage.removeItem('booking_checkOut');
     localStorage.setItem('booking_adults', adults);
     localStorage.setItem('booking_children', children);
     localStorage.setItem('booking_infants', infants);
     localStorage.setItem('booking_roomsCount', roomsCount);
-  }, [checkIn, checkOut, adults, children, infants, roomsCount]);
+  }, [adults, children, infants, roomsCount]);
 
   const [remainingRooms, setRemainingRooms] = useState(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
@@ -1667,11 +1667,10 @@ const RoomDetailPage = () => {
                 </div>
               </div>
 
-              <hr className="hidden lg:block border-gray-200" />
-
               {/* Ratings and Reviews */}
-              <div>
+              <div className="pt-8 lg:pt-10 mt-8 lg:mt-10 border-t border-gray-200">
                 <h2 className="text-[22px] font-semibold text-[#222222] mb-4 lg:mb-6">Rating and reviews</h2>
+                 {/* 
                  <div className="flex items-center gap-2 mb-6 lg:mb-8">
                   <Star className="w-5 h-5 lg:w-6 lg:h-6 text-[#222222] " strokeWidth={2} />
                   <span className="text-[17px] lg:text-2xl font-semibold text-[#222222]">{reviews.length > 0 && room.rating ? room.rating.toFixed(1) : '0.0'}</span>
@@ -1679,7 +1678,9 @@ const RoomDetailPage = () => {
                   <span className="text-gray-300 font-normal select-none">•</span>
                   <span className="text-gray-500 font-medium text-sm lg:text-base">({room.monthVisitorsCount || 0} month visitors)</span>
                 </div>
+                */}
 
+                {/* 
                 <div className="space-y-3.5 lg:space-y-4 max-w-lg">
                   {dynamicStats.map((stat, i) => (
                     <div key={i} className="flex items-center justify-between text-[13px] sm:text-base">
@@ -1691,10 +1692,11 @@ const RoomDetailPage = () => {
                     </div>
                   ))}
                 </div>
+                */}
 
                 {/* Individual Reviews List */}
                 {reviews.length > 0 && (
-                  <div className="mt-10 pt-10 border-t border-gray-200">
+                  <div className="mt-2">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-24 gap-y-12">
                       {reviews.slice(0, 6).map((rev) => renderMainPageReviewCard(rev))}
                     </div>
@@ -1981,55 +1983,57 @@ const RoomDetailPage = () => {
                               </div>
 
                               {/* Payment Options */}
-                              <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 shadow-sm mt-2">
-                                {/* Option 1: Pay Later */}
-                                {advancePercent < 100 && (
-                                  <div className="flex items-start gap-3.5">
+                              {checkIn && checkOut && (
+                                <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 shadow-sm mt-2">
+                                  {/* Option 1: Pay Later */}
+                                  {advancePercent < 100 && (
+                                    <div className="flex items-start gap-3.5">
+                                      <input
+                                        type="radio"
+                                        id="payAdvance"
+                                        name="paymentChoice"
+                                        checked={paymentType === 'advance'}
+                                        onChange={() => setPaymentType('advance')}
+                                        className="mt-1 w-4 h-4 accent-black cursor-pointer"
+                                      />
+                                      <label htmlFor="payAdvance" className="flex-1 cursor-pointer">
+                                        <span className="font-bold text-[14px] text-gray-900 block mb-1">I prefer to Pay Later</span>
+                                        <div className="flex items-center justify-between text-[12px] text-gray-500">
+                                          <span>Pay Now:</span>
+                                          <span className="font-bold text-gray-900">₹{Math.round(finalTotal * (advancePercent / 100)).toLocaleString('en-IN')}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[12px] text-gray-500 mt-0.5">
+                                          <span>Pay Later:</span>
+                                          <span>₹{(finalTotal - Math.round(finalTotal * (advancePercent / 100))).toLocaleString('en-IN')}</span>
+                                        </div>
+                                      </label>
+                                    </div>
+                                  )}
+
+                                  {/* Option 2: Pay 100% Now */}
+                                  <div className={`flex items-start gap-3.5 ${advancePercent < 100 ? 'border-t border-gray-100 pt-4' : ''}`}>
                                     <input
                                       type="radio"
-                                      id="payAdvance"
+                                      id="pay100"
                                       name="paymentChoice"
-                                      checked={paymentType === 'advance'}
-                                      onChange={() => setPaymentType('advance')}
+                                      checked={paymentType === 'full'}
+                                      onChange={() => setPaymentType('full')}
                                       className="mt-1 w-4 h-4 accent-black cursor-pointer"
                                     />
-                                    <label htmlFor="payAdvance" className="flex-1 cursor-pointer">
-                                      <span className="font-bold text-[14px] text-gray-900 block mb-1">I prefer to Pay Later</span>
+                                    <label htmlFor="pay100" className="flex-1 cursor-pointer">
+                                      <span className="font-bold text-[14px] text-gray-900 block mb-1">I prefer to pay 100% now</span>
                                       <div className="flex items-center justify-between text-[12px] text-gray-500">
                                         <span>Pay Now:</span>
-                                        <span className="font-bold text-gray-900">₹{Math.round(finalTotal * (advancePercent / 100)).toLocaleString('en-IN')}</span>
+                                        <span className="font-bold text-gray-900">₹{finalTotal.toLocaleString('en-IN')}</span>
                                       </div>
                                       <div className="flex items-center justify-between text-[12px] text-gray-500 mt-0.5">
                                         <span>Pay Later:</span>
-                                        <span>₹{(finalTotal - Math.round(finalTotal * (advancePercent / 100))).toLocaleString('en-IN')}</span>
+                                        <span>₹0.00</span>
                                       </div>
                                     </label>
                                   </div>
-                                )}
-
-                                {/* Option 2: Pay 100% Now */}
-                                <div className={`flex items-start gap-3.5 ${advancePercent < 100 ? 'border-t border-gray-100 pt-4' : ''}`}>
-                                  <input
-                                    type="radio"
-                                    id="pay100"
-                                    name="paymentChoice"
-                                    checked={paymentType === 'full'}
-                                    onChange={() => setPaymentType('full')}
-                                    className="mt-1 w-4 h-4 accent-black cursor-pointer"
-                                  />
-                                  <label htmlFor="pay100" className="flex-1 cursor-pointer">
-                                    <span className="font-bold text-[14px] text-gray-900 block mb-1">I prefer to pay 100% now</span>
-                                    <div className="flex items-center justify-between text-[12px] text-gray-500">
-                                      <span>Pay Now:</span>
-                                      <span className="font-bold text-gray-900">₹{finalTotal.toLocaleString('en-IN')}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-[12px] text-gray-500 mt-0.5">
-                                      <span>Pay Later:</span>
-                                      <span>₹0.00</span>
-                                    </div>
-                                  </label>
                                 </div>
-                              </div>
+                              )}
 
                               {/* Terms and Conditions Checkbox */}
                               <div className="flex items-start gap-3 pt-2 pb-2">
@@ -3120,7 +3124,7 @@ const RoomDetailPage = () => {
                 <span className="text-[#222222] font-semibold underline cursor-pointer text-sm">How reviews work</span>
               </div>
 
-              {/* Sub-ratings categories horizontally scrollable */}
+              {/* 
               <div className="flex overflow-x-auto gap-4 pb-6 mb-6 border-b border-gray-200 custom-scrollbar">
                 <div className="flex items-start flex-col justify-center border-r border-gray-200 pr-6 min-w-[120px]">
                   <span className="text-[#222222] text-[13px] font-medium mb-2">Overall rating</span>
@@ -3146,6 +3150,7 @@ const RoomDetailPage = () => {
                   </div>
                 ))}
               </div>
+              */}
 
               {/* Reviews List */}
               <div>
