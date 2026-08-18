@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../api";
-import { Quote } from "lucide-react";
+import { Quote, ChevronLeft, ChevronRight } from "lucide-react";
 import testimonialImg from "../assets/testimonial.png";
 
 // Inline Star Icon component
@@ -51,16 +51,25 @@ const TestimonialsSection = () => {
     fetchTestimonials();
   }, []);
 
-  // 3 second interval slide change
+  // 15 second interval slide change
   useEffect(() => {
     if (testimonials.length <= 1) return;
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-    }, 3500);
+    }, 15000);
 
     return () => clearInterval(interval);
   }, [testimonials.length]);
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+  };
+
 
   return (
     <section className="py-16 md:py-24 bg-blue-50/30 overflow-hidden">
@@ -123,6 +132,26 @@ const TestimonialsSection = () => {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Manual Navigation Controls */}
+            {testimonials.length > 1 && !loading && (
+              <div className="flex gap-3 mt-6">
+                <button 
+                  onClick={handlePrev}
+                  className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200 transition-all"
+                  aria-label="Previous Testimonial"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={handleNext}
+                  className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200 transition-all"
+                  aria-label="Next Testimonial"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

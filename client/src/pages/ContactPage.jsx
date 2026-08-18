@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Globe, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api';
+import whatsappIcon from '../assets/icons/whatsapp.svg?url';
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -91,23 +92,20 @@ const ContactPage = () => {
       value: settings.phone,
     },
     {
-      icon: <MessageSquare className="w-5 h-5" />,
+      icon: <img src={whatsappIcon} alt="WhatsApp" className="w-9 h-9 object-contain" />,
       label: 'WhatsApp',
       value: '+91 8946022554',
-      description: 'Chat with us on WhatsApp.',
       link: 'https://wa.me/918946022554'
     },
     {
       icon: <Mail className="w-5 h-5" />,
       label: 'Email Us',
       value: settings.email,
-      description: 'Our friendly team is here to help.',
     },
     {
       icon: <MapPin className="w-5 h-5" />,
       label: 'Visit Us',
       value: settings.address,
-      description: 'Come say hello at our reception.',
     },
   ];
 

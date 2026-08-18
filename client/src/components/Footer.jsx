@@ -10,6 +10,7 @@ import gpayIcon from '../assets/icons/gpay.svg?url';
 import ruPayIcon from '../assets/icons/payment.svg?url';
 import visaIcon from '../assets/icons/visa.svg?url';
 import mastercardIcon from '../assets/icons/mastercard.svg?url';
+import whatsappIcon from '../assets/icons/whatsapp.svg?url';
 import logoImg from '../assets/LogoBalified.png';
 import techxLogo from '../assets/copy-techx.png';
 
@@ -229,6 +230,12 @@ const Footer = () => {
                 <Mail className="w-4 h-4 text-slate-300 flex-shrink-0" />
                 <a href={`mailto:${settings.email || 'info@jhon.com'}`} className="hover:text-white transition-colors duration-300">
                   {settings.email || 'info@jhon.com'}
+                </a>
+              </li>
+              <li className="flex items-center gap-3.5 text-sm text-slate-400">
+                <img src={whatsappIcon} alt="WhatsApp" className="w-6 h-6 flex-shrink-0"/>
+                <a href="https://wa.me/918946022554?text=Hello!%20I%20would%20like%20to%20know%20more%20about%20your%20services." target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors duration-300">
+                  +91 89460 22554
                 </a>
               </li>
             </ul>
