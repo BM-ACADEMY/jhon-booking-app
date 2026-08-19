@@ -1825,6 +1825,7 @@ const RoomDetailPage = () => {
                   {/* Step 2 Header: Enhance Your Stay */}
                   <div className="border-b border-gray-100">
                     <div className="px-6 py-4 flex items-center justify-between bg-[#374151] text-white">
+                      <h3 className="font-bold text-sm">Add-on Services</h3>
                     </div>
 
                     <div className="p-6 bg-white space-y-4">
