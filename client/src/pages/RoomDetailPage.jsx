@@ -2368,34 +2368,30 @@ const RoomDetailPage = () => {
 
               {/* Right side: Icon-free Fully Rounded Yellow Book Now button (smooth width transition without text distortion) */}
               <div className="flex-1 flex justify-end min-w-0">
-                <button
+                <motion.button
+                layout
                 type="button"
                 onClick={() => {
-                  if (checkIn && checkOut) {
-                    initiateGuestBookingPayment();
-                  } else {
-                    setShowMobileBooking(true);
-                  }
+                  setShowMobileBooking(true);
                 }}
                 disabled={!room?.isAvailable || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed || bookingLoading || paymentProcessing}
-                className={`bg-[#d9f969] hover:bg-[#cbf046] active:bg-[#bde830] text-gray-900 font-extrabold text-base py-3.5 rounded-full shadow-md flex items-center justify-center transition-all duration-350 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
-                  isScrolledDown ? 'w-full px-4' : 'w-[140px] sm:w-[160px] px-4'
-                }`}
+                className={`bg-[#d9f969] hover:bg-[#cbf046] active:bg-[#bde830] text-gray-900 font-extrabold text-base py-3.5 rounded-full shadow-md flex items-center justify-center cursor-pointer ${
+                  isScrolledDown ? 'w-full px-4' : 'w-auto min-w-[140px] px-6'
+                } ${(!room?.isAvailable || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed || bookingLoading || paymentProcessing) ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <span className="whitespace-nowrap truncate font-extrabold text-[16px] pointer-events-none select-none flex items-center justify-center gap-1.5">
+                <span className="whitespace-nowrap font-extrabold text-[16px] pointer-events-none select-none flex items-center justify-center gap-1.5">
                   {remainingRooms === 0 ? 'Sold Out' : (!clientOccupancyValidation.isAllowed ? 'Invalid Guests' : (
                     (checkIn && checkOut) ? (
                       <>
                         {(bookingLoading || paymentProcessing) && <Loader2 className="w-4 h-4 animate-spin" />}
-                        <img src={razorpayLogo} alt="Razorpay" className="h-5 object-contain rounded-sm" />
-                        <span>Pay & Confirm</span>
+                        <span>Pay</span>
                       </>
                     ) : (
                       room?.isAvailable ? 'Book Now' : 'Check Availability'
                     )
                   ))}
                 </span>
-              </button>
+              </motion.button>
             </div>
           </div>
           )}
