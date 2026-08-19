@@ -407,7 +407,6 @@ const RoomDetailPage = () => {
 
   // Mobile Booking Wizard & Bottom Bar Scroll State
   const [showMobileBooking, setShowMobileBooking] = useState(false);
-  const [mobileBookingStep, setMobileBookingStep] = useState(1);
   const [isScrolledDown, setIsScrolledDown] = useState(false);
 
   useEffect(() => {
@@ -1263,10 +1262,14 @@ const RoomDetailPage = () => {
 
   const initiateGuestBookingPayment = async () => {
     if (!validateGuestInfo()) {
-      const el = document.getElementById('guest-info-section');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      setShowMobileBooking(false); // Close mobile popup if open
+      setTimeout(() => {
+        const el = document.getElementById('guest-info-section');
+        if (el) {
+          const y = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 100);
       return;
     }
 
@@ -1814,7 +1817,7 @@ const RoomDetailPage = () => {
 
               {/* --- BOOKING FLOW INLINE (NO MANDATORY LOGIN) --- */}
               {showBookingDrawer && (
-                <div className="hidden lg:block">
+                <div className="block">
                   <hr className="border-gray-200 mt-12" />
                   <div ref={bookingFormRef} className="mt-10 lg:mt-12 bg-[#FAFAFA] border border-gray-200 overflow-hidden shadow-sm animate-in fade-in duration-300">
                   
@@ -2071,9 +2074,17 @@ const RoomDetailPage = () => {
               )}
             </div>
 
-            {/* Right Column: Premium Sticky Booking Card (Desktop Only) */}
-            <div className="hidden lg:block lg:col-span-1">
-              <div className="sticky top-[90px] bg-white rounded-3xl border border-gray-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-8">
+            {/* Right Column: Premium Sticky Booking Card */}
+            <div className={`col-span-1 ${showMobileBooking ? 'fixed inset-x-0 bottom-0 z-[100] p-0 bg-transparent animate-in slide-in-from-bottom duration-300' : 'hidden lg:block lg:static'}`} id="booking-card">
+              {showMobileBooking && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[-1] lg:hidden" onClick={() => setShowMobileBooking(false)}></div>
+              )}
+              <div className={`bg-white border border-gray-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] ${showMobileBooking ? 'rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto' : 'rounded-3xl p-8 lg:sticky top-[90px]'}`}>
+                {showMobileBooking && (
+                  <div className="lg:hidden flex justify-center mb-6">
+                    <div className="w-12 h-1.5 bg-gray-300 rounded-full cursor-pointer" onClick={() => setShowMobileBooking(false)}></div>
+                  </div>
+                )}
                 <div className={`flex items-end gap-2 mb-6 ${nights > 0 ? 'justify-center w-full' : ''}`}>
                   {nights > 0 ? (
                     <div className="flex items-center justify-center gap-2 pb-1 pt-1 w-full">
@@ -2316,7 +2327,6 @@ const RoomDetailPage = () => {
                     <span>Pay & Confirm Booking</span>
                   </button>
                 )}
-                {/* <p className="text-sm text-gray-500 text-center mt-4">You won't be charged yet</p> */}
               </div>
             </div>
 
@@ -2325,711 +2335,71 @@ const RoomDetailPage = () => {
       </div>
 
       {/* --- MOBILE FIXED BOTTOM BAR (Silky Smooth Framer-Motion Animations) --- */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white/70 backdrop-blur-xl border-t border-white/50 px-5 py-3.5 z-40 shadow-[0_-8px_32px_rgba(0,0,0,0.06)]">
-        {user?.role === 'admin' ? (
-          <Link 
-            to="/admin/bookings" 
-            className="w-full bg-purple-700 active:bg-purple-800 text-white font-bold text-[16px] py-4 rounded-full flex items-center justify-center shadow-md uppercase tracking-wider text-center border-none cursor-pointer"
-          >
-            Go to Admin Bookings
-          </Link>
-        ) : (
-          <div className="max-w-md mx-auto flex items-center justify-between gap-3 relative">
-            {/* Left side: Price (top) & night (bottom) with fluid AnimatePresence */}
-            <AnimatePresence initial={false}>
-              {!isScrolledDown && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20, width: 0 }}
-                  animate={{ opacity: 1, x: 0, width: 'auto' }}
-                  exit={{ opacity: 0, x: -20, width: 0 }}
-                  transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-                  className="flex flex-col text-left leading-tight overflow-hidden flex-shrink-0"
-                >
-                  <span className="text-xl font-extrabold text-gray-900 tracking-tight whitespace-nowrap">
-                    ₹{(nights > 0 ? average : (room?.price || 0)).toLocaleString('en-IN')}
-                  </span>
-                  <span className="text-xs text-gray-600 font-semibold mt-0.5 whitespace-nowrap">
-                    {nights > 0 ? '/night avg' : 'night'}
-                  </span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+      {!showMobileBooking && (
+        <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white/70 backdrop-blur-xl border-t border-white/50 px-5 py-3.5 z-40 shadow-[0_-8px_32px_rgba(0,0,0,0.06)]">
+          {user?.role === 'admin' ? (
+            <Link 
+              to="/admin/bookings" 
+              className="w-full bg-purple-700 active:bg-purple-800 text-white font-bold text-[16px] py-4 rounded-full flex items-center justify-center shadow-md uppercase tracking-wider text-center border-none cursor-pointer"
+            >
+              Go to Admin Bookings
+            </Link>
+          ) : (
+            <div className="max-w-md mx-auto flex items-center justify-between gap-3 relative">
+              {/* Left side: Price (top) & night (bottom) with fluid AnimatePresence */}
+              <AnimatePresence initial={false}>
+                {!isScrolledDown && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -20, width: 0 }}
+                    animate={{ opacity: 1, x: 0, width: 'auto' }}
+                    exit={{ opacity: 0, x: -20, width: 0 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 35, mass: 0.8 }}
+                    className="flex flex-col flex-shrink-0"
+                  >
+                    <span className="text-xl font-extrabold text-gray-900 tracking-tight leading-tight">
+                      ₹{getTodayPrice(room).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                    </span>
+                    <span className="text-[12px] font-semibold text-gray-500 tracking-wide uppercase mt-0.5">
+                      /night
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            {/* Right side: Icon-free Fully Rounded Yellow Book Now button (smooth width transition without text distortion) */}
-            <div className="flex-1 flex justify-end min-w-0">
-              <button
+              {/* Right side: Icon-free Fully Rounded Yellow Book Now button (smooth width transition without text distortion) */}
+              <div className="flex-1 flex justify-end min-w-0">
+                <button
                 type="button"
                 onClick={() => {
-                  setMobileBookingStep(1);
-                  setShowMobileBooking(true);
+                  if (checkIn && checkOut) {
+                    initiateGuestBookingPayment();
+                  } else {
+                    setShowMobileBooking(true);
+                  }
                 }}
-                disabled={!room?.isAvailable || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed}
+                disabled={!room?.isAvailable || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed || bookingLoading || paymentProcessing}
                 className={`bg-[#d9f969] hover:bg-[#cbf046] active:bg-[#bde830] text-gray-900 font-extrabold text-base py-3.5 rounded-full shadow-md flex items-center justify-center transition-all duration-350 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
                   isScrolledDown ? 'w-full px-4' : 'w-[140px] sm:w-[160px] px-4'
                 }`}
               >
-                <span className="whitespace-nowrap truncate font-extrabold text-[16px] pointer-events-none select-none">
-                  {remainingRooms === 0 ? 'Sold Out' : (!clientOccupancyValidation.isAllowed ? 'Invalid Guests' : (room?.isAvailable ? 'Book Now' : 'Check Availability'))}
+                <span className="whitespace-nowrap truncate font-extrabold text-[16px] pointer-events-none select-none flex items-center justify-center gap-1.5">
+                  {remainingRooms === 0 ? 'Sold Out' : (!clientOccupancyValidation.isAllowed ? 'Invalid Guests' : (
+                    (checkIn && checkOut) ? (
+                      <>
+                        {(bookingLoading || paymentProcessing) && <Loader2 className="w-4 h-4 animate-spin" />}
+                        <img src={razorpayLogo} alt="Razorpay" className="h-5 object-contain rounded-sm" />
+                        <span>Pay & Confirm</span>
+                      </>
+                    ) : (
+                      room?.isAvailable ? 'Book Now' : 'Check Availability'
+                    )
+                  ))}
                 </span>
               </button>
             </div>
           </div>
-        )}
-      </div>
-
-      {/* --- MOBILE STEP-BY-STEP BOOKING WIZARD (Responsive layout for sm/md) --- */}
-      {showMobileBooking && (
-        <div className="lg:hidden fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-          {/* Overlay click-to-close only on md viewports */}
-          <div className="absolute inset-0 hidden md:block" onClick={() => setShowMobileBooking(false)} />
-          
-          <div className="w-full h-full md:max-w-[480px] md:h-[85vh] md:rounded-3xl md:shadow-2xl bg-white flex flex-col overflow-hidden animate-in md:zoom-in-95 slide-in-from-bottom duration-300 relative z-10">
-            {/* Top Fixed Header with Back Arrow, Step Title, Progress Bar, and Close Button */}
-            <div className="flex items-center justify-between px-4 h-14 border-b border-gray-100 bg-white shrink-0 z-10">
-            <button
-              type="button"
-              onClick={() => {
-                if (mobileBookingStep > 1) {
-                  setMobileBookingStep(prev => prev - 1);
-                } else {
-                  setShowMobileBooking(false);
-                }
-              }}
-              className="p-2 hover:bg-gray-100 rounded-full text-gray-700 transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-
-            <div className="flex flex-col items-center">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                Step {mobileBookingStep} of 3
-              </span>
-              <span className="text-sm font-extrabold text-gray-900">
-                {mobileBookingStep === 1 && 'Dates & Guests'}
-                {mobileBookingStep === 2 && 'Enhance Your Stay'}
-                {mobileBookingStep === 3 && 'Guest Details & Payment'}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowMobileBooking(false)}
-              className="p-2 hover:bg-gray-100 rounded-full text-gray-700 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* --- SHADCN UI STYLE STEPPER CONNECTOR BAR --- */}
-          <div className="w-full px-8 py-3.5 bg-gray-50/70 border-b border-gray-100 shrink-0">
-            <div className="max-w-xs mx-auto flex items-center justify-between relative">
-              {/* Connector Background Line */}
-              <div className="absolute top-4 left-6 right-6 h-0.5 bg-gray-200 z-0" />
-              
-              {/* Active Connector Progress Line */}
-              <div 
-                className="absolute top-4 left-6 h-0.5 bg-emerald-500 transition-all duration-300 z-0" 
-                style={{
-                  width: mobileBookingStep === 1 ? '0%' : mobileBookingStep === 2 ? '50%' : 'calc(100% - 48px)'
-                }}
-              />
-
-              {/* Step 1 Circle */}
-              <div className="flex flex-col items-center relative z-10">
-                <div 
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
-                    mobileBookingStep > 1 
-                      ? 'bg-emerald-500 text-white shadow-sm' 
-                      : mobileBookingStep === 1 
-                      ? 'bg-emerald-500 text-white ring-4 ring-emerald-500/20 shadow-md scale-105' 
-                      : 'bg-gray-100 text-gray-400 border border-gray-200'
-                  }`}
-                >
-                  {mobileBookingStep > 1 ? <Check className="w-4 h-4 stroke-[3]" /> : '1'}
-                </div>
-                <span className={`text-[10px] font-bold mt-1 transition-colors ${mobileBookingStep >= 1 ? 'text-gray-900' : 'text-gray-400'}`}>
-                  Dates
-                </span>
-              </div>
-
-              {/* Step 2 Circle */}
-              <div className="flex flex-col items-center relative z-10">
-                <div 
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
-                    mobileBookingStep > 2 
-                      ? 'bg-emerald-500 text-white shadow-sm' 
-                      : mobileBookingStep === 2 
-                      ? 'bg-emerald-500 text-white ring-4 ring-emerald-500/20 shadow-md scale-105' 
-                      : 'bg-white text-gray-700 border-2 border-gray-300 shadow-sm'
-                  }`}
-                >
-                  {mobileBookingStep > 2 ? <Check className="w-4 h-4 stroke-[3]" /> : '2'}
-                </div>
-                <span className={`text-[10px] font-bold mt-1 transition-colors ${mobileBookingStep >= 2 ? 'text-gray-900' : 'text-gray-400'}`}>
-                  Add-ons
-                </span>
-              </div>
-
-              {/* Step 3 Circle */}
-              <div className="flex flex-col items-center relative z-10">
-                <div 
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
-                    mobileBookingStep === 3 
-                      ? 'bg-emerald-500 text-white ring-4 ring-emerald-500/20 shadow-md scale-105' 
-                      : 'bg-gray-100 text-gray-400 border border-gray-200'
-                  }`}
-                >
-                  3
-                </div>
-                <span className={`text-[10px] font-bold mt-1 transition-colors ${mobileBookingStep === 3 ? 'text-gray-900' : 'text-gray-400'}`}>
-                  Details
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Scrollable Step Body */}
-          <div className="flex-1 overflow-y-auto p-5 pb-36 space-y-5">
-            {/* STEP 1: DATES & GUESTS SELECTION */}
-            {mobileBookingStep === 1 && (
-              <div className="space-y-4 animate-in fade-in duration-200">
-
-
-                {/* Check-In & Check-Out 2-Column Grid */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  {/* Check-In Card */}
-                  <div
-                    onClick={() => {
-                      setActiveSelectType('checkIn');
-                      setShowCalendarModal(true);
-                    }}
-                    className="bg-[#F8F9FA] rounded-xl px-3 py-2 flex items-center gap-2 border border-gray-200/70 cursor-pointer active:bg-gray-100 transition-colors"
-                  >
-                    <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
-                    <div className="flex flex-col text-left min-w-0">
-                      <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none mb-0.5">Check-in</label>
-                      <div className={`text-xs truncate ${checkIn ? 'font-bold text-gray-900' : 'font-medium text-gray-400'}`}>
-                        {checkIn ? formatDisplayDate(checkIn, 'en-IN', { day: '2-digit', month: 'short' }) : 'Add date'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Check-Out Card */}
-                  <div
-                    onClick={() => {
-                      setActiveSelectType('checkOut');
-                      setShowCalendarModal(true);
-                    }}
-                    className="bg-[#F8F9FA] rounded-xl px-3 py-2 flex items-center gap-2 border border-gray-200/70 cursor-pointer active:bg-gray-100 transition-colors"
-                  >
-                    <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
-                    <div className="flex flex-col text-left min-w-0">
-                      <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none mb-0.5">Check-out</label>
-                      <div className={`text-xs truncate ${checkOut ? 'font-bold text-gray-900' : 'font-medium text-gray-400'}`}>
-                        {checkOut ? formatDisplayDate(checkOut, 'en-IN', { day: '2-digit', month: 'short' }) : 'Add date'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* --- COMPACT GUESTS COUNTER CARD --- */}
-                <div className="bg-white rounded-xl p-3.5 border border-gray-200/80 shadow-sm space-y-2.5">
-                  <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-                    <div>
-                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">GUESTS</span>
-                      <span className="text-sm font-bold text-gray-900">
-                        {adults + children} guest{adults + children !== 1 ? 's' : ''}
-                        {infants > 0 && `, ${infants} infant${infants !== 1 ? 's' : ''}`}
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-semibold text-gray-400">
-                      Max {(room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)) * roomsCount}
-                    </span>
-                  </div>
-
-                  {/* Adults Row */}
-                  <div className="flex justify-between items-center py-1">
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-900">Adults</h4>
-                      <p className="text-[10px] text-gray-400 font-medium">Age 13+</p>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <button
-                        type="button"
-                        disabled={adults <= 1}
-                        onClick={() => setAdults(Math.max(1, adults - 1))}
-                        className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center font-bold text-xs text-gray-600 active:scale-95 disabled:opacity-30 disabled:border-gray-200 cursor-pointer"
-                      >
-                        -
-                      </button>
-                      <span className="w-4 text-center font-bold text-xs text-gray-900">{adults}</span>
-                      <button
-                        type="button"
-                        disabled={adults + children >= (room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)) * roomsCount}
-                        onClick={() => setAdults(adults + 1)}
-                        className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center font-bold text-xs text-gray-600 active:scale-95 disabled:opacity-30 disabled:border-gray-200 cursor-pointer"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Children Row */}
-                  <div className="flex justify-between items-center py-1 border-t border-gray-100/80">
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-900">Children</h4>
-                      <p className="text-[10px] text-gray-400 font-medium">Ages 2–12</p>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <button
-                        type="button"
-                        disabled={children <= 0}
-                        onClick={() => setChildren(Math.max(0, children - 1))}
-                        className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center font-bold text-xs text-gray-600 active:scale-95 disabled:opacity-30 disabled:border-gray-200 cursor-pointer"
-                      >
-                        -
-                      </button>
-                      <span className="w-4 text-center font-bold text-xs text-gray-900">{children}</span>
-                      <button
-                        type="button"
-                        disabled={adults + children >= (room.maxOccupancy !== undefined && room.maxOccupancy !== null ? room.maxOccupancy : (room.guests || 2)) * roomsCount}
-                        onClick={() => setChildren(children + 1)}
-                        className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center font-bold text-xs text-gray-600 active:scale-95 disabled:opacity-30 disabled:border-gray-200 cursor-pointer"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Infants Row */}
-                  <div className="flex justify-between items-center py-1 border-t border-gray-100/80">
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-900">Infants</h4>
-                      <p className="text-[10px] text-gray-400 font-medium">Under 2</p>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <button
-                        type="button"
-                        disabled={infants <= 0}
-                        onClick={() => setInfants(Math.max(0, infants - 1))}
-                        className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center font-bold text-xs text-gray-600 active:scale-95 disabled:opacity-30 disabled:border-gray-200 cursor-pointer"
-                      >
-                        -
-                      </button>
-                      <span className="w-4 text-center font-bold text-xs text-gray-900">{infants}</span>
-                      <button
-                        type="button"
-                        disabled={infants >= 2 * roomsCount}
-                        onClick={() => setInfants(infants + 1)}
-                        className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center font-bold text-xs text-gray-600 active:scale-95 disabled:opacity-30 disabled:border-gray-200 cursor-pointer"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Extra Bed Row if room allows extra bed */}
-                  {room?.allowExtraBed && Number(room.extraBedCount) > 0 && (
-                    <div className="flex justify-between items-center py-1 border-t border-gray-100/80">
-                      <div>
-                        <h4 className="text-xs font-bold text-gray-900">Extra Bed</h4>
-                        <p className="text-[10px] text-gray-400 font-medium">₹{Number(room.extraBedPrice || 0).toLocaleString('en-IN')} / bed / night</p>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <button
-                          type="button"
-                          disabled={extraBedQty <= 0}
-                          onClick={() => setExtraBedQty(Math.max(0, extraBedQty - 1))}
-                          className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center font-bold text-xs text-gray-600 active:scale-95 disabled:opacity-30 disabled:border-gray-200 cursor-pointer"
-                        >
-                          -
-                        </button>
-                        <span className="w-4 text-center font-bold text-xs text-gray-900">{extraBedQty}</span>
-                        <button
-                          type="button"
-                          disabled={extraBedQty >= Number(room.extraBedCount)}
-                          onClick={() => setExtraBedQty(Math.min(Number(room.extraBedCount), extraBedQty + 1))}
-                          className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center font-bold text-xs text-gray-600 active:scale-95 disabled:opacity-30 disabled:border-gray-200 cursor-pointer"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Rooms Card */}
-                <div className="bg-[#F8F9FA] rounded-2xl p-4 flex items-center gap-4 border border-gray-100/80">
-                  <Users className="w-6 h-6 text-gray-400" />
-                  <div className="flex flex-col flex-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Rooms</label>
-                    <select
-                      value={roomsCount}
-                      onChange={e => setRoomsCount(parseInt(e.target.value, 10))}
-                      className="bg-transparent w-full font-bold text-gray-900 text-[15px] outline-none appearance-none"
-                    >
-                      {[...Array(10)].map((_, i) => (
-                        <option key={i+1} value={i+1}>{i+1} Room{i+1 !== 1 ? 's' : ''}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <ChevronDown className="w-5 h-5 text-gray-900 mr-1" />
-                </div>
-
-                {/* Additional Rooms Cards */}
-                {roomsCount > 1 && selectedAdditionalRooms.map((roomIdVal, idx) => (
-                  <div key={idx} className="bg-[#F8F9FA] rounded-2xl p-4 flex flex-col gap-1 border border-gray-100/80">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-left">Select Room {idx + 2}</label>
-                    <RoomSelectDropdown
-                      value={roomIdVal}
-                      onChange={(nextVal) => {
-                        setSelectedAdditionalRooms(prev => {
-                          const next = [...prev];
-                          next[idx] = nextVal;
-                          return next;
-                        });
-                      }}
-                      options={availableOtherRooms}
-                      getImageUrl={getImageUrl}
-                    />
-                  </div>
-                ))}
-
-                {/* Price Breakdown */}
-                {nights > 0 && (
-                  <div className="space-y-2 border-t border-gray-100 pt-4">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>₹{average.toLocaleString('en-IN')} × {nights} night{nights !== 1 ? 's' : ''}</span>
-                      <span className="font-semibold text-gray-900">₹{total.toLocaleString('en-IN')}</span>
-                    </div>
-                    {getAppliedTaxPercent(total) > 0 && (
-                      <div className="flex justify-between text-sm text-gray-500">
-                        <span>Tax ({getAppliedTaxPercent(total)}%)</span>
-                        <span>₹{getAppliedTax(total).toLocaleString('en-IN')}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between items-center pt-2 text-gray-900 font-extrabold text-lg border-t border-gray-100">
-                      <span>Total</span>
-                      <span>₹{(total + getAppliedTax(total)).toLocaleString('en-IN')}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* STEP 2: ENHANCE YOUR STAY */}
-            {mobileBookingStep === 2 && (
-              <div className="space-y-5 animate-in fade-in duration-200">
-                <div className="border-b border-gray-100 pb-3">
-                  <h2 className="text-xl font-extrabold text-gray-900">Enhance Your Stay</h2>
-                  <p className="text-xs text-gray-500 mt-1 font-medium">Select optional add-ons to customize your stay</p>
-                </div>
-
-                {/* Add-ons Grid */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Available Add-ons</h4>
-                  {addons && addons.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-3">
-                      {addons.map((addon) => {
-                        const isSelected = selectedAddons.some(a => a._id === addon._id);
-                        return (
-                          <div
-                            key={addon._id}
-                            className="border border-gray-200 rounded-xl overflow-hidden bg-white flex items-center transition-all hover:shadow-md"
-                          >
-                            <div className="w-20 aspect-square shrink-0 relative bg-gray-50 overflow-hidden rounded-lg m-2">
-                              {addon.image ? (
-                                <img src={getImageUrl(addon.image)} className="w-full h-full object-cover" alt={addon.name} />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                  <Icons.Image className="w-6 h-6" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="p-3 flex flex-col flex-1 min-w-0">
-                              <h5 className="text-sm font-bold text-gray-900 truncate">{addon.name}</h5>
-                              <p className="text-xs text-gray-500 truncate mt-0.5">{addon.description || 'Optional service'}</p>
-                              <div className="mt-auto pt-3 flex items-center justify-between">
-                                <span className="text-sm font-bold text-gray-900">₹{Number(addon.price || 0).toLocaleString('en-IN')}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleAddonClick(addon)}
-                                  className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
-                                    isSelected
-                                      ? 'bg-[#c5a880] border-[#c5a880] text-white shadow-sm'
-                                      : 'bg-white border-gray-300 text-gray-800 hover:bg-gray-50 hover:border-gray-400'
-                                  }`}
-                                >
-                                  {isSelected ? 'Added' : 'Add'}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-400 italic">No add-ons available for this room.</p>
-                  )}
-                </div>
-
-                {/* Summary Card */}
-                <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-2 mt-4">
-                  <div className="flex justify-between text-xs text-gray-600">
-                    <span>Room Total ({nights} nights)</span>
-                    <span>₹{total.toLocaleString('en-IN')}</span>
-                  </div>
-                  {extraBedTotal > 0 && (
-                    <div className="flex justify-between text-xs text-gray-600">
-                      <span>Extra Bed ({extraBedQty})</span>
-                      <span>₹{extraBedTotal.toLocaleString('en-IN')}</span>
-                    </div>
-                  )}
-                  {selectedAddons.length > 0 && (
-                    <div className="flex justify-between text-xs text-[#c5a880] font-semibold">
-                      <span>Add-ons ({selectedAddons.length})</span>
-                      <span>+₹{selectedAddons.reduce((sum, a) => sum + a.price, 0).toLocaleString('en-IN')}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center pt-2 text-gray-900 font-extrabold text-base border-t border-gray-200">
-                    <span>Grand Total</span>
-                    <span>₹{finalTotal.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 3: GUEST DETAILS & PAYMENT */}
-            {mobileBookingStep === 3 && (
-              <div className="space-y-5 animate-in fade-in duration-200">
-                <div className="border-b border-gray-100 pb-3">
-                  <h2 className="text-xl font-extrabold text-gray-900">Guest Information</h2>
-                  <p className="text-xs text-gray-500 mt-1 font-medium">Enter your details to confirm booking</p>
-                </div>
-
-                <div className="space-y-3.5">
-                  <div>
-                    <label className="text-xs font-bold text-gray-700 block mb-1">Full Name *</label>
-                    <input
-                      type="text"
-                      name="fullName"
-                      value={guestInfo.fullName}
-                      onChange={handleGuestInfoChange}
-                      placeholder="Enter your full name"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:border-yellow-400 focus:bg-white transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-gray-700 block mb-1">Email Address *</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={guestInfo.email}
-                      onChange={handleGuestInfoChange}
-                      placeholder="name@example.com"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:border-yellow-400 focus:bg-white transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-gray-700 block mb-1">Mobile Number (10 digits) *</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={guestInfo.phone}
-                      onChange={handleGuestInfoChange}
-                      placeholder="9876543210"
-                      maxLength={10}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:border-yellow-400 focus:bg-white transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-gray-700 block mb-1">Special Requests</label>
-                    <textarea
-                      name="specialRequests"
-                      value={guestInfo.specialRequests}
-                      onChange={handleGuestInfoChange}
-                      rows={2}
-                      placeholder="Any preference or request..."
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-900 outline-none focus:border-yellow-400 focus:bg-white transition-colors resize-none"
-                    />
-                  </div>
-
-                  {/* Terms & Conditions */}
-                  <label className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={termsAccepted}
-                      onChange={e => setTermsAccepted(e.target.checked)}
-                      className="mt-0.5 w-4 h-4 rounded text-yellow-500 focus:ring-yellow-400"
-                    />
-                    <span className="text-xs text-gray-600 leading-snug">
-                      I agree to the{' '}
-                      <Link
-                        to="/terms-and-conditions"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="font-bold text-gray-900 underline"
-                      >
-                        Terms & Conditions
-                      </Link>{' '}
-                      and cancellation policy.
-                    </span>
-                  </label>
-                </div>
-
-                {/* Booking Details Summary Card */}
-                <div className="bg-white rounded-2xl p-4 border border-gray-200 space-y-4 mt-4">
-                  <h3 className="font-extrabold text-sm text-gray-900 border-b border-gray-100 pb-3">Your Booking Details</h3>
-
-                  <div className="flex justify-between items-start gap-2">
-                    <span className="font-bold text-gray-900 text-sm">{room?.name}</span>
-                    <span className="font-bold text-gray-900 text-sm">₹{finalTotal.toLocaleString('en-IN')}</span>
-                  </div>
-
-                  <div className="bg-gray-50/80 rounded-xl p-3 text-[11px] text-gray-500 font-medium space-y-1">
-                    <div className="text-gray-700">{formatDisplayDate(checkIn, 'en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })} - {formatDisplayDate(checkOut, 'en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                    <div>{nights} Night{nights > 1 ? 's' : ''} — {roomsCount} Room{roomsCount > 1 ? 's' : ''}, {adults} Adult{adults > 1 ? 's' : ''}</div>
-                  </div>
-
-                  <div className="space-y-2.5 border-t border-gray-100 pt-3 text-xs">
-                    <div className="flex justify-between items-center text-gray-600 gap-2">
-                      <span className="truncate" title={room?.name}>Room - {room?.name}</span>
-                      <span className="font-semibold text-gray-900 shrink-0">₹{total.toLocaleString('en-IN')}</span>
-                    </div>
-
-                    {selectedAddons.length > 0 && (
-                      <div className="space-y-1.5 pt-2 border-t border-gray-50">
-                        <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Add-on Services</span>
-                        {selectedAddons.map(a => (
-                          <div key={a._id} className="flex justify-between text-gray-500 text-[11px]">
-                            <span>• {a.name}</span>
-                            <span>₹{a.price.toLocaleString('en-IN')}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {extraBedQty > 0 && (
-                      <div className="flex justify-between text-gray-500 text-[11px] pt-2 border-t border-gray-50">
-                        <span>• Extra Bed ({extraBedQty} × {nights} night{nights > 1 ? 's' : ''})</span>
-                        <span>₹{extraBedTotal.toLocaleString('en-IN')}</span>
-                      </div>
-                    )}
-
-                    <div className="flex justify-between text-gray-600 border-t border-gray-100 pt-2.5">
-                      <span>Sub Total</span>
-                      <span className="font-semibold text-gray-900">₹{(total + selectedAddons.reduce((sum, a) => sum + a.price, 0) + extraBedTotal).toLocaleString('en-IN')}</span>
-                    </div>
-
-                    {getAppliedTaxPercent(total) > 0 && (
-                      <div className="flex justify-between text-gray-600">
-                        <span>Taxes and Fees ({getAppliedTaxPercent(total)}%)</span>
-                        <span className="font-semibold text-gray-900">₹{getAppliedTax(total).toLocaleString('en-IN')}</span>
-                      </div>
-                    )}
-
-                    <div className="flex justify-between items-center text-gray-900 font-extrabold text-sm border-t border-gray-200 pt-3">
-                      <span>Grand Total</span>
-                      <span className="text-[#c5a880] text-base">₹{finalTotal.toLocaleString('en-IN')}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Bottom Fixed Action Footer */}
-          <div className="absolute bottom-0 inset-x-0 bg-white border-t border-gray-200 px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shrink-0 z-20 shadow-[0_-8px_30px_rgba(0,0,0,0.06)]">
-            {!clientOccupancyValidation.isAllowed && mobileBookingStep === 1 && (
-              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold flex items-start gap-2 mb-2">
-                <Icons.AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-rose-600" />
-                <span>{clientOccupancyValidation.message}</span>
-              </div>
-            )}
-
-            {mobileBookingStep === 1 && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (!checkIn || !checkOut) {
-                    toast.error('Please select check-in and check-out dates');
-                    setActiveSelectType('checkIn');
-                    setShowCalendarModal(true);
-                    return;
-                  }
-                  if (checkIn === checkOut) {
-                    toast.error('Minimum stay is 1 night.');
-                    return;
-                  }
-                  if (nights <= 0) {
-                    toast.error('Invalid date range');
-                    return;
-                  }
-                  if (!clientOccupancyValidation.isAllowed) {
-                    toast.error(clientOccupancyValidation.message);
-                    return;
-                  }
-                  setMobileBookingStep(2);
-                }}
-                disabled={!room?.isAvailable || (checkIn && checkOut && remainingRooms === 0) || !clientOccupancyValidation.isAllowed}
-                className="w-full bg-[#d9f969] active:bg-[#bde830] text-gray-900 font-extrabold text-[16px] py-4 rounded-full transition-all active:scale-[0.98] disabled:opacity-50 shadow-md flex justify-center items-center gap-2 cursor-pointer"
-              >
-                <span>Continue to Add-ons</span>
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            )}
-
-            {mobileBookingStep === 2 && (
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedAddons([]);
-                    setMobileBookingStep(3);
-                  }}
-                  className="shrink-0 px-4 h-11 bg-white active:bg-gray-50 text-gray-700 font-bold text-[13px] rounded-full transition-all cursor-pointer border-2 border-dashed border-gray-300"
-                >
-                  Skip
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMobileBookingStep(3)}
-                  className="flex-1 bg-linear-to-r from-[#d9f969] to-[#cbf046] active:scale-[0.98] text-gray-900 font-extrabold text-[13px] h-11 rounded-full transition-all shadow-lg shadow-[#d9f969]/30 flex justify-center items-center gap-1.5 cursor-pointer"
-                >
-                  <span>Guest Details</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
-            {mobileBookingStep === 3 && (
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMobileBookingStep(2)}
-                  aria-label="Back"
-                  className="shrink-0 w-11 h-11 bg-gray-100 active:bg-gray-200 text-gray-700 rounded-full transition-all cursor-pointer flex items-center justify-center border border-gray-200"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={initiateGuestBookingPayment}
-                  disabled={bookingLoading || paymentProcessing}
-                  className="flex-1 bg-[#d9f969] active:bg-[#bde830] text-gray-900 font-extrabold text-[14px] h-11 rounded-full transition-all active:scale-[0.98] disabled:opacity-50 shadow-md flex justify-center items-center gap-2 cursor-pointer"
-                >
-                  {(bookingLoading || paymentProcessing) && <Loader2 className="w-5 h-5 animate-spin mr-1" />}
-                  <span>Confirm & Pay ₹{finalTotal.toLocaleString('en-IN')}</span>
-                </button>
-              </div>
-            )}
-          </div>
+          )}
         </div>
-      </div>
       )}
 
       {/* --- ALL AMENITIES MODAL (Airbnb Style) --- */}
