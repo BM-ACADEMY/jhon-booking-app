@@ -213,7 +213,7 @@ const Footer = () => {
           </div>
 
           {/* Contact Col */}
-          <div className="hidden lg:block lg:col-span-6">
+          <div className="lg:col-span-6">
             <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-6">Contact Us</h4>
             <ul className="space-y-4 mb-6">
               <li className="flex items-start gap-3.5 text-sm text-slate-400">
@@ -227,15 +227,15 @@ const Footer = () => {
                 </a>
               </li>
               <li className="flex items-center gap-3.5 text-sm text-slate-400">
-                <Mail className="w-4 h-4 text-slate-300 flex-shrink-0" />
-                <a href={`mailto:${settings.email || 'info@jhon.com'}`} className="hover:text-white transition-colors duration-300">
-                  {settings.email || 'info@jhon.com'}
-                </a>
-              </li>
-              <li className="flex items-center gap-3.5 text-sm text-slate-400">
                 <img src={whatsappIcon} alt="WhatsApp" className="w-6 h-6 flex-shrink-0"/>
                 <a href="https://wa.me/918946022554?text=Hello!%20I%20would%20like%20to%20know%20more%20about%20your%20services." target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors duration-300">
                   +91 89460 22554
+                </a>
+              </li>
+              <li className="flex items-center gap-3.5 text-sm text-slate-400">
+                <Mail className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                <a href={`mailto:${settings.email || 'info@jhon.com'}`} className="hover:text-white transition-colors duration-300">
+                  {settings.email || 'info@jhon.com'}
                 </a>
               </li>
             </ul>
