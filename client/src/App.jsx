@@ -13,7 +13,6 @@ import WishlistPage from './pages/WishlistPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import ProfilePage from './pages/ProfilePage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
 import PublicBookingDetails from './pages/PublicBookingDetails';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import TermsPage from './pages/TermsPage';
@@ -55,7 +54,6 @@ const AppRoutes = () => (
     {/* Standalone auth pages (no Navbar/Footer) */}
     <Route path="/login" element={<LoginPage />} />
     <Route path="/signup" element={<SignupPage />} />
-    <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
     {/* Public website with Navbar + Footer */}
     <Route element={<PublicLayout />}>

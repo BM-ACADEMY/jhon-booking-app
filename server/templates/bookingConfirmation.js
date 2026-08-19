@@ -72,12 +72,11 @@ export const getGuestBookingEmailTemplate = (user, booking, primaryRoomDetails, 
         <tr>
           <td style="padding: 20px;">
             <strong style="color: #0f172a; font-size: 13px; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Account Credentials</strong>
-            <p style="margin: 0 0 12px 0; font-size: 13px; color: #475569; line-height: 1.5;">A new account has been automatically created using your booking details. Use the password below to log in later:</p>
+            <p style="margin: 0 0 12px 0; font-size: 13px; color: #475569; line-height: 1.5;">A new account has been automatically created using your booking details. You can log in using your email and an OTP sent to your inbox:</p>
             <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
               <tr>
                 <td style="padding: 12px 15px; font-size: 13px; color: #475569;">
-                  <strong>Email:</strong> ${createdCredentials.email}<br/>
-                  <strong>Password:</strong> ${createdCredentials.password} <span style="color: #64748b; font-size: 11px;">(Your phone number)</span>
+                  <strong>Email:</strong> ${createdCredentials.email}
                 </td>
               </tr>
             </table>

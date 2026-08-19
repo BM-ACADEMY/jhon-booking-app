@@ -444,11 +444,10 @@ export const verifyRazorpayPayment = async (req, res) => {
           name: `${firstName} ${lastName}`.trim(),
           email,
           phone,
-          password: phone,
         });
         createdCredentials = {
           email,
-          password: phone
+          isNewUser: true
         };
       }
     }

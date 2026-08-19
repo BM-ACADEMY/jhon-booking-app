@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { User, Mail, Phone, Lock, Save, Loader2, Edit2, X, Check, Key, Shield, ArrowLeft } from 'lucide-react';
+import { User, Mail, Phone, Save, Loader2, Edit2, X, Check, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
@@ -20,8 +20,6 @@ const ProfilePage = () => {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -38,8 +36,6 @@ const ProfilePage = () => {
       setEmail(user.email || '');
       setPhone(user.phone || '');
     }
-    setPassword('');
-    setConfirmPassword('');
     setIsEditing(false);
   };
 
@@ -51,25 +47,17 @@ const ProfilePage = () => {
       return;
     }
 
-    if (password && password !== confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-
     try {
       setSaving(true);
       const res = await api.put('/auth/profile', {
         name,
         email,
-        phone,
-        ...(password ? { password } : {})
+        phone
       });
 
       if (res.data.user) {
         updateUserData(res.data.user);
         toast.success('Profile updated successfully!');
-        setPassword('');
-        setConfirmPassword('');
         setIsEditing(false);
       }
     } catch (err) {
@@ -242,60 +230,7 @@ const ProfilePage = () => {
             </CardContent>
           </Card>
 
-          {/* Security Credentials Card */}
-          <Card className="border border-gray-200 shadow-sm rounded-2xl bg-white overflow-hidden">
-            <CardHeader className="bg-gray-50/50 border-b border-gray-200 p-5">
-              <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <Key className="w-5 h-5 text-primary-600" />
-                Security & Password
-              </CardTitle>
-              <CardDescription className="text-xs text-gray-500">
-                Change your login password.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-5 sm:p-6 space-y-5">
-              {!isEditing ? (
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-500 flex items-center justify-between">
-                  <span>Password is protected. Click <strong>Edit Profile</strong> to update your password.</span>
-                  <Badge variant="outline" className="border-gray-300 text-gray-600 font-bold">Protected</Badge>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  
-                  {/* New Password */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-gray-400" />
-                      New Password
-                    </Label>
-                    <Input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Leave blank to keep current password"
-                      className="border-gray-300 text-sm font-semibold"
-                    />
-                  </div>
 
-                  {/* Confirm Password */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-gray-400" />
-                      Confirm Password
-                    </Label>
-                    <Input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm new password"
-                      className="border-gray-300 text-sm font-semibold"
-                    />
-                  </div>
-
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
         </form>
       </div>

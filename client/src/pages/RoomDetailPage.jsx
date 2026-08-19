@@ -1997,7 +1997,7 @@ const RoomDetailPage = () => {
                                         className="mt-1 w-4 h-4 accent-black cursor-pointer"
                                       />
                                       <label htmlFor="payAdvance" className="flex-1 cursor-pointer">
-                                        <span className="font-bold text-[14px] text-gray-900 block mb-1">I prefer to Pay Later</span>
+                                        <span className="font-bold text-[14px] text-gray-900 block mb-1">I prefer to pay Advance</span>
                                         <div className="flex items-center justify-between text-[12px] text-gray-500">
                                           <span>Pay Now:</span>
                                           <span className="font-bold text-gray-900">₹{Math.round(finalTotal * (advancePercent / 100)).toLocaleString('en-IN')}</span>

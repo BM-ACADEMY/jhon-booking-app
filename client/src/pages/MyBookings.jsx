@@ -212,11 +212,11 @@ const MyBookings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAFAFA] pt-24 pb-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-10">
-          <h1 className="text-3xl font-black text-gray-900">My Bookings</h1>
-          <p className="text-gray-500 mt-2 font-medium">Manage your upcoming and past stays</p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-medium text-gray-900">My Bookings</h1>
+          <p className="text-gray-900 mt-2 font-medium">Manage your upcoming and past stays</p>
         </div>
 
         {bookings.length === 0 ? (
@@ -224,9 +224,9 @@ const MyBookings = () => {
             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <Calendar className="w-10 h-10 text-gray-300" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No bookings yet</h3>
+            <h3 className="text-xl font-medium text-gray-900 mb-2">No bookings yet</h3>
             <p className="text-gray-500 mb-8 max-w-xs mx-auto">Your dream stay is just a few clicks away. Start exploring our curated properties.</p>
-            <Link to="/rooms" className="inline-flex items-center gap-2 bg-primary-600 text-white px-8 py-3.5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-primary-500/25 hover:bg-primary-700 transition-all">
+            <Link to="/rooms" className="inline-flex items-center gap-2 bg-primary-600 text-white px-8 py-3.5 rounded-2xl font-medium uppercase tracking-widest text-sm shadow-xl shadow-primary-500/25 hover:bg-primary-700 transition-all">
               Explore Rooms
             </Link>
           </div>
@@ -256,7 +256,7 @@ const MyBookings = () => {
                         </div>
                       )}
                       <div className="absolute top-4 left-4">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-medium uppercase tracking-widest border ${
                           isPast ? 'bg-gray-100 text-gray-500 border-gray-200' :
                           booking.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                           booking.status === 'cancelled' ? 'bg-red-50 text-red-650 border-red-100' :
@@ -272,18 +272,18 @@ const MyBookings = () => {
                       <div>
                         <div className="flex justify-between items-start mb-3">
                           <div>
-                            <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mb-1">{booking.room?.category || 'Deleted'}</p>
-                            <h2 className="text-xl font-black text-gray-900 line-clamp-2">
+                            <p className="text-[10px] font-medium text-primary-600 uppercase tracking-widest mb-1">{booking.room?.category || 'Deleted'}</p>
+                            <h2 className="text-xl font-medium text-gray-900 line-clamp-2">
                               {booking.rooms && booking.rooms.length > 0
                                 ? booking.rooms.map(r => r?.name || 'Deleted Room').join(', ')
                                 : booking.room?.name || 'Deleted Room'}
                             </h2>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-black text-gray-900">₹{booking.totalAmount?.toLocaleString('en-IN')}</p>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase">Total Price</p>
+                            <p className="text-sm font-medium text-gray-900">₹{booking.totalAmount?.toLocaleString('en-IN')}</p>
+                            <p className="text-[10px] text-gray-400 font-medium uppercase">Total Price</p>
                             {booking.dueAmount > 0 && (
-                              <div className="text-[9px] font-bold mt-1 text-slate-500">
+                              <div className="text-[9px] font-medium mt-1 text-slate-500">
                                 Paid: <span className="text-emerald-600">₹{booking.paidAmount?.toLocaleString('en-IN')}</span>
                                 <br />
                                 Due: <span className="text-amber-600">₹{booking.dueAmount?.toLocaleString('en-IN')}</span>
@@ -296,23 +296,23 @@ const MyBookings = () => {
                           <div>
                             <div className="flex items-center gap-2 text-gray-400 mb-1">
                               <Calendar className="w-3.5 h-3.5" />
-                              <span className="text-[10px] font-black uppercase tracking-widest">Check-In</span>
+                              <span className="text-[10px] font-medium uppercase tracking-widest">Check-In</span>
                             </div>
-                            <p className="text-sm font-bold text-gray-800">{new Date(booking.checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                            <p className="text-sm font-medium text-gray-800">{new Date(booking.checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                           </div>
                           <div>
                             <div className="flex items-center gap-2 text-gray-400 mb-1">
                               <Calendar className="w-3.5 h-3.5" />
-                              <span className="text-[10px] font-black uppercase tracking-widest">Check-Out</span>
+                              <span className="text-[10px] font-medium uppercase tracking-widest">Check-Out</span>
                             </div>
-                            <p className="text-sm font-bold text-gray-800">{new Date(booking.checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                            <p className="text-sm font-medium text-gray-800">{new Date(booking.checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                           </div>
                           <div>
                             <div className="flex items-center gap-2 text-gray-400 mb-1">
                               <Clock className="w-3.5 h-3.5" />
-                              <span className="text-[10px] font-black uppercase tracking-widest">Nights</span>
+                              <span className="text-[10px] font-medium uppercase tracking-widest">Nights</span>
                             </div>
-                            <p className="text-sm font-bold text-gray-800">
+                            <p className="text-sm font-medium text-gray-800">
                               {(() => {
                                 const nights = Math.max(1, Math.ceil((new Date(booking.checkOut) - new Date(booking.checkIn)) / (1000 * 60 * 60 * 24)));
                                 return `${nights} Night${nights !== 1 ? 's' : ''}`;
@@ -322,9 +322,9 @@ const MyBookings = () => {
                           <div>
                             <div className="flex items-center gap-2 text-gray-400 mb-1">
                               <Users className="w-3.5 h-3.5" />
-                              <span className="text-[10px] font-black uppercase tracking-widest">Guests</span>
+                              <span className="text-[10px] font-medium uppercase tracking-widest">Guests</span>
                             </div>
-                            <p className="text-sm font-bold text-gray-800">
+                            <p className="text-sm font-medium text-gray-800">
                               {booking.adults || booking.guests || 1} Adult{(booking.adults || booking.guests || 1) > 1 ? 's' : ''}
                               {booking.children > 0 ? `, ${booking.children} Child${booking.children > 1 ? 'ren' : ''}` : ''}
                               {booking.infants > 0 ? `, ${booking.infants} Infant${booking.infants > 1 ? 's' : ''}` : ''}
@@ -333,21 +333,21 @@ const MyBookings = () => {
                           <div>
                             <div className="flex items-center gap-2 text-gray-400 mb-1">
                               <BedDouble className="w-3.5 h-3.5" />
-                              <span className="text-[10px] font-black uppercase tracking-widest">Rooms</span>
+                              <span className="text-[10px] font-medium uppercase tracking-widest">Rooms</span>
                             </div>
-                            <p className="text-sm font-bold text-gray-800">{booking.roomsCount || 1} Room{(booking.roomsCount || 1) > 1 ? 's' : ''}</p>
+                            <p className="text-sm font-medium text-gray-800">{booking.roomsCount || 1} Room{(booking.roomsCount || 1) > 1 ? 's' : ''}</p>
                           </div>
                         </div>
 
                         {booking.rooms && booking.rooms.length > 1 && (
                           <div className="mt-4">
-                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Booked Rooms</span>
+                            <span className="text-[9px] font-medium text-gray-400 uppercase tracking-widest block mb-1.5">Booked Rooms</span>
                             <div className="flex flex-wrap gap-2">
                               {booking.rooms.map((r, rIdx) => (
                                 <Link
                                   key={rIdx}
                                   to={`/rooms/${r._id}`}
-                                  className="inline-flex items-center gap-2 bg-gray-50 hover:bg-gray-100 active:scale-95 text-gray-700 pl-1.5 pr-2.5 py-1 rounded-lg text-[10px] font-bold border border-gray-200 shadow-sm transition-all"
+                                  className="inline-flex items-center gap-2 bg-gray-50 hover:bg-gray-100 active:scale-95 text-gray-700 pl-1.5 pr-2.5 py-1 rounded-lg text-[10px] font-medium border border-gray-200 shadow-sm transition-all"
                                 >
                                   <div className="w-5 h-5 rounded-md overflow-hidden bg-gray-200 flex-shrink-0 border border-gray-200/40">
                                     {r.images?.length > 0 ? (
@@ -367,17 +367,17 @@ const MyBookings = () => {
 
                         {((booking.addons && booking.addons.length > 0) || booking.extraBedCount > 0) ? (
                           <div className="mt-3">
-                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Extras</span>
+                            <span className="text-[9px] font-medium text-gray-400 uppercase tracking-widest block mb-1.5">Extras</span>
                             <div className="flex flex-wrap gap-1.5">
                               {booking.extraBedCount > 0 && (
-                                <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-[10px] font-bold border border-amber-100">
+                                <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-[10px] font-medium border border-amber-100">
                                   <Bath className="w-3 h-3" />
                                   {booking.extraBedCount} Extra Bed{booking.extraBedCount > 1 ? 's' : ''}
                                   {booking.extraBedPrice > 0 && ` (₹${booking.extraBedPrice.toLocaleString('en-IN')}/night)`}
                                 </span>
                               )}
                               {booking.addons?.map((addon, aIdx) => (
-                                <span key={aIdx} className="inline-flex items-center gap-1.5 bg-primary-50 text-primary-700 px-2.5 py-1 rounded-full text-[10px] font-bold border border-primary-100">
+                                <span key={aIdx} className="inline-flex items-center gap-1.5 bg-primary-50 text-primary-700 px-2.5 py-1 rounded-full text-[10px] font-medium border border-primary-100">
                                   <Check className="w-3 h-3" />
                                   {addon.name} (₹{addon.price})
                                 </span>
@@ -394,7 +394,7 @@ const MyBookings = () => {
                             Booked on {new Date(booking.createdAt).toLocaleDateString()}
                           </div>
                           {booking.razorpayPaymentId && (
-                            <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-bold">
+                            <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
                               <CreditCard className="w-4 h-4" />
                               Payment Secure
                             </div>
@@ -404,7 +404,7 @@ const MyBookings = () => {
                           {booking.dueAmount > 0 && booking.status !== 'cancelled' && (
                             <button
                               onClick={() => handlePayBalance(booking)}
-                              className="px-4 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl bg-[#FCE83A] hover:bg-[#f3df2c] text-slate-900 active:scale-[0.98] transition-all cursor-pointer border-none shadow-sm"
+                              className="px-4 py-2.5 text-xs font-medium uppercase tracking-wider rounded-xl bg-[#FCE83A] hover:bg-[#f3df2c] text-slate-900 active:scale-[0.98] transition-all cursor-pointer border-none shadow-sm"
                             >
                               Pay Balance (₹{booking.dueAmount?.toLocaleString('en-IN')})
                             </button>
@@ -412,7 +412,7 @@ const MyBookings = () => {
                           {(booking.status === 'confirmed' || booking.status === 'pending') && (
                             <button
                               onClick={() => handleCancelClick(booking)}
-                              className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl border transition-all cursor-pointer ${
+                              className={`px-4 py-2 text-xs font-medium uppercase tracking-wider rounded-xl border transition-all cursor-pointer ${
                                 canCancelBooking(booking)
                                   ? "bg-red-50 hover:bg-red-100 text-red-600 border-red-100 active:scale-[0.98]"
                                   : "bg-gray-50 text-gray-400 border-gray-200"
@@ -437,10 +437,10 @@ const MyBookings = () => {
                     >
                       {/* Text label */}
                       <div className="min-w-0">
-                        <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest group-hover:text-primary-700 transition-colors">
+                        <p className="text-[10px] font-medium text-primary-600 uppercase tracking-widest group-hover:text-primary-700 transition-colors">
                           Rate Us
                         </p>
-                        <p className="text-xs font-bold text-gray-400 group-hover:text-primary-600/80 transition-colors">
+                        <p className="text-xs font-medium text-gray-400 group-hover:text-primary-600/80 transition-colors">
                           Leave a quick review
                         </p>
                       </div>
@@ -471,7 +471,7 @@ const MyBookings = () => {
                         </div>
                         <span
                           onClick={() => handleOpenReviewModal(booking)}
-                          className="text-xs font-black text-gray-400 hover:text-primary-600 ml-1 transition-colors cursor-pointer"
+                          className="text-xs font-medium text-gray-400 hover:text-primary-600 ml-1 transition-colors cursor-pointer"
                         >
                           Rate
                         </span>
@@ -492,7 +492,7 @@ const MyBookings = () => {
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-black text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="relative inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     Previous
                   </button>
@@ -502,7 +502,7 @@ const MyBookings = () => {
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     disabled={currentPage === totalPages}
-                    className="relative inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-black text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="relative inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     Next
                   </button>
@@ -510,11 +510,11 @@ const MyBookings = () => {
                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between w-full">
                   <div>
                     <p className="text-sm text-gray-500 font-medium">
-                      Showing <span className="font-bold text-gray-900">{indexOfFirstBooking + 1}</span> to{' '}
-                      <span className="font-bold text-gray-900">
+                      Showing <span className="font-medium text-gray-900">{indexOfFirstBooking + 1}</span> to{' '}
+                      <span className="font-medium text-gray-900">
                         {Math.min(indexOfLastBooking, bookings.length)}
                       </span>{' '}
-                      of <span className="font-bold text-gray-900">{bookings.length}</span> bookings
+                      of <span className="font-medium text-gray-900">{bookings.length}</span> bookings
                     </p>
                   </div>
                   <div>
@@ -538,7 +538,7 @@ const MyBookings = () => {
                             setCurrentPage(pageNum);
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
-                          className={`relative inline-flex items-center justify-center w-10 h-10 rounded-xl text-sm font-black transition-all active:scale-95 ${
+                          className={`relative inline-flex items-center justify-center w-10 h-10 rounded-xl text-sm font-medium transition-all active:scale-95 ${
                             currentPage === pageNum
                               ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20 hover:bg-primary-700'
                               : 'text-gray-700 border border-gray-100 bg-white hover:bg-gray-50 hover:border-gray-200 shadow-sm'
@@ -581,8 +581,8 @@ const MyBookings = () => {
           <div className="bg-white rounded-2xl w-full max-w-lg p-6 sm:p-8 relative z-10 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mb-1">{selectedBooking.room?.category || 'Deleted'}</p>
-                <h2 className="text-xl font-black text-gray-900 leading-snug">
+                <p className="text-[10px] font-medium text-primary-600 uppercase tracking-widest mb-1">{selectedBooking.room?.category || 'Deleted'}</p>
+                <h2 className="text-xl font-medium text-gray-900 leading-snug">
                   {selectedBooking.isReviewed ? 'Edit Review for' : 'Review'} {selectedBooking.room?.name || 'Deleted Room'}
                 </h2>
               </div>
@@ -597,11 +597,11 @@ const MyBookings = () => {
             <form onSubmit={handleReviewSubmit} className="space-y-6">
               {/* Ratings */}
               <div className="bg-gray-50/50 border border-gray-100 rounded-xl p-4 space-y-1">
-                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Category Ratings</h3>
+                <h3 className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-2">Category Ratings</h3>
 
                 {/* Communication */}
                 <div className="flex items-center justify-between py-2 border-b border-gray-100/50">
-                  <span className="text-sm font-bold text-gray-700">Communication</span>
+                  <span className="text-sm font-medium text-gray-700">Communication</span>
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -618,7 +618,7 @@ const MyBookings = () => {
 
                 {/* Cleanliness */}
                 <div className="flex items-center justify-between py-2 border-b border-gray-100/50">
-                  <span className="text-sm font-bold text-gray-700">Cleanliness</span>
+                  <span className="text-sm font-medium text-gray-700">Cleanliness</span>
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -635,7 +635,7 @@ const MyBookings = () => {
 
                 {/* Comfort */}
                 <div className="flex items-center justify-between py-2 border-b border-gray-100/50">
-                  <span className="text-sm font-bold text-gray-700">Comfort</span>
+                  <span className="text-sm font-medium text-gray-700">Comfort</span>
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -652,7 +652,7 @@ const MyBookings = () => {
 
                 {/* Facilities */}
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-sm font-bold text-gray-700">Facilities</span>
+                  <span className="text-sm font-medium text-gray-700">Facilities</span>
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -670,7 +670,7 @@ const MyBookings = () => {
 
               {/* Comment */}
               <div className="space-y-2">
-                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Detailed Feedback</label>
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-widest">Detailed Feedback</label>
                 <textarea
                   required
                   rows={3}
@@ -685,7 +685,7 @@ const MyBookings = () => {
               <button
                 type="submit"
                 disabled={submittingReview}
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white text-sm font-black uppercase tracking-widest py-4 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-primary-600/10 flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium uppercase tracking-widest py-4 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-primary-600/10 flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submittingReview && <Loader2 className="w-4 h-4 animate-spin" />}
                 {selectedBooking.isReviewed ? 'Update Review' : 'Submit Review'}
@@ -705,8 +705,8 @@ const MyBookings = () => {
           <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-8 relative z-10 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <span className="text-[10px] font-black text-red-650 uppercase tracking-widest block mb-1">Cancel Reservation</span>
-                <h2 className="text-xl font-black text-gray-900 leading-snug">Are you absolutely sure?</h2>
+                <span className="text-[10px] font-medium text-red-650 uppercase tracking-widest block mb-1">Cancel Reservation</span>
+                <h2 className="text-xl font-medium text-gray-900 leading-snug">Are you absolutely sure?</h2>
               </div>
               <button
                 onClick={() => setCancellingBooking(null)}
@@ -718,27 +718,27 @@ const MyBookings = () => {
 
             <div className="space-y-6">
               <p className="text-sm text-gray-500 leading-relaxed">
-                You are about to cancel your stay at <span className="font-bold text-gray-800">{cancellingBooking.room?.name}</span> scheduled for <span className="font-semibold text-gray-800">{new Date(cancellingBooking.checkIn).toLocaleDateString()}</span>.
+                You are about to cancel your stay at <span className="font-medium text-gray-800">{cancellingBooking.room?.name}</span> scheduled for <span className="font-semibold text-gray-800">{new Date(cancellingBooking.checkIn).toLocaleDateString()}</span>.
               </p>
 
               <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
-                <h4 className="text-xs font-black text-amber-800 uppercase tracking-widest mb-1.5">Refund Policy</h4>
+                <h4 className="text-xs font-medium text-amber-800 uppercase tracking-widest mb-1.5">Refund Policy</h4>
                 <p className="text-xs text-amber-705 leading-relaxed">
-                  Your payment of <span className="font-bold">₹{cancellingBooking.totalAmount.toLocaleString('en-IN')}</span> will be fully refunded to your original payment method. The refund will take <span className="font-bold">3 to 4 working days</span> to reflect in your account.
+                  Your payment of <span className="font-medium">₹{cancellingBooking.totalAmount.toLocaleString('en-IN')}</span> will be fully refunded to your original payment method. The refund will take <span className="font-medium">3 to 4 working days</span> to reflect in your account.
                 </p>
               </div>
 
               <div className="flex gap-3 mt-8">
                 <button
                   onClick={() => setCancellingBooking(null)}
-                  className="w-1/2 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-black uppercase tracking-wider py-3.5 rounded-xl transition-all active:scale-[0.98] cursor-pointer"
+                  className="w-1/2 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium uppercase tracking-wider py-3.5 rounded-xl transition-all active:scale-[0.98] cursor-pointer"
                 >
                   No, Keep Stay
                 </button>
                 <button
                   onClick={handleCancelBooking}
                   disabled={refundingLoader}
-                  className="w-1/2 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-wider py-3.5 rounded-xl transition-all active:scale-[0.98] flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-1/2 bg-red-600 hover:bg-red-700 text-white text-xs font-medium uppercase tracking-wider py-3.5 rounded-xl transition-all active:scale-[0.98] flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {refundingLoader && <Loader2 className="w-4 h-4 animate-spin" />}
                   Yes, Cancel
