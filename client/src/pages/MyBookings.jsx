@@ -181,7 +181,7 @@ const MyBookings = () => {
           }
         },
         prefill: { email: booking.user?.email || '' },
-        theme: { color: '#EAB308' }
+        theme: { color: '#3399cc' }
       };
 
       const rzp = new window.Razorpay(options);

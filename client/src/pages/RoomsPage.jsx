@@ -1027,7 +1027,7 @@ const RoomsPage = () => {
           </div>
 
           {/* Content — search bar and optional title/subtitle */}
-          <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center h-full pt-24 pb-4">
+          <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col justify-center items-center h-full pt-24 pb-4">
             
             {pageContent?.bannerTitle && (
               <div className="mb-8 text-center px-4 w-full" style={{ zIndex: 10 }}>
@@ -1045,7 +1045,7 @@ const RoomsPage = () => {
             {/* ── Mobile search pill ── */}
             <div
               onClick={() => setIsMobileSearchOpen(true)}
-              className="lg:hidden absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-40 w-[calc(100%-2rem)] max-w-sm bg-black/60 backdrop-blur-xl border border-white/10 rounded-full px-5 py-3.5 flex items-center gap-3 cursor-pointer shadow-xl transition-transform active:scale-95"
+              className={`lg:hidden absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-40 w-[calc(100%-2rem)] max-w-sm bg-black/60 backdrop-blur-xl border border-white/10 rounded-full px-5 py-3.5 flex items-center gap-3 cursor-pointer shadow-xl transition-all duration-300 ${scrolledPastThreshold ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 scale-100 active:scale-95'}`}
             >
               <Search className="w-4 h-4 text-white ml-1 opacity-80 shrink-0" />
               <div className="relative h-5 w-full flex items-center overflow-hidden text-left">
@@ -1104,13 +1104,13 @@ const RoomsPage = () => {
 
                 {isGuestDropdownOpen && (
                   <div 
-                    className="absolute top-full right-0 mt-4 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50 cursor-default"
+                    className="absolute top-full right-0 mt-4 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 p-5 z-50 cursor-default"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                       {/* Adults */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Adults (13+)</span>
+                        <span className="text-sm font-semibold text-gray-800">Adults (Age 13+)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button
                             onClick={() => setAdultsInput(Math.max(1, adultsInput - 1))}
@@ -1130,7 +1130,7 @@ const RoomsPage = () => {
 
                       {/* Children */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Children (3–12)</span>
+                        <span className="text-sm font-semibold text-gray-800">Children (Age 3–12)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button
                             onClick={() => setChildrenInput(Math.max(0, childrenInput - 1))}
@@ -1150,7 +1150,7 @@ const RoomsPage = () => {
 
                       {/* Infants */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Infants (0–2)</span>
+                        <span className="text-sm font-semibold text-gray-800">Infants (Age 0–2)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button
                             onClick={() => setInfantsInput(Math.max(0, infantsInput - 1))}
@@ -1242,7 +1242,7 @@ const RoomsPage = () => {
                 <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
                   <Users className="w-6 h-6 text-gray-400" />
                   <div className="flex-1 flex items-center justify-between">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Adults (13+)</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Adults (Age 13+)</p>
                     <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
                       <button onClick={() => setAdultsInput(Math.max(1, adultsInput - 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
                         <span className="text-2xl font-light leading-none">−</span>
@@ -1257,7 +1257,7 @@ const RoomsPage = () => {
                 <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
                   <Users className="w-6 h-6 text-gray-400" />
                   <div className="flex-1 flex items-center justify-between">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Children (3–12)</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Children (Age 3–12)</p>
                     <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
                       <button onClick={() => setChildrenInput(Math.max(0, childrenInput - 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
                         <span className="text-2xl font-light leading-none">−</span>
@@ -1272,7 +1272,7 @@ const RoomsPage = () => {
                 <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
                   <Users className="w-6 h-6 text-gray-400" />
                   <div className="flex-1 flex items-center justify-between">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Infants (0–2)</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Infants (Age 0–2)</p>
                     <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
                       <button onClick={() => setInfantsInput(Math.max(0, infantsInput - 1))} className="w-8 h-8 flex items-center justify-center rounded-md bg-transparent hover:bg-gray-50 text-gray-500 transition-colors">
                         <span className="text-2xl font-light leading-none">−</span>

@@ -202,7 +202,7 @@ const Navbar = () => {
   };
   return (
     <header className={`sticky top-0 w-full z-[100] pointer-events-none outline-none border-none ${(location.pathname.startsWith("/rooms/") && location.pathname !== "/rooms") ? "hidden lg:block" : ""}`}>
-      <div className={`pointer-events-auto w-full transition-all duration-300 ${isHeaderScrolled ? "bg-white/95 shadow-md backdrop-blur-md border-b border-gray-200/50 py-2" : "bg-white/70 backdrop-blur-md border-b border-gray-200/50 py-2"} px-4 sm:px-6 lg:px-8`}>
+      <div className={`pointer-events-auto w-full transition-all duration-300 ${showSearchInHeader ? "bg-transparent backdrop-blur-md py-2 lg:py-4" : (isHeaderScrolled ? "bg-white/95 shadow-md backdrop-blur-md py-2" : "bg-white/70 backdrop-blur-md py-2")} px-4 sm:px-6 lg:px-8`}>
         <div className={`max-w-7xl mx-auto flex items-center h-14 lg:h-16 ${showSearchInHeader ? 'justify-center' : 'justify-between'}`}>
           {/* Logo */}
           {!showSearchInHeader && (
@@ -221,10 +221,10 @@ const Navbar = () => {
           {/* Desktop Nav Links / Compact Search Bar */}
           {showSearchInHeader ? (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="hidden lg:flex bg-white shadow-sm border border-gray-200/50 rounded-full max-w-[550px] w-full items-center divide-x divide-gray-200/50 py-1 mx-auto"
+              initial={{ opacity: 0, scale: 0.9, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="flex bg-white shadow-md rounded-full max-w-[550px] w-full items-center divide-x divide-gray-200/50 py-1 mx-auto"
             >
               {/* Date Range Picker containing Date column */}
               <div className="flex-[1.5] flex items-center">
@@ -265,13 +265,13 @@ const Navbar = () => {
 
                 {isNavGuestDropdownOpen && (
                   <div 
-                    className="absolute top-full right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50 cursor-default"
+                    className="absolute top-full right-0 mt-3 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 p-5 z-50 cursor-default"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       {/* Adults */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Adults (13+)</span>
+                        <span className="text-sm font-semibold text-gray-800">Adults (Age 13+)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button 
                             onClick={() => setAdults(Math.max(1, adults - 1))}
@@ -291,7 +291,7 @@ const Navbar = () => {
 
                       {/* Children */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Children (3–12)</span>
+                        <span className="text-sm font-semibold text-gray-800">Children (Age 3–12)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button 
                             onClick={() => setChildren(Math.max(0, children - 1))}
@@ -311,7 +311,7 @@ const Navbar = () => {
 
                       {/* Infants */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Infants (0–2)</span>
+                        <span className="text-sm font-semibold text-gray-800">Infants (Age 0–2)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button 
                             onClick={() => setInfants(Math.max(0, infants - 1))}
@@ -354,13 +354,13 @@ const Navbar = () => {
               </div>
 
               {/* Search Button */}
-              <div className="px-2 w-full md:w-auto mt-0 flex self-stretch items-center">
+              <div className="px-2 shrink-0 flex items-center justify-center">
                 <button
                   onClick={handleSearch}
-                  className="w-full md:w-auto bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-[10px] rounded-full px-4 py-2 flex items-center justify-center gap-1.5 transition-all hover:shadow active:scale-95 group"
+                  className="w-9 h-9 lg:w-auto lg:h-auto bg-[#d9f969] hover:bg-[#cbf046] text-black font-bold uppercase tracking-widest text-[10px] rounded-full lg:px-4 lg:py-2 flex items-center justify-center lg:gap-1.5 transition-all hover:shadow active:scale-95 group cursor-pointer"
                 >
-                  <Search className="w-3.5 h-3.5 group-hover:scale-110 transition-transform duration-300" />
-                  <span>SEARCH</span>
+                  <Search className="w-4 h-4 lg:w-3.5 lg:h-3.5 group-hover:scale-110 transition-transform duration-300" />
+                  <span className="hidden lg:block">SEARCH</span>
                 </button>
               </div>
             </motion.div>
@@ -496,12 +496,14 @@ const Navbar = () => {
           )}
 
           {/* MAIN HEADER HAMBURGER */}
-          <button
-            onClick={() => setMenuOpen(true)}
-            className="lg:hidden p-2.5 rounded-full outline-none transition-all relative bg-gray-100 text-gray-900 hover:bg-gray-200"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          {!showSearchInHeader && (
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="lg:hidden p-2.5 rounded-full outline-none transition-all relative bg-gray-100 text-gray-900 hover:bg-gray-200"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 

@@ -489,28 +489,30 @@ const HeroSection = () => {
           {/* ========================================= */}
           {/* MOBILE SEARCH PILL (Visible sm & md)      */}
           {/* ========================================= */}
-          <div 
-            onClick={() => setIsMobileSearchOpen(true)}
-            className="lg:hidden absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-40 w-[calc(100%-2rem)] max-w-md bg-black/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-5 flex items-center gap-4 cursor-pointer shadow-2xl animate-reveal [animation-delay:600ms] opacity-0 transition-transform active:scale-95"
-          >
-            <Search className="w-6 h-6 text-white ml-2 opacity-80 shrink-0" />
-            
-            {/* Animated Text Container */}
-            <div className="relative h-6 w-full flex items-center overflow-hidden text-left">
-              <p 
-                className={`absolute w-full text-white font-medium text-base transition-all duration-500 ease-in-out ${
-                  tickerIndex === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full'
-                }`}
-              >
-                {dateText}
-              </p>
-              <p 
-                className={`absolute w-full text-white font-medium text-base transition-all duration-500 ease-in-out ${
-                  tickerIndex === 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'
-                }`}
-              >
-                {guestText}
-              </p>
+          <div className={`lg:hidden absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-40 w-[calc(100%-2rem)] max-w-md transition-all duration-300 ${scrolledPastThreshold ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
+            <div 
+              onClick={() => setIsMobileSearchOpen(true)}
+              className="w-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-5 flex items-center gap-4 cursor-pointer shadow-2xl animate-reveal [animation-delay:600ms] opacity-0 transition-transform active:scale-95"
+            >
+              <Search className="w-6 h-6 text-white ml-2 opacity-80 shrink-0" />
+              
+              {/* Animated Text Container */}
+              <div className="relative h-6 w-full flex items-center overflow-hidden text-left">
+                <p 
+                  className={`absolute w-full text-white font-medium text-base transition-all duration-500 ease-in-out ${
+                    tickerIndex === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full'
+                  }`}
+                >
+                  {dateText}
+                </p>
+                <p 
+                  className={`absolute w-full text-white font-medium text-base transition-all duration-500 ease-in-out ${
+                    tickerIndex === 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'
+                  }`}
+                >
+                  {guestText}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -560,13 +562,13 @@ const HeroSection = () => {
 
                 {isGuestDropdownOpen && (
                   <div 
-                    className="absolute top-full right-0 mt-4 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50 cursor-default"
+                    className="absolute top-full right-0 mt-4 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 p-5 z-50 cursor-default"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                       {/* Adults */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Adults (13+)</span>
+                        <span className="text-sm font-semibold text-gray-800">Adults (Age 13+)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button 
                             onClick={() => setAdults(Math.max(1, adults - 1))}
@@ -586,7 +588,7 @@ const HeroSection = () => {
 
                       {/* Children */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Children (3–12)</span>
+                        <span className="text-sm font-semibold text-gray-800">Children (Age 3–12)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button 
                             onClick={() => setChildren(Math.max(0, children - 1))}
@@ -606,7 +608,7 @@ const HeroSection = () => {
 
                       {/* Infants */}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Infants (0–2)</span>
+                        <span className="text-sm font-semibold text-gray-800">Infants (Age 0–2)</span>
                         <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-md p-0.5">
                           <button 
                             onClick={() => setInfants(Math.max(0, infants - 1))}
@@ -750,7 +752,7 @@ const HeroSection = () => {
                 <div className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
                   <div className="flex items-center gap-3">
                     <Users className="w-5 h-5 text-gray-400" />
-                    <span className="text-sm font-semibold text-gray-800">Adults (13+)</span>
+                    <span className="text-sm font-semibold text-gray-800">Adults (Age 13+)</span>
                   </div>
                   <div className="flex items-center gap-4">
                     <button 
@@ -773,7 +775,7 @@ const HeroSection = () => {
                 <div className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
                   <div className="flex items-center gap-3">
                     <Users className="w-5 h-5 text-gray-400" />
-                    <span className="text-sm font-semibold text-gray-800">Children (3–12)</span>
+                    <span className="text-sm font-semibold text-gray-800">Children (Age 3–12)</span>
                   </div>
                   <div className="flex items-center gap-4">
                     <button 
@@ -796,7 +798,7 @@ const HeroSection = () => {
                 <div className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
                   <div className="flex items-center gap-3">
                     <Users className="w-5 h-5 text-gray-400" />
-                    <span className="text-sm font-semibold text-gray-800">Infants (0–2)</span>
+                    <span className="text-sm font-semibold text-gray-800">Infants (Age 0–2)</span>
                   </div>
                   <div className="flex items-center gap-4">
                     <button 

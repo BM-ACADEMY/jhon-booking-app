@@ -1390,7 +1390,7 @@ const RoomDetailPage = () => {
           email: guestInfo.email, 
           contact: guestInfo.phone 
         },
-        theme: { color: '#EAB308' }
+        theme: { color: '#3399cc' }
       };
 
       const rzp = new window.Razorpay(options);

@@ -207,7 +207,7 @@ const AddonsPage = () => {
           }
         },
         prefill: { name: user.name, email: user.email, contact: user.phone || '' },
-        theme: { color: '#EAB308' } // Sleek yellow theme matching villa brand
+        theme: { color: '#3399cc' } // Sleek default theme matching razorpay
       };
 
       const rzp = new window.Razorpay(options);
