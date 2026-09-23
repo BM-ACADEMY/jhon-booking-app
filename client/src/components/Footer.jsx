@@ -180,7 +180,7 @@ const Footer = () => {
         {/* Middle Section: Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 mb-12">
           {/* Brand Col */}
-          <div className="lg:col-span-6">
+          <div className="lg:col-span-5">
             <Link to="/" className="bg-white rounded-xl inline-flex items-center mb-6 outline-none border-none">
               <img
                 src={logoImg}
@@ -212,8 +212,27 @@ const Footer = () => {
             )}
           </div>
 
+          {/* Quick Links Col */}
+          <div className="lg:col-span-3">
+            <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-6">Quick Links</h4>
+            <ul className="space-y-4 mb-6">
+              <li>
+                <Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors duration-300">Home</Link>
+              </li>
+              <li>
+                <Link to="/about" className="text-sm text-slate-400 hover:text-white transition-colors duration-300">About</Link>
+              </li>
+              <li>
+                <Link to="/rooms" className="text-sm text-slate-400 hover:text-white transition-colors duration-300">Rooms</Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-sm text-slate-400 hover:text-white transition-colors duration-300">Contact</Link>
+              </li>
+            </ul>
+          </div>
+
           {/* Contact Col */}
-          <div className="lg:col-span-6">
+          <div className="lg:col-span-4">
             <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-6">Contact Us</h4>
             <ul className="space-y-4 mb-6">
               <li className="flex items-start gap-3.5 text-sm text-slate-400">
