@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Hotel, Trees, Bath, Sparkles, MapPin, ArrowRight } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import api from '../api';
 
 const AboutPage = () => {
@@ -81,6 +82,10 @@ const AboutPage = () => {
 
   return (
     <div className="bg-stone-50 font-sans text-stone-800 animate-in fade-in duration-500">
+      <Helmet>
+        <title>About Us | Bali & Greek Themed Villa in Pondicherry – The Balified Villa</title>
+        <meta name="description" content="Learn about The Balified Villa — a unique Bali & Greek themed villa in Kottakuppam, Pondicherry, offering a boutique themed stay near Serenity Beach & Auroville." />
+      </Helmet>
       {/* Hero Section */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
         {/* Background Slides */}

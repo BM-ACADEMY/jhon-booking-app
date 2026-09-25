@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, forwardRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../context/AuthContext';
 import {
   Search, BedDouble, Star, Users, Bath, ArrowRight, Loader2,
@@ -889,6 +890,10 @@ const RoomsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
+      <Helmet>
+        <title>Rooms & Villas in Pondicherry | Bali & Greek Themed Stays – The Balified Villa</title>
+        <meta name="description" content="Browse all themed rooms & villas at The Balified Villa, Pondicherry — from Bali-inspired rooms to a private pool villa, near Serenity Beach & Auroville." />
+      </Helmet>
 
       {/* ══════════════════════════════════════════
            HERO SECTION  (mirrors HomePage HeroSection)

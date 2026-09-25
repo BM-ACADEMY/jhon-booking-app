@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Icons from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import {
   ArrowLeft, Star, Users, BedDouble, Bath, MapPin, Wifi, Check,
   ChevronLeft, ChevronRight, ChevronDown, Loader2, Calendar, Share2, Heart, Shield, Maximize,
@@ -1466,9 +1467,41 @@ const RoomDetailPage = () => {
     return "col-span-1 row-span-1";
   };
 
+  const getRoomSEO = () => {
+    if (!room?.name) return null;
+    const name = room.name.toLowerCase();
+    
+    if (name.includes('bali classic')) {
+      return {
+        title: "Bali Classic Room – Themed Couple Villa in Pondicherry | The Balified Villa",
+        description: "Stay in our Bali-inspired Classic Room in Pondicherry — private bathroom, couple's bathtub & Balinese decor, near Serenity Beach."
+      };
+    }
+    if (name.includes('greek classic')) {
+      return {
+        title: "Greek Classic Room – Themed Stay in Pondicherry | The Balified Villa",
+        description: "Experience our Greek-themed Classic Room in Pondicherry — whitewashed interiors, blue accents & a relaxing coastal-inspired stay near Auroville."
+      };
+    }
+    if (name.includes('honeymoon')) {
+      return {
+        title: "Bali Honeymoon Nest – Romantic Villa Stay in Pondicherry | The Balified Villa",
+        description: "Book the Bali Honeymoon Nest in Pondicherry — an intimate, Bali-themed romantic escape perfect for couples near Serenity Beach."
+      };
+    }
+    return null;
+  };
+
+  const seoInfo = getRoomSEO();
+
   return (
     <div className="min-h-screen bg-white lg:bg-[#ffffff] font-sans pb-0 lg:pb-20 pt-0 lg:pt-28">
-
+      {seoInfo && (
+        <Helmet>
+          <title>{seoInfo.title}</title>
+          <meta name="description" content={seoInfo.description} />
+        </Helmet>
+      )}
       <Lightbox
         open={lightboxOpen}
         close={() => setLightboxOpen(false)}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Globe, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
 import api from '../api';
 import whatsappIcon from '../assets/icons/whatsapp.svg?url';
@@ -142,6 +143,10 @@ const ContactPage = () => {
 
   return (
     <div className="bg-stone-50 min-h-screen font-sans text-stone-800 animate-in fade-in duration-500">
+      <Helmet>
+        <title>Contact Us | The Balified Villa – Pondicherry</title>
+        <meta name="description" content="Get in touch with The Balified Villa in Kottakuppam, Pondicherry — call, WhatsApp or email us to book your Bali & Greek themed villa stay near Serenity Beach." />
+      </Helmet>
       {/* Hero Section */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0 overflow-hidden">
@@ -157,7 +162,7 @@ const ContactPage = () => {
                   className="w-full h-full object-cover"
                   style={{ imageOrientation: 'from-image' }}
                 />
-                <div className="absolute inset-0 bg-black/60" />
+                <div className="absolute inset-0 bg-black/55" />
               </div>
             ))}
           </div>
