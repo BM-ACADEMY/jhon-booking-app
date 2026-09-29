@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { Helmet } from 'react-helmet-async';
 
 // Public
 import PublicLayout from './layouts/PublicLayout';
@@ -114,6 +115,17 @@ import AuthModal from './components/AuthModal';
 import { AnimatePresence } from 'framer-motion';
 import InitialLoader from './components/InitialLoader';
 
+const CanonicalTag = () => {
+  const location = useLocation();
+  const canonicalUrl = `https://thebalifiedvilla.com${location.pathname}`;
+  
+  return (
+    <Helmet>
+      <link rel="canonical" href={canonicalUrl} />
+    </Helmet>
+  );
+};
+
 const App = () => {
   const [showLoader, setShowLoader] = useState(true);
   const [toastPosition, setToastPosition] = useState(
@@ -137,6 +149,7 @@ const App = () => {
 
   return (
     <BrowserRouter>
+      <CanonicalTag />
       <AnimatePresence mode="wait">
         {showLoader && <InitialLoader />}
       </AnimatePresence>
