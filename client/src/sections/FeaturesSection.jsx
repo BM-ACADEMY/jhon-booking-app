@@ -1,12 +1,12 @@
 import { useRef, useEffect, useState } from 'react';
-import wifiIcon from "../assets/whychoose/wifi.png";
-import socialIcon from "../assets/whychoose/users.png";
-import kitchenIcon from "../assets/whychoose/kitchen.png";
-import lockerIcon from "../assets/whychoose/locker.png";
-import locationIcon from "../assets/whychoose/location.png";
-import laundryIcon from "../assets/whychoose/laundry.png";
-import bedIcon from "../assets/whychoose/bed.png";
-import travelIcon from "../assets/whychoose/travel.png";
+import wifiIcon from "../assets/whychoose/wifi.webp";
+import socialIcon from "../assets/whychoose/users.webp";
+import kitchenIcon from "../assets/whychoose/kitchen.webp";
+import lockerIcon from "../assets/whychoose/locker.webp";
+import locationIcon from "../assets/whychoose/location.webp";
+import laundryIcon from "../assets/whychoose/laundry.webp";
+import bedIcon from "../assets/whychoose/bed.webp";
+import travelIcon from "../assets/whychoose/travel.webp";
 
 const features = [
   {

@@ -65,8 +65,7 @@ const AddonsPage = () => {
       if (!roomId) return;
       try {
         setLoading(true);
-        // Wait 1200ms to show the beautifully designed skeleton-loading state as requested
-        await new Promise(resolve => setTimeout(resolve, 1200));
+        // Removed artificial delay
         const [roomRes, addonsRes, settingsRes] = await Promise.all([
           api.get(`/rooms/${roomId}`),
           api.get('/addons'),

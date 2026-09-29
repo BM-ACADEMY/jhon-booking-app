@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect } from 'react';
-import logoImg from '../assets/LogoBalified.png';
+import logoImg from '../assets/LogoBalified.webp';
 
 const InitialLoader = ({ onComplete }) => {
   useEffect(() => {

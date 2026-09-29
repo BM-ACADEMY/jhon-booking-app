@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import logoImg from "../assets/LogoBalified.png";
+import logoImg from "../assets/LogoBalified.webp";
 
 const navLinks = [
   { label: "Home", to: "/" },

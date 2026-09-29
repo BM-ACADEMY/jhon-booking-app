@@ -21,7 +21,7 @@ const SERVER_URL = import.meta.env.VITE_BASE_URL;
 // Import SVG Assets for Room Details
 import tagIcon from '../assets/icons/tag.svg';
 import airIcon from '@/assets/svg/air.svg';
-import razorpayLogo from '../assets/razorpay.png';
+import razorpayLogo from '../assets/razorpay.webp';
 import bedLinenIcon from '@/assets/svg/bed linen.svg';
 import blenderIcon from '@/assets/svg/blender.svg';
 import bodySoapIcon from '@/assets/svg/body soap.svg';

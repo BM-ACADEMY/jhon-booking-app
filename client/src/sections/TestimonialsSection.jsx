@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../api";
 import { Quote, ChevronLeft, ChevronRight } from "lucide-react";
-import testimonialImg from "../assets/testimonial.png";
+import testimonialImg from "../assets/testimonial.webp";
 
 // Inline Star Icon component
 const StarIcon = ({ filled }) => (

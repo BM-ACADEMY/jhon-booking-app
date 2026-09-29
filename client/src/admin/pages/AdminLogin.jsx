@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import logoImg from '../../assets/LogoBalified.png';
+import logoImg from '../../assets/LogoBalified.webp';
 import toast from 'react-hot-toast';
 
 const AdminLogin = () => {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import api from '../../api';
 import { useAuth } from '../../context/AuthContext';
-import logoImg from '../../assets/LogoBalified.png';
+import logoImg from '../../assets/LogoBalified.webp';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {

@@ -71,6 +71,7 @@ const ImageCarousel = ({ images, roomName }) => {
           key={idx}
           src={getImageUrl(img)}
           alt={`${roomName} - View ${idx + 1}`}
+          loading={idx === 0 ? "eager" : "lazy"}
           className={`absolute inset-0 w-full h-full object-cover transition-transform lg:transition-opacity duration-300 ${
             idx === current 
               ? 'translate-x-0 lg:opacity-100 z-10' 
@@ -116,6 +117,133 @@ const ImageCarousel = ({ images, roomName }) => {
   );
 };
 
+const getTodayPrice = (roomObj) => {
+  if (!roomObj) return 0;
+  
+  const matchDate = (dbDate, targetDateStr) => {
+    if (!dbDate) return false;
+    let dbDateStr = '';
+    if (typeof dbDate === 'string') {
+      if (dbDate.includes('T')) {
+        const d = new Date(dbDate);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        dbDateStr = `${yyyy}-${mm}-${dd}`;
+      } else {
+        dbDateStr = dbDate.substring(0, 10);
+      }
+    } else if (dbDate instanceof Date) {
+      const yyyy = dbDate.getFullYear();
+      const mm = String(dbDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(dbDate.getDate()).padStart(2, '0');
+      dbDateStr = `${yyyy}-${mm}-${dd}`;
+    } else {
+      const d = new Date(dbDate);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      dbDateStr = `${yyyy}-${mm}-${dd}`;
+    }
+    return dbDateStr === targetDateStr;
+  };
+
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+  
+  let todayPrice = roomObj.price || 0;
+  if (roomObj.datePrices && Array.isArray(roomObj.datePrices)) {
+    const found = roomObj.datePrices.find(dp => matchDate(dp.date, todayStr));
+    if (found) todayPrice = found.price;
+  }
+  return todayPrice;
+};
+
+const RoomCard = ({ room, navigate, user, toggleUserWishlist, setAuthModal, wishlist }) => {
+  const isWishlisted = wishlist.includes(room._id);
+  return (
+    <div
+      onClick={() => navigate(`/rooms/${getRoomSlug(room.name)}-${room._id}`)}
+      className="group cursor-pointer bg-white rounded-[32px] border border-gray-100 p-3 flex flex-col shadow-xl hover:border-gray-200/80 transition-all duration-350"
+    >
+      {/* Image Container */}
+      <div className="relative aspect-[4/3] rounded-[24px] overflow-hidden bg-gray-150 shadow-sm">
+        <ImageCarousel images={room.images} roomName={room.name} />
+
+        {/* Floating Heart Button on Top-Right */}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!user) { setAuthModal('login'); return; }
+            toggleUserWishlist(room._id);
+          }}
+          className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white hover:scale-105 shadow-md active:scale-95 transition-all flex items-center justify-center cursor-pointer border-none outline-none"
+        >
+          <Heart className={`w-4 h-4 transition-colors ${isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-800'}`} />
+        </button>
+
+        {/* Premium Price Tag Badge on Bottom-Right */}
+        <div className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full tracking-wide flex items-center gap-1.5 shadow-sm">
+          <span className="font-bold mr-1">₹{getTodayPrice(room).toLocaleString('en-IN')}</span>
+          <span className="text-[9px] font-medium text-white/80">/ {room.priceUnit || 'night'}</span>
+        </div>
+      </div>
+
+      {/* Content Panel */}
+      <div className="pt-4 pb-2 px-2 flex-1 flex flex-col text-left">
+        <div className="mb-2">
+          <span className="text-[9px] font-black text-primary-600 uppercase tracking-widest bg-gray-100 px-2.5 py-1 rounded-full">
+            {room.category}
+          </span>
+        </div>
+        <h3 className="font-bold text-gray-900 text-lg group-hover:text-primary-600 transition-colors line-clamp-1">
+          {room.name}
+        </h3>
+        <p className="text-sm text-gray-400 font-medium mt-0.5 mb-2">
+          {room.address || `${room.city || 'Serenity Beach'}, India`}
+        </p>
+
+        <div className="flex items-center gap-1.5 mb-3 text-[13px] text-gray-900 font-semibold">
+          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+          <span>{room.rating > 0 ? room.rating.toFixed(2) : '0.00'}</span>
+          <span className="mx-0.5">·</span>
+          <span>{room.reviewCount || 0} {(room.reviewCount === 1) ? 'review' : 'reviews'}</span>
+        </div>
+
+        {/* Specs Row */}
+        <div className="flex flex-wrap items-center gap-y-2 gap-x-4 border-t border-gray-100 pt-3.5 mt-auto text-xs text-gray-500 font-bold">
+          <div className="flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-gray-400" />
+            <span>{room.guests || 2} Guests</span>
+          </div>
+          {room.bathrooms > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Bath className="w-3.5 h-3.5 text-gray-400" />
+              <span>{room.bathrooms === 1 ? 'Bath Tub' : `${room.bathrooms} Bath Tubs`}</span>
+            </div>
+          )}
+          {room.showers > 0 && (
+            <div className="flex items-center gap-1.5">
+              <ShowerHead className="w-3.5 h-3.5 text-gray-400" />
+              <span>{room.showers === 1 ? 'Bathroom' : `${room.showers} Bathrooms`}</span>
+            </div>
+          )}
+          {room.size && (
+            <div className="flex items-center gap-1.5">
+              <Maximize className="w-3.5 h-3.5 text-gray-400" />
+              <span>{room.size}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const RoomsSection = () => {
   const [rooms, setRooms] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -143,53 +271,6 @@ const RoomsSection = () => {
     fetchData();
   }, []);
 
-  const SERVER_URL = import.meta.env.VITE_BASE_URL;
-
-  const getTodayPrice = (roomObj) => {
-    if (!roomObj) return 0;
-    
-    const matchDate = (dbDate, targetDateStr) => {
-      if (!dbDate) return false;
-      let dbDateStr = '';
-      if (typeof dbDate === 'string') {
-        if (dbDate.includes('T')) {
-          const d = new Date(dbDate);
-          const yyyy = d.getFullYear();
-          const mm = String(d.getMonth() + 1).padStart(2, '0');
-          const dd = String(d.getDate()).padStart(2, '0');
-          dbDateStr = `${yyyy}-${mm}-${dd}`;
-        } else {
-          dbDateStr = dbDate.substring(0, 10);
-        }
-      } else if (dbDate instanceof Date) {
-        const yyyy = dbDate.getFullYear();
-        const mm = String(dbDate.getMonth() + 1).padStart(2, '0');
-        const dd = String(dbDate.getDate()).padStart(2, '0');
-        dbDateStr = `${yyyy}-${mm}-${dd}`;
-      } else {
-        const d = new Date(dbDate);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        dbDateStr = `${yyyy}-${mm}-${dd}`;
-      }
-      return dbDateStr === targetDateStr;
-    };
-
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${yyyy}-${mm}-${dd}`;
-    
-    let todayPrice = roomObj.price || 0;
-    if (roomObj.datePrices && Array.isArray(roomObj.datePrices)) {
-      const found = roomObj.datePrices.find(dp => matchDate(dp.date, todayStr));
-      if (found) todayPrice = found.price;
-    }
-    return todayPrice;
-  };
-
   // Group rooms by category; also collect rooms with no matching category under their own label
   const grouped = categories.reduce((acc, cat) => {
     const catRooms = rooms.filter(r => r.category === cat);
@@ -201,88 +282,6 @@ const RoomsSection = () => {
   const knownCats = new Set(categories);
   const uncategorised = rooms.filter(r => !knownCats.has(r.category));
   if (uncategorised.length > 0) grouped.push({ name: 'Other', rooms: uncategorised });
-
-  const RoomCard = ({ room }) => {
-    const isWishlisted = wishlist.includes(room._id);
-    return (
-      <div
-        onClick={() => navigate(`/rooms/${getRoomSlug(room.name)}-${room._id}`)}
-        className="group cursor-pointer bg-white rounded-[32px] border border-gray-100 p-3 flex flex-col shadow-xl hover:border-gray-200/80 transition-all duration-350"
-      >
-        {/* Image Container */}
-        <div className="relative aspect-[4/3] rounded-[24px] overflow-hidden bg-gray-150 shadow-sm">
-          <ImageCarousel images={room.images} roomName={room.name} />
-
-          {/* Floating Heart Button on Top-Right */}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!user) { setAuthModal('login'); return; }
-              toggleUserWishlist(room._id);
-            }}
-            className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white hover:scale-105 shadow-md active:scale-95 transition-all flex items-center justify-center cursor-pointer border-none outline-none"
-          >
-            <Heart className={`w-4 h-4 transition-colors ${isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-800'}`} />
-          </button>
-
-          {/* Premium Price Tag Badge on Bottom-Right */}
-          <div className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-md text-white text-xs font-black px-3.5 py-1.5 rounded-full tracking-wide flex items-center gap-1.5 shadow-sm">
-            <span className="font-bold mr-1">₹{getTodayPrice(room).toLocaleString('en-IN')}</span>
-            <span className="text-[9px] font-medium text-white/80">/ {room.priceUnit || 'night'}</span>
-          </div>
-        </div>
-
-        {/* Content Panel */}
-        <div className="pt-4 pb-2 px-2 flex-1 flex flex-col text-left">
-          <div className="mb-2">
-            <span className="text-[9px] font-black text-primary-600 uppercase tracking-widest bg-gray-100 px-2.5 py-1 rounded-full">
-              {room.category}
-            </span>
-          </div>
-          <h3 className="font-bold text-gray-900 text-lg group-hover:text-primary-600 transition-colors line-clamp-1">
-            {room.name}
-          </h3>
-          <p className="text-sm text-gray-400 font-medium mt-0.5 mb-2">
-            {room.address || `${room.city || 'Serenity Beach'}, India`}
-          </p>
-
-          <div className="flex items-center gap-1.5 mb-3 text-[13px] text-gray-900 font-semibold">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span>{room.rating > 0 ? room.rating.toFixed(2) : '0.00'}</span>
-            <span className="mx-0.5">·</span>
-            <span>{room.reviewCount || 0} {(room.reviewCount === 1) ? 'review' : 'reviews'}</span>
-          </div>
-
-          {/* Specs Row */}
-          <div className="flex flex-wrap items-center gap-y-2 gap-x-4 border-t border-gray-100 pt-3.5 mt-auto text-xs text-gray-500 font-bold">
-            <div className="flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5 text-gray-400" />
-              <span>{room.guests || 2} Guests</span>
-            </div>
-            {room.bathrooms > 0 && (
-              <div className="flex items-center gap-1.5">
-                <Bath className="w-3.5 h-3.5 text-gray-400" />
-                <span>{room.bathrooms === 1 ? 'Bath Tub' : `${room.bathrooms} Bath Tubs`}</span>
-              </div>
-            )}
-            {room.showers > 0 && (
-              <div className="flex items-center gap-1.5">
-                <ShowerHead className="w-3.5 h-3.5 text-gray-400" />
-                <span>{room.showers === 1 ? 'Bathroom' : `${room.showers} Bathrooms`}</span>
-              </div>
-            )}
-            {room.size && (
-              <div className="flex items-center gap-1.5">
-                <Maximize className="w-3.5 h-3.5 text-gray-400" />
-                <span>{room.size}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <section className="py-20 lg:py-28 bg-blue-50/30">
@@ -318,7 +317,15 @@ const RoomsSection = () => {
                 {/* Room cards grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                   {catRooms.slice(0, 3).map(room => (
-                    <RoomCard key={room._id} room={room} />
+                    <RoomCard 
+                      key={room._id} 
+                      room={room} 
+                      navigate={navigate}
+                      user={user}
+                      toggleUserWishlist={toggleUserWishlist}
+                      setAuthModal={setAuthModal}
+                      wishlist={wishlist}
+                    />
                   ))}
                 </div>
               </div>

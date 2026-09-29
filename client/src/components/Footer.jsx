@@ -11,8 +11,7 @@ import ruPayIcon from '../assets/icons/payment.svg?url';
 import visaIcon from '../assets/icons/visa.svg?url';
 import mastercardIcon from '../assets/icons/mastercard.svg?url';
 import whatsappIcon from '../assets/icons/whatsapp.svg?url';
-import logoImg from '../assets/LogoBalified.png';
-import techxLogo from '../assets/copy-techx.png';
+import logoImg from '../assets/LogoBalified.webp';
 
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
@@ -278,7 +277,7 @@ const Footer = () => {
                 className="hover:text-slate-300 transition-all duration-300 flex items-center gap-1.5"
               >
                 <span>Designed & Developed by</span>
-                <img src={techxLogo} alt="BM TechX" className="h-6 w-auto object-contain inline-block" />
+                <span className="font-bold text-white ml-1">BM TechX</span>
               </a>
             </div>
           </div>
