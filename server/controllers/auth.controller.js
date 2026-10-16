@@ -142,7 +142,7 @@ export const getMe = (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { name, email, phone } = req.body;
+    const { name, email, phone, password } = req.body;
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -155,6 +155,13 @@ export const updateProfile = async (req, res) => {
 
     user.name = name || user.name;
     user.phone = phone || user.phone;
+
+    if (password) {
+      if (typeof password !== 'string' || password.trim().length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+      }
+      user.password = password.trim();
+    }
 
     const updatedUser = await user.save();
     

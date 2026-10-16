@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { User, Mail, Phone, Lock, Save, Loader2, Shield, Edit2, X, Check, Key } from 'lucide-react';
+import { User, Mail, Phone, Lock, Save, Loader2, Shield, Edit2, X, Check, Key, Eye, EyeOff } from 'lucide-react';
 import api from '../../api';
 
 // Shadcn UI Imports
@@ -20,6 +20,8 @@ const AdminProfile = () => {
   const [phone, setPhone] = useState(user?.phone || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -38,6 +40,8 @@ const AdminProfile = () => {
     }
     setPassword('');
     setConfirmPassword('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setIsEditing(false);
   };
 
@@ -48,8 +52,17 @@ const AdminProfile = () => {
       return;
     }
 
-    if (password && password !== confirmPassword) {
-      toast.error('Passwords do not match');
+    if (password) {
+      if (password.length < 6) {
+        toast.error('Password must be at least 6 characters long');
+        return;
+      }
+      if (password !== confirmPassword) {
+        toast.error('Passwords do not match');
+        return;
+      }
+    } else if (confirmPassword) {
+      toast.error('Please enter a new password');
       return;
     }
 
@@ -64,9 +77,11 @@ const AdminProfile = () => {
 
       if (res.data.user) {
         updateUserData(res.data.user);
-        toast.success('Admin profile updated successfully!');
+        toast.success(password ? 'Admin profile and password updated successfully!' : 'Admin profile updated successfully!');
         setPassword('');
         setConfirmPassword('');
+        setShowPassword(false);
+        setShowConfirmPassword(false);
         setIsEditing(false);
       }
     } catch (err) {
@@ -264,13 +279,23 @@ const AdminProfile = () => {
                     <Lock className="w-3.5 h-3.5 text-gray-400" />
                     New Password
                   </Label>
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Leave blank to keep unchanged"
-                    className="border-gray-300 text-sm font-semibold"
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Leave blank to keep unchanged"
+                      className="border-gray-300 text-sm font-semibold pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Confirm Password */}
@@ -279,13 +304,23 @@ const AdminProfile = () => {
                     <Lock className="w-3.5 h-3.5 text-gray-400" />
                     Confirm New Password
                   </Label>
-                  <Input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
-                    className="border-gray-300 text-sm font-semibold"
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      className="border-gray-300 text-sm font-semibold pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                      title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
               </div>
