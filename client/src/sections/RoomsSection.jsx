@@ -288,10 +288,18 @@ const RoomsSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Top Header */}
-        <div className="mb-12">
+        <div className="flex items-center justify-between gap-4 mb-10 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl font-medium text-gray-900 tracking-tight">
             Our Rooms
           </h2>
+          <Link
+            to="/rooms"
+            id="explore-more-rooms-btn"
+            className="group inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-gray-900 hover:bg-black text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-300 shrink-0 cursor-pointer"
+          >
+            <span>Explore more rooms</span>
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </Link>
         </div>
 
         {loading ? (
