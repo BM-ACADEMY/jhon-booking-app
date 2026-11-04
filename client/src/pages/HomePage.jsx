@@ -8,8 +8,8 @@ import TestimonialsSection from '../sections/TestimonialsSection';
 const HomePage = () => (
   <>
     <Helmet>
-      <title>The Balified Villa | Bali & Greek Themed Villa Stay in Pondicherry</title>
-      <meta name="description" content="Discover The Balified Villa — a Bali & Greek themed private pool villa stay in Pondicherry, near Serenity Beach & Auroville. Book your themed getaway today." />
+      <title>Best Villa in Pondicherry: Themed Stays | The Balified Villa</title>
+      <meta name="description" content="Stay at The Balified Villa, a Bali & Greek themed villa with a private pool near Serenity Beach & Auroville, Pondicherry. Book direct for your getaway." />
     </Helmet>
     <HeroSection />
     <RoomsSection />
