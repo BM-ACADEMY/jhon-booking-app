@@ -1470,11 +1470,17 @@ const RoomDetailPage = () => {
   const getRoomSEO = () => {
     if (!room?.name) return null;
     const name = room.name.toLowerCase();
-    
+
+    if (name.includes('private pool')) {
+      return {
+        title: "Private Pool Villa Pondicherry | The Balified Villa",
+        description: "Enjoy your own private pool at The Balified Villa in Kottakuppam, Pondicherry, minutes from Serenity Beach. Check availability and book your villa now."
+      };
+    }
     if (name.includes('bali classic')) {
       return {
-        title: "Bali Classic Room – Themed Couple Villa in Pondicherry | The Balified Villa",
-        description: "Stay in our Bali-inspired Classic Room in Pondicherry — private bathroom, couple's bathtub & Balinese decor, near Serenity Beach."
+        title: "Couple Friendly Villa Pondicherry – Bali Classic Room",
+        description: "A Bali-inspired room with a couple's bathtub and Balinese decor, near Serenity Beach, Pondicherry. Ideal for couples - check dates and book online now."
       };
     }
     if (name.includes('greek classic')) {
@@ -1489,7 +1495,11 @@ const RoomDetailPage = () => {
         description: "Book the Bali Honeymoon Nest in Pondicherry — an intimate, Bali-themed romantic escape perfect for couples near Serenity Beach."
       };
     }
-    return null;
+    // Fallback so any new room gets its own tags instead of the homepage's
+    return {
+      title: `${room.name} in Pondicherry | The Balified Villa`,
+      description: `Book the ${room.name} at The Balified Villa, a Bali & Greek themed stay near Serenity Beach and Auroville, Pondicherry. Check dates and reserve online.`
+    };
   };
 
   const seoInfo = getRoomSEO();

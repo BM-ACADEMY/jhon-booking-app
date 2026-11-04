@@ -892,8 +892,8 @@ const RoomsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
       <Helmet>
-        <title>Rooms & Villas in Pondicherry | Bali & Greek Themed Stays – The Balified Villa</title>
-        <meta name="description" content="Browse all themed rooms & villas at The Balified Villa, Pondicherry — from Bali-inspired rooms to a private pool villa, near Serenity Beach & Auroville." />
+        <title>Villa Rental Pondicherry – Themed Rooms | The Balified Villa</title>
+        <meta name="description" content="Compare Bali, Greek and private pool villa stays at The Balified Villa, between White Town and Auroville. Check live dates and book your room online." />
       </Helmet>
 
       {/* ══════════════════════════════════════════
