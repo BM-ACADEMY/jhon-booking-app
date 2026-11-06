@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import api from '../api';
 
 const PrivacyPage = () => {
@@ -25,6 +26,10 @@ const PrivacyPage = () => {
 
   return (
     <div className="bg-white min-h-screen font-sans text-gray-800">
+      <Helmet>
+        <title>Privacy Policy – Guest Data & Bookings | The Balified Villa</title>
+        <meta name="description" content="Learn how The Balified Villa collects, uses and protects your personal details when you enquire or book a stay with us in Pondicherry. Read the policy." />
+      </Helmet>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8 md:pt-28 md:pb-10">
         {/* Breadcrumb & Header */}
         <div className="mb-4">

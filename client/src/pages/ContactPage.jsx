@@ -144,8 +144,8 @@ const ContactPage = () => {
   return (
     <div className="bg-stone-50 min-h-screen font-sans text-stone-800 animate-in fade-in duration-500">
       <Helmet>
-        <title>Contact Us | The Balified Villa – Pondicherry</title>
-        <meta name="description" content="Get in touch with The Balified Villa in Kottakuppam, Pondicherry — call, WhatsApp or email us to book your Bali & Greek themed villa stay near Serenity Beach." />
+        <title>Pondicherry Villa Booking & Contact | The Balified Villa</title>
+        <meta name="description" content="Call, WhatsApp or email The Balified Villa in Kottakuppam, Pondicherry to plan your stay. Get quick answers on rooms and dates, then book with us direct." />
       </Helmet>
       {/* Hero Section */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">

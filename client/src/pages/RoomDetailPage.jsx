@@ -1485,14 +1485,14 @@ const RoomDetailPage = () => {
     }
     if (name.includes('greek classic')) {
       return {
-        title: "Greek Classic Room – Themed Stay in Pondicherry | The Balified Villa",
-        description: "Experience our Greek-themed Classic Room in Pondicherry — whitewashed interiors, blue accents & a relaxing coastal-inspired stay near Auroville."
+        title: "Greek Classic Room in Pondicherry | The Balified Villa",
+        description: "Whitewashed walls and blue accents bring a calm Greek coastal feel to this themed room near Auroville, Pondicherry. Check availability and book today."
       };
     }
     if (name.includes('honeymoon')) {
       return {
-        title: "Bali Honeymoon Nest – Romantic Villa Stay in Pondicherry | The Balified Villa",
-        description: "Book the Bali Honeymoon Nest in Pondicherry — an intimate, Bali-themed romantic escape perfect for couples near Serenity Beach."
+        title: "Honeymoon Stay in Pondicherry – Bali Honeymoon Nest",
+        description: "Celebrate together in the Bali Honeymoon Nest, an intimate Bali-themed room near Serenity Beach, Pondicherry. Pick your dates and book your stay online."
       };
     }
     // Fallback so any new room gets its own tags instead of the homepage's
