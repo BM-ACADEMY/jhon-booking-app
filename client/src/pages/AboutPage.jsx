@@ -83,8 +83,8 @@ const AboutPage = () => {
   return (
     <div className="bg-stone-50 font-sans text-stone-800 animate-in fade-in duration-500">
       <Helmet>
-        <title>About Us | Bali & Greek Themed Villa in Pondicherry – The Balified Villa</title>
-        <meta name="description" content="Learn about The Balified Villa — a unique Bali & Greek themed villa in Kottakuppam, Pondicherry, offering a boutique themed stay near Serenity Beach & Auroville." />
+        <title>About Our Pondicherry Villa Stay | The Balified Villa</title>
+        <meta name="description" content="Meet The Balified Villa, a Bali & Greek themed stay in Kottakuppam, between White Town and Auroville. See why guests return, then book your Pondy stay." />
       </Helmet>
       {/* Hero Section */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">

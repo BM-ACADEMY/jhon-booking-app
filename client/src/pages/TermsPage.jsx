@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, FileText, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import api from '../api';
 
 const TermsPage = () => {
@@ -25,6 +26,10 @@ const TermsPage = () => {
 
   return (
     <div className="bg-white min-h-screen font-sans text-gray-800">
+      <Helmet>
+        <title>Terms and Conditions for Your Stay | The Balified Villa</title>
+        <meta name="description" content="Read the booking, payment, cancellation and house terms that apply to every stay at The Balified Villa, Pondicherry, before you confirm your reservation." />
+      </Helmet>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8 md:pt-28 md:pb-10">
         {/* Breadcrumb & Header */}
         <div className="mb-4">
